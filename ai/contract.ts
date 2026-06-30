@@ -38,6 +38,10 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);
 
+// `desk.stop` is a CONTROL signal, not a reasoner verb — named once here so the door
+// and the (browser-side) dispatcher agree on the wire string without a magic literal.
+export const STOP_ACTION: ActionName = "desk.stop";
+
 // Invert the registry: which verbs apply to a surface kind. Lets the manifest derive
 // a region's accepts from the registry instead of hand-listing them (AI-INTERFACE §4).
 export const actionsForKind = (kind: SurfaceKind): ActionName[] =>

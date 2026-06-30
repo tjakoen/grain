@@ -165,9 +165,9 @@
       case "flash":
         if (!el) return;
         el.removeAttribute("data-commit");           // clear optimistic grain → rollback
-        el.classList.remove("flash-error");
+        el.removeAttribute("data-state");
         void el.offsetWidth;                         // restart the animation
-        el.classList.add("flash-error");
+        el.setAttribute("data-state", "error");      // transient UI state (CONVENTIONS: data-state)
         if (op.message) el.setAttribute("title", op.message);
         return;
       case "type":                                   // streamed AI text (grain → settles clean)

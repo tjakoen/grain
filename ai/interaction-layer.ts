@@ -6,7 +6,7 @@
 
 import type { Reasoner, ReasonTools } from "./reasoner.ts";
 import type { Intent, Decision, Surface, OpChannel } from "./contract.ts";
-import { ACTIONS, isAction, surfaceKind, OP_EVENT } from "./contract.ts";
+import { ACTIONS, isAction, surfaceKind, OP_EVENT, STOP_ACTION } from "./contract.ts";
 
 export interface LayerDeps {
   reasoner: Reasoner;
@@ -39,7 +39,7 @@ export function createInteractionLayer(deps: LayerDeps): InteractionLayer {
   async function handleIntent(intent: Intent): Promise<Decision> {
     // `desk.stop` is a CONTROL signal: it never reaches the reasoner. It flips the
     // session's stop flag; the running decision notices and hands back cleanly.
-    if (intent.action === "desk.stop") {
+    if (intent.action === STOP_ACTION) {
       stopRequested.add(intent.session);
       return { ok: true, ops: [], reply: "Asked the desk to stop." };
     }

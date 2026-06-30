@@ -29,7 +29,6 @@
   }
 
   // ---- "the desk is acting": spotlight the surface the AI is touching --------------
-  const prefersReduced = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   let backdrop = null, actingLabel = null, confirmEl = null;
   let spotlit = null, spotlightTimer = null;
   const isActing = () => !!backdrop && backdrop.classList.contains("is-on");
@@ -68,7 +67,7 @@
     if (spotlit && spotlit !== el) clearActing(spotlit);   // moving on → release the previous surface
     if (el) {
       el.classList.add("ai-spotlit");
-      el.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth", block: "center" });  // gently follow
+      el.scrollIntoView({ block: "center" });   // smoothness owned by CSS scroll-behavior (honors reduced-motion)
       if (click) { el.classList.remove("is-click"); void el.offsetWidth; el.classList.add("is-click"); }  // pulse ONLY on a real click
       // each KIND of surface reads AI-mode its own way:
       const tag = el.tagName, out = el.getAttribute("data-target");
@@ -108,9 +107,11 @@
   }
   function ensureConfirm() {
     if (confirmEl) return;
-    confirmEl = document.createElement("div");
+    // a native modal <dialog>: focus-trap, Escape-to-close, ::backdrop, and top-layer
+    // come free — no manual overlay/keydown plumbing. Escape = "let it finish" (the
+    // desk keeps working behind it), which is the safe default.
+    confirmEl = document.createElement("dialog");
     confirmEl.className = "ai-confirm";
-    confirmEl.hidden = true;
     confirmEl.innerHTML =
       '<div class="ai-confirm__card">' +
         '<p class="ai-confirm__msg">The desk is working. Ask it to stop?</p>' +
@@ -127,8 +128,8 @@
     });
     document.body.appendChild(confirmEl);
   }
-  function showConfirm() { ensureConfirm(); confirmEl.hidden = false; }
-  function hideConfirm() { if (confirmEl) confirmEl.hidden = true; }
+  function showConfirm() { ensureConfirm(); if (!confirmEl.open) confirmEl.showModal(); }
+  function hideConfirm() { if (confirmEl && confirmEl.open) confirmEl.close(); }
   function resume() { hideConfirm(); }                   // "let it finish" — it never actually stopped
   function requestStop() {                               // ask the desk to stop (mediated, graceful)
     hideConfirm();

@@ -38,9 +38,13 @@
   padding: var(--space-1) var(--space-3);
 }
 
-/* interrupt confirm — "ask the desk to stop?" (mediated, never a force-kill) */
-.ai-confirm { position: fixed; inset: 0; z-index: 9003; display: grid; place-items: center; }
-.ai-confirm[hidden] { display: none; }
+/* interrupt confirm — "ask the desk to stop?" (mediated, never a force-kill).
+   A native modal <dialog>: top-layer, focus-trap, Escape-to-close come free. The bare
+   element is transparent (the spotlight backdrop already dims); only the card shows. */
+.ai-confirm { border: 0; padding: 0; background: transparent; opacity: 0; transition: opacity 0.18s ease; }
+.ai-confirm[open] { opacity: 1; }
+@starting-style { .ai-confirm[open] { opacity: 0; } }   /* fade in from display:none */
+.ai-confirm::backdrop { background: transparent; }      /* the .ai-backdrop beneath already provides the dim */
 .ai-confirm__card {
   background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius-md);
   padding: var(--space-5); max-width: 24rem; text-align: center;
@@ -50,5 +54,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ai-backdrop { transition: none; }
+  .ai-confirm { transition: none; }
   .ai-spotlit.is-click::before { animation: none; display: none; }
 }

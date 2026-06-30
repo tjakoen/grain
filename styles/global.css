@@ -1,6 +1,6 @@
-/* project/styles/global.css — the PRODUCT skin: reset, paper, base layout, masthead.
-   The grade-as-signal MECHANISM lives in GRAIN (grain/styles/grain.css, bundled into
-   /components.css); the token VALUES live in variables.css. This file is identity. */
+/* grain/styles/global.css — GRAIN's base/skin: reset, paper, base layout, masthead.
+   The grade-as-signal MECHANISM is the sibling grain.css; the token VALUES live in
+   variables.css. The three are linked together as GRAIN's default theme. */
 
 /* Cross-document (MPA) view transitions: a slow fade fits e-ink; bouncy easing
    would break the spell (DESIGN-SYSTEM §6). */
@@ -9,6 +9,11 @@
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.3s; }
 
 * { box-sizing: border-box; }
+
+/* Smooth programmatic scrolling owned by CSS in ONE place — the AI spotlight just calls
+   scrollIntoview() with no behavior, and this decides (honoring reduced-motion). */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
   font: var(--font-base);
@@ -32,8 +37,8 @@ body::before {
 
 /* ---- Layout: one left-aligned column, generous air (DESIGN-SYSTEM §4/§7) ---- */
 .container { max-width: var(--content-max); margin: var(--space-8) auto; padding: 0 var(--page-pad); }
-h1, h2, h3 { font-weight: var(--font-weight-regular); letter-spacing: -0.01em; }
-p { margin: 0 0 var(--space-4); }
+h1, h2, h3 { font-weight: var(--font-weight-regular); letter-spacing: -0.01em; text-wrap: balance; }
+p { margin: 0 0 var(--space-4); text-wrap: pretty; }   /* no orphans/ragged breaks — no JS */
 
 /* ---- Masthead (DESIGN-SYSTEM §5): eyebrow → display headline → hairline rule -- */
 .eyebrow { font-size: var(--text-sm); color: var(--color-fg); margin: 0 0 var(--space-2); }

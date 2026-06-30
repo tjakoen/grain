@@ -1,7 +1,7 @@
-// /frontend/scripts/cmdk.js — global command palette (Spotlight / Notion ⌘K style).
+// grain/scripts/cmdk.js — global command palette (Spotlight / Notion ⌘K style).
 //
 // Self-contained: one <script> tag drops it onto any page. Injects its own styles +
-// overlay, binds ⌘K / Ctrl+K, fetches /search.json once, filters, and navigates.
+// a native <dialog>, binds ⌘K / Ctrl+K, fetches /search.json once, filters, and navigates.
 // Monochrome e-ink look via the page's design tokens. Today it indexes pages +
 // components; the seam to add tasks/knowledge — and to let a result EMIT an intent
 // through the one door (palette as another action-vocabulary client) — is marked below.
@@ -10,16 +10,19 @@
   let data = null, items = [], sel = 0, root, input, list;
 
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const isOpen = () => root && root.classList.contains("is-open");
+  const isOpen = () => !!(root && root.open);
 
   function styles() {
     const css = `
-.cmdk { position: fixed; inset: 0; z-index: 10000; display: none; }
-.cmdk.is-open { display: block; }
-.cmdk__backdrop { position: absolute; inset: 0; background: rgba(28,27,23,.35); }
-.cmdk__sheet { position: relative; max-width: 560px; margin: 12vh auto 0; background: var(--paper, #E2E0D8);
+.cmdk { max-width: 560px; width: calc(100% - 2rem); margin: 12vh auto auto; padding: 0;
   border: 1px solid var(--ink, #1C1B17); border-radius: var(--radius-md, 4px); overflow: hidden;
-  font-family: var(--font-smooth, "Times New Roman", serif); color: var(--ink, #1C1B17); }
+  background: var(--paper, #E2E0D8); color: var(--ink, #1C1B17);
+  font-family: var(--font-smooth, "Times New Roman", serif);
+  opacity: 0; transition: opacity .18s ease; }
+.cmdk[open] { opacity: 1; }
+@starting-style { .cmdk[open] { opacity: 0; } }
+.cmdk::backdrop { background: rgba(28,27,23,.35); }
+@media (prefers-reduced-motion: reduce) { .cmdk { transition: none; } }
 .cmdk__input { width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--ink, #1C1B17);
   background: transparent; padding: .85rem 1rem; font-family: inherit; font-size: 1.1rem; color: inherit; outline: none; }
 .cmdk__input::placeholder { color: var(--ink-faint, #ABA89F); }
@@ -39,19 +42,19 @@
   }
 
   function build() {
-    root = document.createElement("div");
+    // native modal <dialog>: focus-trap + focus-restore + Escape + ::backdrop + top-layer
+    // for free — no backdrop div, no manual Escape handling, no z-index races.
+    root = document.createElement("dialog");
     root.className = "cmdk";
+    root.setAttribute("aria-label", "Search");
     root.innerHTML = `
-      <div class="cmdk__backdrop"></div>
-      <div class="cmdk__sheet" role="dialog" aria-modal="true" aria-label="Search">
-        <input class="cmdk__input" type="text" placeholder="Search pages and components…" aria-label="Search">
-        <ul class="cmdk__list" role="listbox"></ul>
-        <div class="cmdk__hint">↑↓ navigate · ↵ open · esc close</div>
-      </div>`;
+      <input class="cmdk__input" type="text" placeholder="Search pages and components…" aria-label="Search">
+      <ul class="cmdk__list" role="listbox"></ul>
+      <div class="cmdk__hint">↑↓ navigate · ↵ open · esc close</div>`;
     document.body.appendChild(root);
     input = root.querySelector(".cmdk__input");
     list = root.querySelector(".cmdk__list");
-    root.querySelector(".cmdk__backdrop").addEventListener("click", close);
+    root.addEventListener("click", (e) => { if (e.target === root) close(); });   // light-dismiss: click the backdrop
     input.addEventListener("input", render);
     input.addEventListener("keydown", onKey);
     list.addEventListener("click", (e) => { const li = e.target.closest(".cmdk__item"); if (li) { sel = +li.dataset.i; activate(); } });
@@ -95,11 +98,11 @@
     if (ev.key === "ArrowDown") { ev.preventDefault(); move(1); }
     else if (ev.key === "ArrowUp") { ev.preventDefault(); move(-1); }
     else if (ev.key === "Enter") { ev.preventDefault(); activate(); }
-    else if (ev.key === "Escape") { ev.preventDefault(); close(); }
+    // Escape is handled natively by <dialog> (cancel → close)
   }
 
-  function open() { root.classList.add("is-open"); input.value = ""; load().then(render); input.focus(); }
-  function close() { root.classList.remove("is-open"); }
+  function open() { root.showModal(); input.value = ""; load().then(render); input.focus(); }
+  function close() { if (root.open) root.close(); }
 
   function init() {
     styles(); build();

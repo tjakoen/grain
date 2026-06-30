@@ -66,7 +66,6 @@ Put these on your components/markup; GRAIN's island + door act on them:
 | `data-kind` + `data-accepts="v1 v2"` | a component root | harvested into the AI manifest (what verbs this kind accepts) |
 | `data-grade="grain\|smooth\|accent"` · `.is-ai` | any ancestor | provenance: grain = AI, smooth = human (distributed via `--type-font`) |
 | `data-commit="pending"` | any ancestor | in-transit / not-yet-committed → reads grain |
-| `data-ai-veil="dim\|wash\|lift"` | `<body>` | the "AI is acting" **veil** style (default `dim`): `dim` = gentle ink recede · `wash` = bleach the surroundings toward paper · `lift` = no veil, the element pops alone. Theme-aware (built from `--ink`/`--paper`). |
 
 The verbs themselves live in the closed registry (`ai/contract.ts`: `ActionName` /
 `SurfaceKind` / `ACTIONS`) — the single source of truth.
@@ -113,6 +112,10 @@ consuming theme defines (e.g. in the project's `variables.css`):
 - **fonts:** `--type-font` (the inherited switch), `--font-grain`, `--font-smooth`, `--font-accent`
 - **ink/paper:** `--ink`, `--paper`, `--color-fg`, `--color-muted`, `--line-soft`
 - **scale:** `--space-1..8`, `--text-sm`, `--border`, `--radius-sm`, `--radius-md`
+- **AI spotlight veil:** `--ai-veil` — the "AI is acting" backdrop, set ONCE in the theme
+  so every page fades identically (optional; GRAIN defaults to a gentle ink dim). Three
+  on-theme picks: `color-mix(in srgb, var(--ink) 22%, transparent)` (dim) ·
+  `color-mix(in srgb, var(--paper) 70%, transparent)` (wash) · `transparent` (lift).
 
 Pick any palette/typeface; *Department of Time* (the reference product) uses monochrome
 paper/ink + self-hosted Redaction grades.

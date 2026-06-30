@@ -7,3 +7,9 @@
 }
 .badge[data-status="active"]   { color: var(--ink); border-color: var(--ink); }
 .badge[data-status="archived"] { color: var(--ink-faint); }
+
+/* ---- AI / in-transit: the non-text grain. A badge the AI is setting (live pending, or
+   any grain ancestor) wears the dashed "terminal" edge; the label already swaps to the
+   grain family via --type-font. Same vocabulary as the button + field. */
+.badge[data-commit="pending"],
+[data-grade="grain"] .badge { border-style: dashed; border-color: var(--ink); }

@@ -21,3 +21,12 @@
 /* ---- sizes (attribute) ---- */
 .field[data-size="sm"] .field__input { padding: var(--space-1) var(--space-2); font-size: var(--text-sm); }
 .field[data-size="lg"] .field__input { padding: var(--space-3) var(--space-4); font-size: var(--text-lg); }
+
+/* ---- AI / in-transit: the non-text grain, same language as the button (AI-INTERFACE §5).
+   A field the AI is touching (live pending, or any grain ancestor) wears the dashed
+   "terminal" edge; the label + value already swap to the grain family via --type-font.
+   EXCEPTION: while the AI is actively COMPOSING, the dispatcher sets data-grade="smooth"
+   on the input itself (clean ink, real caret, like a human typing) — so that stays solid. */
+.field[data-commit="pending"] .field__input,
+[data-grade="grain"] .field__input { border-style: dashed; }
+.field__input[data-grade="smooth"] { border-style: solid; }

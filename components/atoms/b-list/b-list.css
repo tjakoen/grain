@@ -14,3 +14,8 @@
    Same vocabulary as the other atoms (AI-INTERFACE §5). */
 .list__item[data-commit="pending"]::before,
 [data-grade="grain"] .list__item::before { color: var(--ink-faint); }
+
+/* While the desk writes an item it's momentarily EMPTY (appended, not yet typed). Reserve
+   a line so the list doesn't collapse then grow back — that jumpy shrink before writing. */
+.list__item:empty { min-height: 1.55em; }   /* ≈ one --leading-relaxed line */
+

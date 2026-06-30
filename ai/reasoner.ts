@@ -30,6 +30,7 @@ export interface Reasoner {
 // One calm, deliberate rhythm for ALL AI motion — same beats everywhere so the flow
 // reads consistently (e-ink implies stillness, not a teletype burst).
 const TYPE_MS = 32;     // per character while typing
+const BACK_MS = 16;     // per character while ERASING — quicker than typing, reads as scrubbing
 const SETTLE_MS = 480;  // after the spotlight lands on a surface, before it acts (≥ the dim's fade-in)
 const HOLD_MS = 650;    // after an action finishes, before attention moves on
 
@@ -124,7 +125,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           await moveTo(surface);
           for (let i = 0; i < [...oldText].length; i++) {
             if (tools.cancelled()) break;
-            await tools.delay(thinkMs > 0 ? TYPE_MS : 0);
+            await tools.delay(thinkMs > 0 ? BACK_MS : 0);   // erase faster than we type
             tools.emit({ target: surface, op: "type", back: 1, provenance: "ai", commit: "pending" });
           }
           await beat(220);                           // a pause on the empty line — "reconsidering"
@@ -159,12 +160,30 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           liHtml(3, "Review doc — done, archived"));
         if (stopped()) return handBack;
 
-        // 5) summarise — speech again (grain) — then hand back
+        // 5) triage today's task CARDS — spotlight each (it goes grain), flip its b-badge,
+        //    settle clean. Drives loop-card + item-card + badge, all AI-driven.
+        const badge = (n: number, status: string, label: string) =>
+          `<span class="badge" data-status="${status}" data-surface="task-badge:${n}">${label}</span>`;
+        await moveTo("task:1");                     // the finished one → archive it
+        tools.emit({ target: "task-badge:1", op: "replace", html: badge(1, "archived", "archived"), provenance: "ai", commit: "committed" });
+        await beat(HOLD_MS);
+        if (stopped()) return handBack;
+        await moveTo("task:2");                     // the deep-work one → schedule it
+        tools.emit({ target: "task-badge:2", op: "replace", html: badge(2, "active", "Thu 09:00"), provenance: "ai", commit: "committed" });
+        await beat(HOLD_MS);
+        if (stopped()) return handBack;
+
+        // 6) press Commit to finalise — a button the desk CLICKS (pulse), like a human (b-button)
+        await moveTo("commit-btn", true);
+        await beat(SETTLE_MS);
+        if (stopped()) return handBack;
+
+        // 7) summarise — speech again (grain) — then hand back
         await moveTo("summary");
         await stream("summary", "Plan's set — deep-work at nine, one already done. Two to go.");
         await beat(HOLD_MS);
         spot("screen", false);                     // hand back to you
-        return { ok: true, ops: [], reply: "(demo) the desk drafted your plan, revised it, then handed back." };
+        return { ok: true, ops: [], reply: "(demo) the desk planned, triaged, committed, then handed back." };
       }
 
       // Even the light path takes a beat so the optimistic grain state is visible;

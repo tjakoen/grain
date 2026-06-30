@@ -79,6 +79,7 @@
         if (el.placeholder) { savedPlaceholder.set(el, el.placeholder); el.placeholder = ""; }
         el.focus();
       } else if (el.hasAttribute("data-action") && out) {
+        clearTrigger(out);                            // drop any stale holder of this target first
         el.setAttribute("data-commit", "pending");   // a control being USED → working until its output finishes…
         pendingTriggers.set(out, el);                // …held, then released by the output's committed op
       } else if (target !== "screen") {
@@ -95,6 +96,7 @@
     if (backdrop) backdrop.classList.remove("is-on");
     if (actingLabel) actingLabel.hidden = true;
     clearActing(spotlit); spotlit = null;
+    for (const t of [...pendingTriggers.keys()]) clearTrigger(t);   // backstop: turn over → nothing stays "working"
   }
 
   // ---- interrupt: pause, ask, and (if confirmed) ask the DESK to stop --------------
@@ -219,7 +221,7 @@
     // the target. The target's grade is driven by the server's render ops (type → grain,
     // replace → committed). Pre-graining the target wrongly grained whole regions like
     // the screen and left them stuck, since nothing cleared it.
-    if (trigger) { trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); }
+    if (trigger) { clearTrigger(target); trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); }
     fetch("/intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

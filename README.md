@@ -67,6 +67,16 @@ Put these on your components/markup; GRAIN's island + door act on them:
 The verbs themselves live in the closed registry (`ai/contract.ts`: `ActionName` /
 `SurfaceKind` / `ACTIONS`) — the single source of truth.
 
+**State invariant (what keeps it from getting fidgety).** UI state is **declarative
+attributes** components wear — the dispatcher acts on attributes, never component names,
+so any component participates with no bespoke JS. Transient state (`data-commit="pending"`
+/ `ai-spotlit`) follows one rule: **every optimistic "pending" is cleared by a
+server-sent terminal op** — a `committed` op, a `flash` (rollback), a `remove`, or a
+`type {done}`. Backstops cover the rest: a held control is also released when the AI
+turn ends (`spotlight active:false`), re-triggering the same surface clears the old
+holder first, and a 20s timeout releases a stuck spotlight. Net: the server is the
+source of truth; the DOM is derived, and never strands a "working" state.
+
 ---
 
 ## 3. The binding vocabulary GRAIN's components are authored in

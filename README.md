@@ -14,6 +14,26 @@ and how to wire it.
 
 ---
 
+## 0. Two layers — the AI interface is optional
+
+GRAIN is **two things, one-directional**:
+
+- **The design system** (always usable) — the `b-*` atoms + the **grade-as-signal**
+  mechanism (`styles/grain.css`: the `--type-font` atom, `data-grade` / `.field` /
+  `data-commit` rules, caret, settle). Grade is useful with **no AI at all**: draft vs.
+  saved, focus/editing, in-transit vs. committed. It depends on nothing in `ai/`.
+- **The AI-interaction layer** (opt-in) — `ai/*` (the door, contract, reasoner boundary,
+  manifest, accepts), the dispatcher island `scripts/ai-dispatch.js`, and its styling
+  `ai/ai.css` (the "AI is acting" spotlight). This layer *uses* the design system
+  (sets `data-grade` by provenance); the design system never reaches back into it.
+
+So you can adopt **just the design system** in a plain BATCH app: include the `b-*`
+atoms + `styles/grain.css`, define the token slots (§4), and skip `ai/` entirely. Add
+the AI layer later by wiring §5 and bundling `ai/ai.css`. (This repo's app uses both;
+a no-AI consumer simply drops `grain/ai` from its style roots.)
+
+---
+
 ## 1. The substrate contract — what a host must provide
 
 GRAIN is portable to any host that supplies three things:

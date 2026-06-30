@@ -1,0 +1,44 @@
+/* grain/ai/ai.css — the AI-interaction MODULE's styling: the "AI is acting" spotlight.
+   Optional: include this ONLY when you use GRAIN's AI interface. The design system
+   (grain/styles/grain.css + the b-* atoms) works without it. (AI-INTERFACE §5c) */
+
+/* When the AI (not the user) drives a surface, the page dims and the touched surface is
+   lifted into the light and pulsed like a click. Calm, monochrome, no shadows. */
+.ai-backdrop {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(28, 27, 23, 0.45);
+  opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+}
+.ai-backdrop.is-on { opacity: 1; pointer-events: auto; }
+.ai-spotlit {
+  position: relative; z-index: 9001;
+  background: var(--paper);                 /* lift it out of the dim */
+  outline: 1px solid var(--ink); outline-offset: 4px;
+}
+.ai-spotlit.is-click::after {
+  content: ""; position: absolute; inset: -4px;
+  border: 1px solid var(--ink); border-radius: inherit;
+  animation: ai-click 0.5s ease-out;
+}
+@keyframes ai-click { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.12); opacity: 0; } }
+.ai-acting-label {
+  position: fixed; top: var(--space-4); left: 50%; transform: translateX(-50%); z-index: 9002;
+  font-family: var(--font-grain); font-size: var(--text-sm); color: var(--ink);
+  background: var(--paper); border: var(--border); border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* interrupt confirm — "ask the desk to stop?" (mediated, never a force-kill) */
+.ai-confirm { position: fixed; inset: 0; z-index: 9003; display: grid; place-items: center; }
+.ai-confirm[hidden] { display: none; }
+.ai-confirm__card {
+  background: var(--paper); border: 1px solid var(--ink); border-radius: var(--radius-md);
+  padding: var(--space-5); max-width: 24rem; text-align: center;
+}
+.ai-confirm__msg { margin: 0 0 var(--space-4); }
+.ai-confirm__actions { display: flex; gap: var(--space-3); justify-content: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-backdrop { transition: none; }
+  .ai-spotlit.is-click::after { animation: none; display: none; }
+}

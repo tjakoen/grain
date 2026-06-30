@@ -27,9 +27,11 @@ export interface Reasoner {
   decide(intent: Intent, tools: ReasonTools): Promise<Decision>;
 }
 
-// One calm, deliberate typing cadence for ALL streamed text (ms per character).
-// e-ink implies stillness — slow enough to read as it lands, not a teletype burst.
-const TYPE_MS = 45;
+// One calm, deliberate rhythm for ALL AI motion — same beats everywhere so the flow
+// reads consistently (e-ink implies stillness, not a teletype burst).
+const TYPE_MS = 45;     // per character while typing
+const SETTLE_MS = 480;  // after the spotlight lands on a surface, before it acts (≥ the dim's fade-in)
+const HOLD_MS = 650;    // after an action finishes, before attention moves on
 
 export interface StubOptions {
   /** 0 = always commit; 1 = always fail (exercises rollback). */
@@ -46,10 +48,16 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
     async decide(intent: Intent, tools: ReasonTools): Promise<Decision> {
       const def = ACTIONS[intent.action];
 
+      const beat = (ms: number) => tools.delay(thinkMs > 0 ? ms : 0);
+
       // Spotlight the surface the AI is touching — the "desk is acting" treatment.
       // on = pending (in progress); off = committed (done → also releases the trigger).
       const spot = (target: string, active: boolean, click = false) =>
         tools.emit({ target, op: "spotlight", active, click, provenance: "ai", commit: active ? "pending" : "committed" });
+
+      // Move attention to a surface, then let it SETTLE before acting — the one
+      // consistent transition used everywhere (so no step feels faster than another).
+      const moveTo = async (target: string, click = false) => { spot(target, true, click); await beat(SETTLE_MS); };
 
       // Type a line out, ONE CHARACTER at a time over SSE at a single steady cadence,
       // so every typing effect reads identically regardless of word length. Each char
@@ -68,8 +76,9 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       // --- say.stream: button → the AI types a reflection. Spotlit: a human clicked, but
       //     the AI is the one writing, so show where it acts (grade = AI as actor, §5c). ---
       if (intent.action === "say.stream") {
-        spot(intent.surface, true);
+        await moveTo(intent.surface);
         const d = await stream(intent.surface, "On it — checking your week. You have room on Thursday.");
+        await beat(HOLD_MS);
         spot(intent.surface, false);
         return d;
       }
@@ -77,8 +86,9 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       // --- say.set: input → the AI writes back the line it noted from your text ---
       if (intent.action === "say.set") {
         const text = String(intent.payload.text ?? "").trim();
-        spot(intent.surface, true);
+        await moveTo(intent.surface);
         const d = await stream(intent.surface, text ? `Noted: ${text}` : "Nothing to note.");
+        await beat(HOLD_MS);
         spot(intent.surface, false);
         return d;
       }
@@ -87,35 +97,32 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       //     drive the UI. The spotlight follows what it touches; the backdrop stays up
       //     across the whole turn, then releases (AI-INTERFACE §5c). ---
       if (intent.action === "demo.run") {
-        const beat = (ms: number) => tools.delay(thinkMs > 0 ? ms : 0);
         const handBack: Decision = { ok: true, ops: [], reply: "Stopped — handed back to you." };
         // graceful stop: hand back cleanly if asked — never a force-kill (PROJECT-PLAN §9).
         const stopped = (): boolean => { if (!tools.cancelled()) return false; spot("screen", false); return true; };
 
-        // 1) click the button in one motion (spotlight + pulse together — no laggy
-        //    separate "arrive" flash), then the answer lands right under it.
-        await beat(150);                           // let the backdrop fade in first
-        spot("say-button", true, true);            // arrive + click at once
-        await beat(350);                           // the click reads, then…
+        // Same rhythm at every step: moveTo (spotlight + SETTLE) → act → HOLD → move on.
+        // 1) land on the button, settle, then click — the click visibly causes the answer.
+        await moveTo("say-button");
+        spot("say-button", true, true);            // click (pulse) once it's settled
+        await beat(SETTLE_MS);
         if (stopped()) return handBack;
-        spot("say-stream", true);                  // …the answer appears, caused by the click
-        await beat(150);
+        await moveTo("say-stream");                // move to the answer, settle
         await stream("say-stream", "On it — checking your week. Thursday 09:00–11:00 is clear.");
+        await beat(HOLD_MS);
         if (stopped()) return handBack;
 
         // 2) use the INPUT like a human would: compose IN the field, then "submit"
-        spot("say-input", true);                   // focus the field (clean, no pulse — it's typed, not clicked)
-        await beat(350);
-        await stream("say-input", "Move my deep-work block to Thursday", false);   // type into the field
-        await beat(500);
+        await moveTo("say-input");
+        await stream("say-input", "Move my deep-work block to Thursday", false);
+        await beat(HOLD_MS);
         tools.emit({ target: "say-input", op: "type", done: true, provenance: "ai", commit: "committed" });  // Enter → clears it
         if (stopped()) return handBack;
 
         // 3) …which lands the noted line in the text under it
-        spot("say-line", true);
-        await beat(300);
+        await moveTo("say-line");
         await stream("say-line", "Noted: deep-work moved to Thursday, 09:00–11:00.");
-        await beat(600);
+        await beat(HOLD_MS);
         spot("screen", false);                     // hand back to you
         return { ok: true, ops: [], reply: "(demo) the desk acted, then handed back." };
       }

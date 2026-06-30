@@ -1,0 +1,23 @@
+/* atoms/b-input — one class per element (BEM, component-scoped).
+   Variants are attributes, same pattern as the button. */
+.field { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
+.field__label { font-size: var(--text-sm); color: var(--color-muted); }
+.field__input {
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--type-font); font-size: var(--text-base);
+  color: var(--ink); background: transparent;
+  border: var(--border); border-radius: var(--radius-sm);   /* hard edge — you tap it */
+}
+.field__input::placeholder { color: var(--ink-faint); }
+.field__input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+/* invalid state — native, no JS. Monochrome: a heavier rule, not a red one. */
+.field__input:user-invalid { border-width: 2px; }
+
+/* ---- variants (attribute) ---- */
+.field[data-variant="inline"] { flex-direction: row; align-items: center; gap: var(--space-3); }
+.field[data-variant="inline"] .field__label { flex: 0 0 auto; }
+
+/* ---- sizes (attribute) ---- */
+.field[data-size="sm"] .field__input { padding: var(--space-1) var(--space-2); font-size: var(--text-sm); }
+.field[data-size="lg"] .field__input { padding: var(--space-3) var(--space-4); font-size: var(--text-lg); }

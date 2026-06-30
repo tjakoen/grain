@@ -1,0 +1,72 @@
+/* atoms/b-button — the button, ONE class: .btn. Variants are ATTRIBUTES, not
+   extra classes (vanilla CSS, no utility soup). The component owns its styling.
+   Accent is three CSS vars scoped to .btn; a status attribute repoints them, so
+   every variant inherits the new color for free.
+   Each pseudo-state has a parallel data-force value so the catalog can show it
+   statically (e.g. .btn:hover AND .btn[data-force~="hover"]). */
+
+.btn {
+  /* accent token set — [data-status] overrides these */
+  --btn-accent: var(--color-primary);
+  --btn-accent-hover: var(--color-primary-hover);
+  --btn-accent-contrast: var(--color-primary-contrast);
+  --btn-accent-soft: var(--color-primary-soft);
+
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--type-font);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em; text-transform: uppercase;   /* DESIGN-SYSTEM §3 button label */
+  line-height: var(--leading-normal);
+  min-height: 2.75rem;                    /* ≥44px touch target (DESIGN-SYSTEM §7) */
+  padding: var(--space-2) var(--space-4);
+  border: var(--border);                  /* ink hairline — no fill, no shadow */
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+
+  /* default = transparent fill, ink border + label (DESIGN-SYSTEM §5 Buttons) */
+  background: transparent;
+  color: var(--ink);
+}
+
+/* ---- sizes (attribute) ---- */
+.btn[data-size="sm"] { min-height: 0; padding: var(--space-1) var(--space-3); font-size: var(--text-xs); }
+.btn[data-size="lg"] { padding: var(--space-3) var(--space-5); font-size: var(--text-base); }
+
+/* ---- variants (attribute). Monochrome: the difference is fill, not hue ---- */
+.btn[data-variant="soft"]    { background: var(--paper-2); }
+.btn[data-variant="outline"] { background: transparent; }   /* already the default look */
+
+/* ---- status (attribute): repoint the accent token set ---- */
+.btn[data-status="success"] {
+  --btn-accent: var(--color-success); --btn-accent-hover: var(--color-success-hover);
+  --btn-accent-contrast: var(--color-success-contrast); --btn-accent-soft: var(--color-success-soft);
+}
+.btn[data-status="danger"] {
+  --btn-accent: var(--color-danger); --btn-accent-hover: var(--color-danger-hover);
+  --btn-accent-contrast: var(--color-danger-contrast); --btn-accent-soft: var(--color-danger-soft);
+}
+
+/* ---- pseudo-states. Hover = invert to ink (DESIGN-SYSTEM §5), not a new hue ---- */
+.btn:hover, .btn[data-force~="hover"] { background: var(--ink); color: var(--paper); }
+
+.btn:focus-visible, .btn[data-force~="focus"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.btn:active,        .btn[data-force~="active"] { transform: translateY(1px); }
+
+.btn:disabled, .btn[disabled] { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+/* ---- AI / in-transit: the non-text grain (grade = commit state, AI-INTERFACE §5).
+   Same idea as the text grain, expressed for a button: the label already swaps to the
+   Redaction grain family via the inherited --type-font; here we add the "retro terminal"
+   edge — a dashed border + a blinking block caret — that says "machine-made, not settled".
+   Keyed off the button's own pending state OR any grain ancestor (e.g. the catalog toggle). */
+.btn[data-commit="pending"],
+.btn[data-grade="grain"],
+[data-grade="grain"] .btn {
+  border-style: dashed;          /* a control the AI is using — terminal edge + grain label */
+  pointer-events: none;          /* one intent at a time while the writer works */
+}
+/* no typing caret on buttons — a button isn't a text field; the caret belongs to
+   streamed text (.caret), not here. */

@@ -1,0 +1,2 @@
+/* atoms/b-text — typography tokens this atom can wear */
+.heading-2 { font-size: var(--text-lg); color: var(--color-muted); margin: var(--space-6) 0 var(--space-3); }

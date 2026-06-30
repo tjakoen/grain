@@ -29,7 +29,7 @@ export interface Reasoner {
 
 // One calm, deliberate rhythm for ALL AI motion — same beats everywhere so the flow
 // reads consistently (e-ink implies stillness, not a teletype burst).
-const TYPE_MS = 45;     // per character while typing
+const TYPE_MS = 32;     // per character while typing
 const SETTLE_MS = 480;  // after the spotlight lands on a surface, before it acts (≥ the dim's fade-in)
 const HOLD_MS = 650;    // after an action finishes, before attention moves on
 

@@ -8,15 +8,15 @@
 // SurfaceKind is the CLOSED set of kinds (the "enum", erasable-style: a union, since
 // `enum` is banned by erasableSyntaxOnly). Build addresses with surface(), never by
 // hand-concatenating strings, so a typo is a compile error.
-export type Surface = string;                       // e.g. "item:ITM-1", "say-line"
-export type SurfaceKind = "item" | "say-line" | "say-stream" | "screen";
+export type Surface = string;                       // e.g. "item:ITM-1", "reflection"
+export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen";
 export const surface = (kind: SurfaceKind, id?: string): Surface => (id ? `${kind}:${id}` : kind);
 export const surfaceKind = (s: Surface): SurfaceKind => (s.split(":")[0] ?? "") as SurfaceKind;
 export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":");
 
 // ---- Actions: the closed verb vocabulary (grows reluctantly) --------------------
 //   item.archive  — stands in for task.complete (optimistic light path)
-//   say.set       — input → AI rewrites a line of text (grain → settles clean)
+//   say.set       — input → AI writes back into a reflection line (grain → settles clean)
 //   say.stream    — button → AI types a line out, token by token, over SSE
 // The full product vocabulary lives in docs/AI-INTERFACE.md.
 export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop";
@@ -30,7 +30,7 @@ export interface ActionDef {
 
 export const ACTIONS: Record<ActionName, ActionDef> = {
   "item.archive": { name: "item.archive", depth: "light", accepts: ["item"] },
-  "say.set":      { name: "say.set",      depth: "light", accepts: ["say-line"] },
+  "say.set":      { name: "say.set",      depth: "light", accepts: ["reflection"] },
   "say.stream":   { name: "say.stream",   depth: "light", accepts: ["say-stream"] },
   "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"] },   // plays an AI-acting demo
   "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"] },   // user asks the desk to halt (mediated)

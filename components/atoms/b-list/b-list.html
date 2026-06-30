@@ -1,0 +1,6 @@
+<!-- atoms/b-list — a quiet list (bullet or ordered). Items come from an `items` array
+     via `each`, or author <li class="list__item"> directly. Each item is addressable
+     (give it a data-surface) so the AI can write or revise ONE item. Self-closable. -->
+<ul class="list" prop-attr-data-variant="variant">
+  <li class="list__item" each="items" data-field="."></li>
+</ul>

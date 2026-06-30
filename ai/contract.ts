@@ -67,6 +67,7 @@ export interface RenderOp {
   op: RenderOpKind;
   html?: string;               // server-rendered fragment (replace / append / flash)
   text?: string;               // a streamed token (type)
+  back?: number;               // delete the last N chars (type) — the desk REVISING / overwriting
   done?: boolean;              // last token of a stream → settle grain to clean (type)
   active?: boolean;            // spotlight on (move to target) vs off (release)
   click?: boolean;            // spotlight: this is a "click" → pulse the target (else just lift it)

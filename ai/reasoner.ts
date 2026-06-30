@@ -93,38 +93,78 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         return d;
       }
 
-      // --- demo.run: play a scripted AI-acting sequence so the user can WATCH the desk
-      //     drive the UI. The spotlight follows what it touches; the backdrop stays up
-      //     across the whole turn, then releases (AI-INTERFACE §5c). ---
+      // --- demo.run: a useful end-to-end scenario the user can WATCH — the desk drafts a
+      //     Thursday plan as a bullet LIST, then REVISES one specific item (backspacing it,
+      //     retyping) to show targeted editing. The spotlight follows what it touches; the
+      //     backdrop stays up across the turn, then releases (AI-INTERFACE §5c).
+      //     Re-runnable: it drives demo surfaces with render ops and mutates no storage. ---
       if (intent.action === "demo.run") {
         const handBack: Decision = { ok: true, ops: [], reply: "Stopped — handed back to you." };
         // graceful stop: hand back cleanly if asked — never a force-kill (PROJECT-PLAN §9).
         const stopped = (): boolean => { if (!tools.cancelled()) return false; spot("screen", false); return true; };
 
-        // Same rhythm at every step: moveTo (spotlight + SETTLE) → act → HOLD → move on.
-        // 1) land on the button, settle, then click — the click visibly causes the answer.
-        await moveTo("say-button");
-        spot("say-button", true, true);            // click (pulse) once it's settled
-        await beat(SETTLE_MS);
+        // Write a committed VALUE into a surface: stream it in grain (you watch it type),
+        // then settle to the CLEAN committed HTML. Speech stays grain; ground-truth data
+        // settles clean — the same grain→clean an item.archive shows (AI-INTERFACE §5).
+        const commitText = async (surface: string, grainLine: string, cleanHtml: string) => {
+          await moveTo(surface);
+          await stream(surface, grainLine, false);   // type in grain, no settle-to-grain
+          await beat(HOLD_MS);
+          tools.emit({ target: surface, op: "replace", html: cleanHtml, provenance: "ai", commit: "committed" });
+        };
+        // Append a bullet to the plan list, then write its text and settle it clean.
+        const liHtml = (n: number, text: string) => `<li class="list__item" data-surface="plan-item:${n}">${text}</li>`;
+        const addBullet = async (n: number, text: string) => {
+          tools.emit({ target: "plan", op: "append", html: liHtml(n, ""), provenance: "ai", commit: "pending" });
+          await commitText(`plan-item:${n}`, text, liHtml(n, text));
+        };
+        // REVISE an already-written surface: backspace the old text one char at a time
+        // (the desk thinking again), then type the replacement and settle it clean.
+        const overwrite = async (surface: string, oldText: string, newText: string, cleanHtml: string) => {
+          await moveTo(surface);
+          for (let i = 0; i < [...oldText].length; i++) {
+            if (tools.cancelled()) break;
+            await tools.delay(thinkMs > 0 ? TYPE_MS : 0);
+            tools.emit({ target: surface, op: "type", back: 1, provenance: "ai", commit: "pending" });
+          }
+          await beat(220);                           // a pause on the empty line — "reconsidering"
+          await stream(surface, newText, false);     // retype in grain
+          await beat(HOLD_MS);
+          tools.emit({ target: surface, op: "replace", html: cleanHtml, provenance: "ai", commit: "committed" });
+        };
+
+        // 1) compose the request in the input like a human would, then "submit"
+        await moveTo("ask-input");
+        await stream("ask-input", "Plan my Thursday", false);
+        await beat(HOLD_MS);
+        tools.emit({ target: "ask-input", op: "type", done: true, provenance: "ai", commit: "committed" });  // Enter → clears it
         if (stopped()) return handBack;
-        await moveTo("say-stream");                // move to the answer, settle
-        await stream("say-stream", "On it — checking your week. Thursday 09:00–11:00 is clear.");
+
+        // 2) reflect — the desk SPEAKING, so it stays grain
+        await moveTo("reflection");
+        await stream("reflection", "Thursday's light — 09:00–11:00 is free. Here's a plan…");
         await beat(HOLD_MS);
         if (stopped()) return handBack;
 
-        // 2) use the INPUT like a human would: compose IN the field, then "submit"
-        await moveTo("say-input");
-        await stream("say-input", "Move my deep-work block to Thursday", false);
-        await beat(HOLD_MS);
-        tools.emit({ target: "say-input", op: "type", done: true, provenance: "ai", commit: "committed" });  // Enter → clears it
+        // 3) write the plan as a bullet list — each item commits to clean
+        await addBullet(1, "Deep-work block — 09:00–11:00");
+        if (stopped()) return handBack;
+        await addBullet(2, "Clear the inbox");
+        if (stopped()) return handBack;
+        await addBullet(3, "Review architecture doc");
         if (stopped()) return handBack;
 
-        // 3) …which lands the noted line in the text under it
-        await moveTo("say-line");
-        await stream("say-line", "Noted: deep-work moved to Thursday, 09:00–11:00.");
+        // 4) revise just the 3rd item — backspace it, retype (targeted edit + flexibility)
+        await overwrite("plan-item:3", "Review architecture doc", "Review doc — done, archived",
+          liHtml(3, "Review doc — done, archived"));
+        if (stopped()) return handBack;
+
+        // 5) summarise — speech again (grain) — then hand back
+        await moveTo("summary");
+        await stream("summary", "Plan's set — deep-work at nine, one already done. Two to go.");
         await beat(HOLD_MS);
         spot("screen", false);                     // hand back to you
-        return { ok: true, ops: [], reply: "(demo) the desk acted, then handed back." };
+        return { ok: true, ops: [], reply: "(demo) the desk drafted your plan, revised it, then handed back." };
       }
 
       // Even the light path takes a beat so the optimistic grain state is visible;

@@ -196,12 +196,18 @@
     }
     let body = el.querySelector(".stream-body");
     if (!body) {
+      const prev = el.textContent || "";             // capture current text before we rebuild
       el.innerHTML = '<span class="stream-body"></span><span class="caret"></span>';
       el.setAttribute("data-grade", "grain");        // AI / in-transit = grain (DESIGN-SYSTEM §3)
       el.setAttribute("data-commit", "pending");
       body = el.querySelector(".stream-body");
+      // OVERWRITE (op.back) re-enters an already-written surface → keep its text so the
+      // desk can backspace it. A fresh write (text, no back) starts empty (wipes any placeholder).
+      if (typeof op.back === "number") body.textContent = prev;
     }
-    if (typeof op.text === "string") body.textContent += op.text;   // text only — no injection
+    if (typeof op.back === "number" && op.back > 0)                 // the desk revising: delete trailing chars
+      body.textContent = [...body.textContent].slice(0, -op.back).join("");
+    else if (typeof op.text === "string") body.textContent += op.text;   // text only — no injection
     if (op.done) {
       const caret = el.querySelector(".caret");
       if (caret) caret.remove();

@@ -1,0 +1,16 @@
+/* atoms/b-list — a quiet list. Markers are an editorial em-dash (bullet) or a counter
+   (ordered) in muted ink — no heavy disc, fits the e-ink paper look (DESIGN-SYSTEM §4). */
+.list { margin: 0 0 var(--space-4); padding: 0; list-style: none; }
+.list__item { position: relative; padding-left: var(--space-5); margin: var(--space-2) 0; }
+.list__item::before { content: "—"; position: absolute; left: 0; color: var(--ink-muted); }
+
+/* ---- ordered variant (attribute): a counter, not a disc ---- */
+.list[data-variant="ordered"] { counter-reset: li; }
+.list[data-variant="ordered"] .list__item { counter-increment: li; }
+.list[data-variant="ordered"] .list__item::before { content: counter(li) "."; }
+
+/* ---- AI / in-transit: an item the desk is writing reads grain (the label swaps via the
+   inherited --type-font); its marker recedes to faint while pending, settling on commit.
+   Same vocabulary as the other atoms (AI-INTERFACE §5). */
+.list__item[data-commit="pending"]::before,
+[data-grade="grain"] .list__item::before { color: var(--ink-faint); }

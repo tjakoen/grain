@@ -2,16 +2,13 @@
 import { test, expect } from "bun:test";
 import { createInteractionLayer } from "./interaction-layer.ts";
 import { makeStubReasoner } from "./reasoner.ts";
-import type { Stream } from "../../batch/http/stream.ts";
-import type { Intent, RenderOp } from "./contract.ts";
+import type { Intent, RenderOp, OpChannel } from "./contract.ts";
 
-// A Stream double that records what got pushed and to whom.
+// An OpChannel double that records what got pushed and to whom (GRAIN's only port).
 function fakeStream() {
   const pushed: Array<{ session: string; event: string; data: unknown }> = [];
-  const stream: Stream = {
-    subscribe: () => new Response(null),
+  const stream: OpChannel = {
     push: (session, event, data) => { pushed.push({ session, event, data }); },
-    broadcast: () => {},
   };
   return { stream, pushed };
 }

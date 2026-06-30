@@ -4,14 +4,13 @@
 // the reasoner (the single writer), and the resulting RenderOps are PUSHED back to
 // the originating session over SSE. Nothing reaches the DOM by any other path.
 
-import type { Stream } from "../../batch/http/stream.ts";
 import type { Reasoner, ReasonTools } from "./reasoner.ts";
-import type { Intent, Decision, Surface } from "./contract.ts";
+import type { Intent, Decision, Surface, OpChannel } from "./contract.ts";
 import { ACTIONS, isAction, surfaceKind, OP_EVENT } from "./contract.ts";
 
 export interface LayerDeps {
   reasoner: Reasoner;
-  stream: Stream;
+  stream: OpChannel;   // the push port — GRAIN depends on this, not on BATCH's SSE hub
   archiveItem: (id: string) => Promise<void>;       // the scoped write capability
   renderSurface: (surface: Surface) => Promise<string>;   // committed HTML for a surface
 }

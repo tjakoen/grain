@@ -84,3 +84,11 @@ export interface Decision {
 
 // The SSE event name render ops are pushed under (the dispatcher listens for it).
 export const OP_EVENT = "op";
+
+// ---- The substrate PORT GRAIN needs: a way to push to a session ----------------
+// GRAIN depends on this interface, never on a concrete substrate. BATCH's SSE hub
+// satisfies it structurally; a WebSocket hub, a test double, or another substrate
+// would too. This is what keeps GRAIN runnable on something other than BATCH.
+export interface OpChannel {
+  push(session: string, event: string, data: unknown): void;
+}

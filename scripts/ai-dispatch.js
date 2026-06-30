@@ -48,14 +48,19 @@
   // release a surface from the spotlight. A control the AI is "using" keeps its
   // working state (data-commit) until its OUTPUT completes — held in pendingTriggers,
   // released by clearTrigger on the output's committed op — so it isn't dropped here.
+  const savedPlaceholder = new WeakMap();   // restore a field's placeholder after AI typing
   function clearActing(el) {
     if (!el) return;
     el.classList.remove("ai-spotlit", "is-click");
-    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") el.blur();
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      if (savedPlaceholder.has(el)) { el.placeholder = savedPlaceholder.get(el); savedPlaceholder.delete(el); }
+      el.removeAttribute("data-grade");   // drop the forced-clean
+      el.blur();
+    }
     const held = [...pendingTriggers.values()].includes(el);
     if (!held) el.removeAttribute("data-commit");
   }
-  function spotlightOn(target) {
+  function spotlightOn(target, click) {
     ensureSpotlight();
     backdrop.classList.add("is-on");
     actingLabel.hidden = false;
@@ -63,12 +68,16 @@
     if (spotlit && spotlit !== el) clearActing(spotlit);   // moving on → release the previous surface
     if (el) {
       el.classList.add("ai-spotlit");
-      el.classList.remove("is-click"); void el.offsetWidth; el.classList.add("is-click");   // pulse = "click"
       el.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth", block: "center" });  // gently follow
+      if (click) { el.classList.remove("is-click"); void el.offsetWidth; el.classList.add("is-click"); }  // pulse ONLY on a real click
       // each KIND of surface reads AI-mode its own way:
       const tag = el.tagName, out = el.getAttribute("data-target");
       if (tag === "INPUT" || tag === "TEXTAREA") {
-        el.focus();   // the AI composes like a human — clean ink + the field's own caret
+        // the AI composes like a human: clean ink from the first frame (no grain→smooth
+        // flash), no grey placeholder ghost, the field's own caret.
+        el.setAttribute("data-grade", "smooth");
+        if (el.placeholder) { savedPlaceholder.set(el, el.placeholder); el.placeholder = ""; }
+        el.focus();
       } else if (el.hasAttribute("data-action") && out) {
         el.setAttribute("data-commit", "pending");   // a control being USED → working until its output finishes…
         pendingTriggers.set(out, el);                // …held, then released by the output's committed op
@@ -163,7 +172,7 @@
         applyType(el, op);
         return;
       case "spotlight":                              // the AI as actor: dim + light the target
-        op.active ? spotlightOn(op.target) : spotlightOff();
+        op.active ? spotlightOn(op.target, op.click) : spotlightOff();
         return;
     }
   }

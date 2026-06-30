@@ -48,8 +48,8 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
 
       // Spotlight the surface the AI is touching — the "desk is acting" treatment.
       // on = pending (in progress); off = committed (done → also releases the trigger).
-      const spot = (target: string, active: boolean) =>
-        tools.emit({ target, op: "spotlight", active, provenance: "ai", commit: active ? "pending" : "committed" });
+      const spot = (target: string, active: boolean, click = false) =>
+        tools.emit({ target, op: "spotlight", active, click, provenance: "ai", commit: active ? "pending" : "committed" });
 
       // Type a line out, ONE CHARACTER at a time over SSE at a single steady cadence,
       // so every typing effect reads identically regardless of word length. Each char
@@ -92,18 +92,21 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         // graceful stop: hand back cleanly if asked — never a force-kill (PROJECT-PLAN §9).
         const stopped = (): boolean => { if (!tools.cancelled()) return false; spot("screen", false); return true; };
 
-        // 1) "click" the button — it goes into AI mode (grain/terminal) — answer lands below it
-        spot("say-button", true);
-        await beat(800);
+        // 1) attention lands on the button, THEN it clicks — so the click visibly
+        //    *causes* the answer that lands below it.
+        spot("say-button", true);                  // arrive (dim + lift, no pulse)
+        await beat(550);
         if (stopped()) return handBack;
-        spot("say-stream", true);
-        await beat(250);
+        spot("say-button", true, true);            // …click it (the pulse)
+        await beat(200);
+        spot("say-stream", true);                  // the answer appears right after the click
+        await beat(150);
         await stream("say-stream", "On it — checking your week. Thursday 09:00–11:00 is clear.");
         if (stopped()) return handBack;
 
         // 2) use the INPUT like a human would: compose IN the field, then "submit"
-        spot("say-input", true);
-        await beat(300);
+        spot("say-input", true);                   // focus the field (clean, no pulse — it's typed, not clicked)
+        await beat(350);
         await stream("say-input", "Move my deep-work block to Thursday", false);   // type into the field
         await beat(500);
         tools.emit({ target: "say-input", op: "type", done: true, provenance: "ai", commit: "committed" });  // Enter → clears it

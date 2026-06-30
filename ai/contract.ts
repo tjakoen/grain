@@ -68,7 +68,8 @@ export interface RenderOp {
   html?: string;               // server-rendered fragment (replace / append / flash)
   text?: string;               // a streamed token (type)
   done?: boolean;              // last token of a stream → settle grain to clean (type)
-  active?: boolean;            // spotlight on (move/pulse to target) vs off (release)
+  active?: boolean;            // spotlight on (move to target) vs off (release)
+  click?: boolean;            // spotlight: this is a "click" → pulse the target (else just lift it)
   message?: string;            // human-facing note (flash)
   provenance: Provenance;
   commit: Commit;

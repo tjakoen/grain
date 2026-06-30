@@ -6,8 +6,11 @@
    lifted into the light and pulsed like a click. Calm, monochrome, no shadows. */
 .ai-backdrop {
   position: fixed; inset: 0; z-index: 9000;
-  background: rgba(28, 27, 23, 0.45);
+  background: rgba(28, 27, 23, 0.22);   /* gentle ink dim — recede, don't black out (was .45) */
   opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  /* Alt vibe (most on-theme): a PAPER wash instead of a dark scrim — the surroundings
+     bleach toward blank paper, the active element stays the only "inked" thing:
+       background: rgba(226, 224, 216, 0.65);   (= var(--paper) @ .65) */
 }
 .ai-backdrop.is-on { opacity: 1; pointer-events: auto; }
 .ai-spotlit {

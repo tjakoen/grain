@@ -1,0 +1,77 @@
+// grain/ai/reasoner.test.ts — UNIT: the stub reasoner (the single writer) in isolation.
+// We hand it a fake ReasonTools that records every emitted RenderOp + write, with zero
+// delays, and assert the decision logic + the op stream it produces. No HTTP, no DOM.
+import { test, expect } from "bun:test";
+import { makeStubReasoner } from "./reasoner.ts";
+import type { ReasonTools } from "./reasoner.ts";
+import type { Intent, RenderOp } from "./contract.ts";
+
+function fakeTools(over: Partial<ReasonTools> = {}) {
+  const emitted: RenderOp[] = [];
+  const archived: string[] = [];
+  const tools: ReasonTools = {
+    archiveItem: async (id) => { archived.push(id); },
+    renderSurface: async (s) => `<x data-surface="${s}" data-commit="committed">ok</x>`,
+    emit: (op) => { emitted.push(op); },
+    cancelled: () => false,
+    delay: async () => {},
+    ...over,
+  };
+  return { tools, emitted, archived };
+}
+
+const intent = (over: Partial<Intent> = {}): Intent => ({
+  source: "user", session: "s1", screen: "loop",
+  surface: "item:ITM-1", action: "item.archive", payload: {}, ...over,
+});
+
+const reasoner = makeStubReasoner({ thinkMs: 0 });
+const spots = (ops: RenderOp[]) => ops.filter((o) => o.op === "spotlight");
+
+test("item.archive: writes through the scoped tool, returns a committed replace", async () => {
+  const { tools, archived } = fakeTools();
+  const d = await reasoner.decide(intent(), tools);
+  expect(d.ok).toBe(true);
+  expect(archived).toEqual(["ITM-1"]);                 // the write happened via the injected capability
+  expect(d.ops[0]?.op).toBe("replace");
+  expect(d.ops[0]?.commit).toBe("committed");
+});
+
+test("item.archive failure rolls back: ok:false + a flash op", async () => {
+  const failing = makeStubReasoner({ thinkMs: 0, failRate: 1 });
+  const { tools, archived } = fakeTools();
+  const d = await failing.decide(intent(), tools);
+  expect(d.ok).toBe(false);
+  expect(archived).toEqual([]);                        // no write committed
+  expect(d.ops[0]?.op).toBe("flash");
+});
+
+test("say.set: brackets with spotlight on→off and streams type tokens that settle committed", async () => {
+  const { tools, emitted } = fakeTools();
+  await reasoner.decide(intent({ surface: "reflection", action: "say.set", payload: { text: "hi" } }), tools);
+  const types = emitted.filter((o) => o.op === "type");
+  expect(types.length).toBeGreaterThan(1);
+  expect(types.at(-1)?.commit).toBe("committed");      // grain settles to clean
+  expect(spots(emitted)[0]?.active).toBe(true);
+  expect(spots(emitted).at(-1)?.active).toBe(false);
+});
+
+test("demo.run: appends a 3-item list, erases (back), commits clean, clicks, then releases", async () => {
+  const { tools, emitted } = fakeTools();
+  const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run" }), tools);
+  expect(d.ok).toBe(true);
+  expect(emitted.filter((o) => o.op === "append")).toHaveLength(3);                       // 3 bullets
+  expect(emitted.some((o) => o.op === "type" && (o.back ?? 0) > 0)).toBe(true);           // backspaces (overwrite)
+  expect(emitted.filter((o) => o.op === "replace" && o.commit === "committed").length)   // list items + badges
+    .toBeGreaterThanOrEqual(4);
+  expect(spots(emitted).some((o) => o.click)).toBe(true);                                 // clicks the commit button
+  expect(spots(emitted)[0]?.active).toBe(true);
+  expect(spots(emitted).at(-1)?.active).toBe(false);                                      // hands back at the end
+});
+
+test("demo.run halts gracefully when cancelled: still releases the spotlight, no throw", async () => {
+  const { tools, emitted } = fakeTools({ cancelled: () => true });
+  const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run" }), tools);
+  expect(d.ok).toBe(true);
+  expect(spots(emitted).at(-1)?.active).toBe(false);   // graceful hand-back even on stop
+});

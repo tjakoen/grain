@@ -18,7 +18,11 @@
   position: relative; z-index: 9001;
   background: var(--paper);                 /* lift it out of the dim */
   outline: 1px solid var(--ink); outline-offset: 4px;
-  transition: background-color 0.18s ease, outline-color 0.18s ease;   /* ease the lift in, don't snap */
+  /* the focus-switch glide — how slowly the lit box eases onto the new surface.
+     One token so it's tunable + consistent (keep it ≤ the reasoner's SETTLE so the
+     box finishes landing before the AI acts). */
+  transition: background-color var(--ai-focus-move, 0.4s) ease,
+              outline-color var(--ai-focus-move, 0.4s) ease;
 }
 .ai-spotlit.is-click::before {     /* ::before so it never collides with a button's ::after caret */
   content: ""; position: absolute; inset: -4px;

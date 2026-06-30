@@ -18,18 +18,21 @@ and how to wire it.
 
 GRAIN is **two things, one-directional**:
 
-- **The design system** (always usable) — the `b-*` atoms + the **grade-as-signal**
-  mechanism (`styles/grain.css`: the `--type-font` atom, `data-grade` / `.field` /
-  `data-commit` rules, caret, settle). Grade is useful with **no AI at all**: draft vs.
-  saved, focus/editing, in-transit vs. committed. It depends on nothing in `ai/`.
+- **The design system** (always usable) — the `b-*` atoms, the **default theme**
+  (`styles/variables.css` = tokens + `@font-face`, `styles/global.css` = base/skin,
+  `fonts/` = the Redaction grades), and the **grade-as-signal** mechanism
+  (`styles/grain.css`: the `--type-font` atom, `data-grade` / `.field` / `data-commit`
+  rules, caret, settle). Grade is useful with **no AI at all**: draft vs. saved,
+  focus/editing, in-transit vs. committed. It depends on nothing in `ai/`.
 - **The AI-interaction layer** (opt-in) — `ai/*` (the door, contract, reasoner boundary,
   manifest, accepts), the dispatcher island `scripts/ai-dispatch.js`, and its styling
   `ai/ai.css` (the "AI is acting" spotlight). This layer *uses* the design system
   (sets `data-grade` by provenance); the design system never reaches back into it.
 
-So you can adopt **just the design system** in a plain BATCH app: include the `b-*`
-atoms + `styles/grain.css`, define the token slots (§4), and skip `ai/` entirely. Add
-the AI layer later by wiring §5 and bundling `ai/ai.css`. (This repo's app uses both;
+So you can adopt **just the design system** in a plain BATCH app: link GRAIN's three
+stylesheets (`variables.css` → `global.css` → `grain.css`) + the `b-*` atoms, and skip
+`ai/` entirely. It looks like GRAIN out of the box; override token slots (§4) to re-skin.
+Add the AI layer later by wiring §5 and bundling `ai/ai.css`. (This repo's app uses both;
 a no-AI consumer simply drops `grain/ai` from its style roots.)
 
 ---
@@ -104,21 +107,20 @@ Example (GRAIN's text atom):
 
 ---
 
-## 4. The grade token slots a host must define
+## 4. The token slots (GRAIN's default theme — override to re-skin)
 
-GRAIN's mechanism (`styles/grain.css`) ships **no values** — it reads token *slots* the
-consuming theme defines (e.g. in the project's `variables.css`):
+GRAIN ships a **default theme** in `styles/variables.css` (the *Department of Time* look:
+monochrome paper/ink + self-hosted Redaction grades). The mechanism (`styles/grain.css`)
+and atoms read these token *slots*, so a consumer re-skins by **overriding the slots** in
+its own sheet (linked after GRAIN's) — no component changes:
 
 - **fonts:** `--type-font` (the inherited switch), `--font-grain`, `--font-smooth`, `--font-accent`
 - **ink/paper:** `--ink`, `--paper`, `--color-fg`, `--color-muted`, `--line-soft`
 - **scale:** `--space-1..8`, `--text-sm`, `--border`, `--radius-sm`, `--radius-md`
-- **AI spotlight veil:** `--ai-veil` — the "AI is acting" backdrop, set ONCE in the theme
-  so every page fades identically (optional; GRAIN defaults to a gentle ink dim). Three
-  on-theme picks: `color-mix(in srgb, var(--ink) 22%, transparent)` (dim) ·
-  `color-mix(in srgb, var(--paper) 70%, transparent)` (wash) · `transparent` (lift).
-
-Pick any palette/typeface; *Department of Time* (the reference product) uses monochrome
-paper/ink + self-hosted Redaction grades.
+- **AI spotlight:** `--ai-veil` (the "AI is acting" backdrop — three on-theme picks:
+  `color-mix(in srgb, var(--ink) 22%, transparent)` dim · `color-mix(in srgb, var(--paper) 70%, transparent)` wash ·
+  `transparent` lift) and `--ai-focus-move` (how slowly the spotlight glides between
+  surfaces). Both set once in the theme so every page behaves identically.
 
 ---
 
@@ -137,7 +139,8 @@ const layer = createInteractionLayer({
 // mount: POST /intent → layer.handleIntent ; GET /stream → the channel ;
 //        GET /ai/manifest → buildManifest(screen, targets) ;
 // include the island: <script src="/scripts/ai-dispatch.js" defer></script>
-// bundle styles/grain.css into your component CSS so the mechanism ships.
+// link GRAIN's stylesheets in <head>: variables.css → global.css → grain.css, then your
+//   component bundle; include grain/ai/ai.css (bundled or linked) for the AI spotlight.
 ```
 
 > **Rough edge (honest):** the action *vocabulary values* and the reasoner's *tools*

@@ -1,0 +1,58 @@
+/* project/styles/global.css — the PRODUCT skin: reset, paper, base layout, masthead.
+   The grade-as-signal MECHANISM lives in GRAIN (grain/styles/grain.css, bundled into
+   /components.css); the token VALUES live in variables.css. This file is identity. */
+
+/* Cross-document (MPA) view transitions: a slow fade fits e-ink; bouncy easing
+   would break the spell (DESIGN-SYSTEM §6). */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.3s; }
+
+* { box-sizing: border-box; }
+
+body {
+  font: var(--font-base);
+  color: var(--color-fg);
+  background: var(--paper);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Paper grain (DESIGN-SYSTEM §6): one fixed full-screen SVG turbulence layer,
+   multiply-blended so it darkens the surface like fibre. Covers everything. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 9999;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- Layout: one left-aligned column, generous air (DESIGN-SYSTEM §4/§7) ---- */
+.container { max-width: var(--content-max); margin: var(--space-8) auto; padding: 0 var(--page-pad); }
+h1, h2, h3 { font-weight: var(--font-weight-regular); letter-spacing: -0.01em; }
+p { margin: 0 0 var(--space-4); }
+
+/* ---- Masthead (DESIGN-SYSTEM §5): eyebrow → display headline → hairline rule -- */
+.eyebrow { font-size: var(--text-sm); color: var(--color-fg); margin: 0 0 var(--space-2); }
+.eyebrow .name { text-decoration: underline; }
+.masthead { font-size: var(--display); line-height: var(--leading-tight); letter-spacing: -0.01em; margin: 0 0 var(--space-3); }
+.rule { border: 0; border-bottom: var(--rule); margin: 0 0 var(--space-6); }
+
+/* ---- Section header: label left, underlined action right -------------------- */
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: var(--text-xl); margin: var(--space-8) 0 var(--space-3);
+}
+.section-head .action { font-size: var(--text-sm); }
+
+/* ---- Links: always underlined; the underline IS the affordance --------------- */
+a { color: var(--color-fg); text-decoration: underline; text-underline-offset: 2px; }
+
+/* form layout helper — a native <form> composed of atomic fields on a page */
+.add-form { display: flex; gap: var(--space-2); align-items: flex-end; margin-bottom: var(--space-6); }
+
+.muted { color: var(--color-muted); font-size: var(--text-sm); line-height: var(--leading-normal); }
+.error { color: var(--color-fg); text-decoration: underline; }   /* monochrome: no red */

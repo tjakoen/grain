@@ -1,0 +1,133 @@
+/* styles/variables.css — design tokens, TWO layers (see ARCHITECTURE).
+   Layer 1: raw PRIMITIVES (palette, grades, scale) — components never touch these.
+   Layer 2: SEMANTIC aliases that point at primitives — components use ONLY these.
+
+   This is the "Department of Time" theme (docs/DESIGN-SYSTEM.md): monochrome
+   e-ink / Swiss-editorial. The whole re-skin is done HERE — every existing
+   component restyles because it only ever read the Layer-2 aliases. */
+
+/* ---- Redaction grades, self-hosted (docs/DESIGN-SYSTEM.md §3) ----------------
+   Each grade is its OWN family, so switching grade = swapping family (a class
+   change), which is how "grade as signal" works. */
+@font-face {
+  font-family: "Redaction"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/redaction-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Redaction 35"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/redaction-35-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Redaction 50"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/redaction-50-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Redaction 70"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/redaction-70-400.woff2") format("woff2");
+}
+
+:root {
+  /* ---- Layer 1: primitives ------------------------------------------------ */
+
+  /* monochrome paper + ink — six values do everything (DESIGN-SYSTEM §2) */
+  --paper:     #E2E0D8;            /* page background — dimmed warm grey, NOT bright */
+  --paper-2:   #E8E6DF;            /* subtle hover surface */
+  --panel:     #E8E6DF;            /* grouped "sheet" — a hair brighter than the page */
+  --ink:       #1C1B17;            /* primary text, filled dots, rules */
+  --ink-muted: #6E6C64;            /* secondary text, section labels */
+  --ink-faint: #ABA89F;            /* fading insights, empty/future dots */
+  --hairline:  #1C1B17;            /* solid rules (under headlines) */
+  --line-soft: rgba(28, 27, 23, .14);  /* translucent border for quiet grouping */
+
+  /* grade font families (clean = human, grain = AI / in-transit). Grain is grade 50 —
+     one step up from the 35 working grade for more visible texture. */
+  --font-smooth: "Redaction",    "Times New Roman", Georgia, serif;
+  --font-grain:  "Redaction 50", "Redaction 35", "Times New Roman", Georgia, serif;
+  --font-accent: "Redaction 70", "Times New Roman", Georgia, serif;
+
+  --font-weight-regular: 400;      /* house weight — even for headlines */
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;         /* reserved for rare extra punch */
+
+  /* type scale (mobile-first, rem @ 16px) — fluid display via clamp */
+  --text-xs:  0.8125rem;  /* 13px caption */
+  --text-sm:  0.875rem;   /* 14px label / eyebrow */
+  --text-base: 0.9375rem; /* 15px body */
+  --text-lg:  1.05rem;
+  --text-xl:  1.3rem;     /* section heading */
+  --text-2xl: 1.6rem;
+  --text-3xl: 2.25rem;
+  --display:  clamp(2rem, 6vw, 2.75rem);   /* the masthead headline */
+
+  --leading-tight: 1.02;   /* display */
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.55; /* body */
+
+  /* spacing — 4px base scale */
+  --space-1: 0.25rem;  --space-2: 0.5rem;  --space-3: 0.75rem;
+  --space-4: 1rem;     --space-5: 1.25rem; --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* radius — crisp, almost square (DESIGN-SYSTEM §4) */
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-pill: 2px;    /* badges are near-rectangular here, not pills */
+
+  /* rules */
+  --rule:   1.5px solid var(--hairline);   /* under-headline rule */
+  --border: 1px solid var(--hairline);     /* buttons, hard edges you tap */
+
+  --content-max: 768px;
+  --page-pad: clamp(1.25rem, 5vw, 2.5rem);
+
+  /* ---- Layer 2: semantic aliases (the only tokens components touch) -------
+     Re-pointed at the monochrome primitives. Because components read these and
+     never the primitives, the whole app re-themes from the lines below. */
+
+  /* surfaces & text */
+  --color-bg: var(--paper);
+  --color-surface: var(--panel);
+  --color-fg: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-line: var(--line-soft);
+
+  /* "primary" is just ink — bordered, no fill (no accent hue in a closed palette) */
+  --color-primary: var(--ink);
+  --color-primary-hover: var(--ink);
+  --color-primary-contrast: var(--paper);
+  --color-primary-soft: var(--paper-2);
+
+  /* success / danger collapse to ink in monochrome — signalled by weight/treatment,
+     not hue (DESIGN-SYSTEM §2: states from opacity + size, palette stays closed) */
+  --color-success: var(--ink);
+  --color-success-hover: var(--ink);
+  --color-success-contrast: var(--paper);
+  --color-success-soft: var(--paper-2);
+  --color-danger: var(--ink);
+  --color-danger-hover: var(--ink);
+  --color-danger-contrast: var(--paper);
+  --color-danger-soft: var(--paper-2);
+
+  /* status badge */
+  --color-ok-bg: transparent;
+  --color-ok-fg: var(--ink);
+  --color-archived-bg: transparent;
+
+  /* the inheritable grade switch — DESIGN-SYSTEM §3 "As an atom".
+     Default = human/clean; ancestors flip it; CSS inheritance distributes it. */
+  --type-font: var(--font-smooth);
+
+  /* base font shorthand */
+  --font-base: var(--text-base)/var(--leading-relaxed) var(--type-font);
+
+  /* AI spotlight veil (GRAIN) — set ONCE here so every page fades the same way.
+     Pick ONE (CSS comments don't nest — keep exactly one line uncommented): */
+  --ai-veil: color-mix(in srgb, var(--ink) 22%, transparent);   /* dim: gentle ink recede */
+  /* --ai-veil: color-mix(in srgb, var(--paper) 70%, transparent); */ /* wash: bleach toward blank paper */
+  /* --ai-veil: transparent; */                                      /* lift: no veil, the element pops alone */
+
+  /* how slowly the spotlight box glides onto the next surface when the AI switches
+     focus. Keep it ≤ the reasoner's SETTLE_MS (480ms) so the box lands before it acts. */
+  --ai-focus-move: 0.45s;
+}

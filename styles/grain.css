@@ -1,7 +1,8 @@
-/* grain/styles/grain.css — GRAIN's MECHANISM (grade-as-signal + the AI-acts spotlight).
-   No values/skin here: it reads token SLOTS the consuming project defines
-   (--type-font, --font-grain/smooth/accent, --ink, --paper, --color-*, --space-*…).
-   Bundled into /components.css by the style-bundle, so it ships with the design system. */
+/* grain/styles/grain.css — GRAIN's grade-as-signal MECHANISM (the inherited --type-font
+   switch + caret/settle). Reads token slots from variables.css (the default theme).
+   One of GRAIN's three page-level stylesheets, all LINKED (not bundled): variables.css
+   (tokens) → global.css (base/skin) → grain.css (this, the grade mechanism). The "AI is
+   acting" spotlight lives separately in the optional AI module, grain/ai/ai.css. */
 
 /* ---- The typography atom: one inherited switch (DESIGN-SYSTEM §3) -----------
    Every type primitive reads --type-font and knows nothing about grades. State

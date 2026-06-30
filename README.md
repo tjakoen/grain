@@ -66,6 +66,7 @@ Put these on your components/markup; GRAIN's island + door act on them:
 | `data-kind` + `data-accepts="v1 v2"` | a component root | harvested into the AI manifest (what verbs this kind accepts) |
 | `data-grade="grain\|smooth\|accent"` · `.is-ai` | any ancestor | provenance: grain = AI, smooth = human (distributed via `--type-font`) |
 | `data-commit="pending"` | any ancestor | in-transit / not-yet-committed → reads grain |
+| `data-ai-veil="dim\|wash\|lift"` | `<body>` | the "AI is acting" **veil** style (default `dim`): `dim` = gentle ink recede · `wash` = bleach the surroundings toward paper · `lift` = no veil, the element pops alone. Theme-aware (built from `--ink`/`--paper`). |
 
 The verbs themselves live in the closed registry (`ai/contract.ts`: `ActionName` /
 `SurfaceKind` / `ACTIONS`) — the single source of truth.

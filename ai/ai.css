@@ -4,15 +4,21 @@
 
 /* When the AI (not the user) drives a surface, the page dims and the touched surface is
    lifted into the light and pulsed like a click. Calm, monochrome, no shadows. */
+/* The "veil" — how the surroundings recede while the AI acts. A design-system OPTION,
+   not a hardcoded value: set data-ai-veil on <body> to pick one (default = dim).
+   Theme-aware (built from --ink / --paper), so it follows any palette. */
 .ai-backdrop {
   position: fixed; inset: 0; z-index: 9000;
-  background: rgba(28, 27, 23, 0.22);   /* gentle ink dim — recede, don't black out (was .45) */
+  background: color-mix(in srgb, var(--ink) 22%, transparent);   /* dim (default): a gentle ink recede */
   opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
-  /* Alt vibe (most on-theme): a PAPER wash instead of a dark scrim — the surroundings
-     bleach toward blank paper, the active element stays the only "inked" thing:
-       background: rgba(226, 224, 216, 0.65);   (= var(--paper) @ .65) */
 }
 .ai-backdrop.is-on { opacity: 1; pointer-events: auto; }
+/* wash — bleach the surroundings toward blank paper; the live element stays the only
+   "inked" thing (most on-theme, softest boundary). */
+[data-ai-veil="wash"] .ai-backdrop { background: color-mix(in srgb, var(--paper) 70%, transparent); }
+/* lift — no veil at all; the element pops on its own, so give it a heavier ring. */
+[data-ai-veil="lift"] .ai-backdrop { background: transparent; }
+[data-ai-veil="lift"] .ai-spotlit  { outline-width: 2px; outline-offset: 5px; }
 .ai-spotlit {
   position: relative; z-index: 9001;
   background: var(--paper);                 /* lift it out of the dim */

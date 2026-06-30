@@ -68,5 +68,14 @@
   border-style: dashed;          /* a control the AI is using — terminal edge + grain label */
   pointer-events: none;          /* one intent at a time while the writer works */
 }
-/* no typing caret on buttons — a button isn't a text field; the caret belongs to
-   streamed text (.caret), not here. */
+/* processing indicator: a blinking block caret after the label = "this control is
+   working". A flex item (the button is inline-flex) so it sits to the RIGHT of the
+   label, vertically centred — not absolutely positioned (that was the old top-left bug,
+   a collision with the spotlight pulse, which now lives on ::before). */
+.btn[data-commit="pending"]::after {
+  content: ""; align-self: center;
+  width: 0.5ch; height: 1.05em; margin-left: 0.45ch;
+  background: currentColor;
+  animation: caret-blink 1s steps(1) infinite;   /* keyframes in grain/styles/grain.css */
+}
+@media (prefers-reduced-motion: reduce) { .btn[data-commit="pending"]::after { animation: none; } }

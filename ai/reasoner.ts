@@ -92,14 +92,13 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         // graceful stop: hand back cleanly if asked — never a force-kill (PROJECT-PLAN §9).
         const stopped = (): boolean => { if (!tools.cancelled()) return false; spot("screen", false); return true; };
 
-        // 1) attention lands on the button, THEN it clicks — so the click visibly
-        //    *causes* the answer that lands below it.
-        spot("say-button", true);                  // arrive (dim + lift, no pulse)
-        await beat(550);
+        // 1) click the button in one motion (spotlight + pulse together — no laggy
+        //    separate "arrive" flash), then the answer lands right under it.
+        await beat(150);                           // let the backdrop fade in first
+        spot("say-button", true, true);            // arrive + click at once
+        await beat(350);                           // the click reads, then…
         if (stopped()) return handBack;
-        spot("say-button", true, true);            // …click it (the pulse)
-        await beat(200);
-        spot("say-stream", true);                  // the answer appears right after the click
+        spot("say-stream", true);                  // …the answer appears, caused by the click
         await beat(150);
         await stream("say-stream", "On it — checking your week. Thursday 09:00–11:00 is clear.");
         if (stopped()) return handBack;

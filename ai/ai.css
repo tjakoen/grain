@@ -16,10 +16,11 @@
   outline: 1px solid var(--ink); outline-offset: 4px;
   transition: background-color 0.18s ease, outline-color 0.18s ease;   /* ease the lift in, don't snap */
 }
-.ai-spotlit.is-click::after {
+.ai-spotlit.is-click::before {     /* ::before so it never collides with a button's ::after caret */
   content: ""; position: absolute; inset: -4px;
   border: 1px solid var(--ink); border-radius: inherit;
   animation: ai-click 0.5s ease-out;
+  pointer-events: none;
 }
 @keyframes ai-click { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.12); opacity: 0; } }
 .ai-acting-label {
@@ -41,5 +42,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ai-backdrop { transition: none; }
-  .ai-spotlit.is-click::after { animation: none; display: none; }
+  .ai-spotlit.is-click::before { animation: none; display: none; }
 }

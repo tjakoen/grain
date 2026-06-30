@@ -40,7 +40,10 @@ GRAIN is portable to any host that supplies three things:
 
 1. **An `OpChannel`** — `push(session, event, data)` (`ai/contract.ts`). How render ops
    reach a client. BATCH = SSE; a WebSocket hub would do. GRAIN imports the *interface*
-   from its own contract, never the implementation.
+   from its own contract, never the implementation. *(Future, additive: a durable
+   sibling — a per-actor turn-status store — lets a reconnecting client reflect a
+   still-running turn. It sits beside this port; the component conventions don't change.
+   See `../docs/AI-INTERFACE.md` §5d.)*
 2. **A renderer that understands the binding vocabulary** below (§3). BATCH's
    composition engine implements it; another substrate must too.
 3. **A filesystem** (`ai/accepts.ts` reads component files to harvest the manifest) —

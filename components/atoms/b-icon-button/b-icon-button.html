@@ -1,0 +1,8 @@
+<!-- atoms/b-icon-button — a square, bordered control holding ONE glyph (DESIGN-SYSTEM §5
+     "Icon square"). Icon-only, so it REQUIRES `label` (→ aria-label). Same ink-hairline,
+     no-fill treatment as b-button; variant (ghost) + size are attributes. The glyph is
+     inlined (the binding vocabulary can't forward a prop into a nested <b-icon>). -->
+<button class="icon-btn" prop-attr-type="type" prop-attr-aria-label="label"
+        prop-attr-data-variant="variant" prop-attr-data-size="size">
+  <svg class="icon" aria-hidden="true" focusable="false"><use prop-attr-href="sym"></use></svg>
+</button>

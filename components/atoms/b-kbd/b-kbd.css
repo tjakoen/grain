@@ -1,0 +1,11 @@
+/* atoms/b-kbd — a keyboard-shortcut hint. A quiet hairline chip in muted ink; reads the
+   inherited --type-font like every type primitive (no bespoke font). */
+.kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.5rem; min-height: 1.5rem;
+  padding: 0 var(--space-2);
+  font-family: var(--type-font); font-size: var(--text-xs);
+  color: var(--ink-muted);
+  border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  white-space: nowrap;
+}

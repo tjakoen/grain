@@ -1,0 +1,8 @@
+/* organisms/tab-bar — the top strip of open views inside the app-shell topbar. A
+   horizontal, scrollable row of tabs; the page places controls (⌘K, presence) after it in
+   the topbar. A layout class composed with tab. */
+.tab-bar {
+  display: flex; align-items: stretch; min-width: 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }

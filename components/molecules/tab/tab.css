@@ -1,0 +1,16 @@
+/* molecules/tab — one open view in the tab-bar. A styled link; the active tab connects to
+   the pane below with an inset ink underline. Optional close affordance (.tab__close). */
+.tab {
+  display: flex; align-items: center; gap: var(--space-2);
+  height: 2.5rem; padding: 0 var(--space-3);
+  font-size: var(--text-sm); color: var(--color-muted);
+  text-decoration: none; white-space: nowrap;
+  border-right: 1px solid var(--color-line);
+}
+.tab:hover { color: var(--color-fg); }
+.tab[aria-current="page"], .tab[data-active="true"] {
+  color: var(--color-fg); background: var(--color-bg);
+  box-shadow: inset 0 -2px 0 var(--ink);   /* the active tab meets its pane */
+}
+.tab__close { display: inline-flex; color: var(--ink-faint); }
+.tab__close:hover { color: var(--ink); }

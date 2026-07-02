@@ -9,7 +9,12 @@
 // `enum` is banned by erasableSyntaxOnly). Build addresses with surface(), never by
 // hand-concatenating strings, so a typo is a compile error.
 export type Surface = string;                       // e.g. "item:ITM-1", "reflection"
-export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen";
+// SurfaceKind is exactly the set of kinds a VERB can accept (they drive `actionsForKind` +
+// the manifest). Push-only DISPLAY surfaces the AI only ever WRITES to — never a verb
+// target — are intentionally NOT kinds: `console` (the takeover narration feed), plus the
+// demo-only render targets `plan` / `summary` / `ask-input`. They're addressed by their
+// bare `data-surface` slug and need no entry here. Add a kind only when a verb accepts it.
+export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log";
 export const surface = (kind: SurfaceKind, id?: string): Surface => (id ? `${kind}:${id}` : kind);
 export const surfaceKind = (s: Surface): SurfaceKind => (s.split(":")[0] ?? "") as SurfaceKind;
 export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":");
@@ -18,8 +23,9 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //   item.archive  — stands in for task.complete (optimistic light path)
 //   say.set       — input → AI writes back into a reflection line (grain → settles clean)
 //   say.stream    — button → AI types a line out, token by token, over SSE
+//   chat.send     — composer → your message (clean) + the AI's reply streamed (grain) into a chat log
 // The full product vocabulary lives in docs/AI-INTERFACE.md.
-export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop";
+export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send";
 export type Depth = "light" | "heavy";
 
 export interface ActionDef {
@@ -33,7 +39,8 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
   "say.set":      { name: "say.set",      depth: "light", accepts: ["reflection"] },
   "say.stream":   { name: "say.stream",   depth: "light", accepts: ["say-stream"] },
   "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"] },   // plays an AI-acting demo
-  "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"] },   // user asks the desk to halt (mediated)
+  "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"] },   // user asks the AI to halt (mediated)
+  "chat.send":    { name: "chat.send",    depth: "light", accepts: ["chat-log"] }, // send a message; AI replies over SSE
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);
@@ -49,7 +56,8 @@ export const actionsForKind = (kind: SurfaceKind): ActionName[] =>
 
 // ---- Envelope 1: Intent — every interaction (human OR ai) becomes this ----------
 export interface Intent {
-  source: "user" | "ai";       // provenance, set at the door — never inferred later
+  source: "user" | "ai";       // provenance, stamped at the entrance — never taken from the client.
+                               // HTTP /intent always stamps "user"; only IN-PROCESS actors raise "ai".
   session: string;             // which SSE stream the result is pushed back on
   screen: string;              // "check what's in view"
   surface: Surface;            // what was touched / referred to
@@ -71,7 +79,7 @@ export interface RenderOp {
   op: RenderOpKind;
   html?: string;               // server-rendered fragment (replace / append / flash)
   text?: string;               // a streamed token (type)
-  back?: number;               // delete the last N chars (type) — the desk REVISING / overwriting
+  back?: number;               // delete the last N chars (type) — the AI REVISING / overwriting
   done?: boolean;              // last token of a stream → settle grain to clean (type)
   active?: boolean;            // spotlight on (move to target) vs off (release)
   click?: boolean;            // spotlight: this is a "click" → pulse the target (else just lift it)

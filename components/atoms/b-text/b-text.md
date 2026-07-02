@@ -9,12 +9,12 @@ single ancestor state flips a whole subtree between **clean** (human / committed
 
 ### Body
 ```html
-<p class="t">The desk records what you decided, in your own clean hand.</p>
+<p class="t">The AI records what you decided, in your own clean hand.</p>
 ```
 
 ### Display heading
 ```html
-<h1 class="t masthead">A desk that writes back.</h1>
+<h1 class="t masthead">An AI that writes back.</h1>
 ```
 
 ### Section heading

@@ -19,7 +19,7 @@ AI output types in at grain with a caret; when it finishes the caret goes but th
 
 ### Accent — display only
 ```html
-<p class="t" data-grade="accent">Department of Time</p>
+<p class="t" data-grade="accent">Bread</p>
 ```
 
 > **Provenance is set by an ancestor, never stamped on the text.** Clean is the

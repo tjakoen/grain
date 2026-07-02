@@ -9,13 +9,13 @@
    The default below (a gentle ink dim) applies if a theme doesn't set the token —
    GRAIN ships the mechanism + a sensible default, the theme picks the value. */
 .ai-backdrop {
-  position: fixed; inset: 0; z-index: 9000;
+  position: fixed; inset: 0; z-index: var(--z-ai-veil, 9000);
   background: var(--ai-veil, color-mix(in srgb, var(--ink) 22%, transparent));
   opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
 }
 .ai-backdrop.is-on { opacity: 1; pointer-events: auto; }
 .ai-spotlit {
-  position: relative; z-index: 9001;
+  position: relative; z-index: var(--z-ai-spot, 9001);
   background: var(--paper);                 /* lift it out of the dim */
   outline: 1px solid var(--ink); outline-offset: 4px;
   /* the focus-switch glide — how slowly the lit box eases onto the new surface.
@@ -32,13 +32,13 @@
 }
 @keyframes ai-click { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.12); opacity: 0; } }
 .ai-acting-label {
-  position: fixed; top: var(--space-4); left: 50%; transform: translateX(-50%); z-index: 9002;
+  position: fixed; top: var(--space-4); left: 50%; transform: translateX(-50%); z-index: var(--z-ai-surface, 9002);
   font-family: var(--font-grain); font-size: var(--text-sm); color: var(--ink);
   background: var(--paper); border: var(--border); border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-3);
 }
 
-/* interrupt confirm — "ask the desk to stop?" (mediated, never a force-kill).
+/* interrupt confirm — "ask the AI to stop?" (mediated, never a force-kill).
    A native modal <dialog>: top-layer, focus-trap, Escape-to-close come free. The bare
    element is transparent (the spotlight backdrop already dims); only the card shows. */
 .ai-confirm { border: 0; padding: 0; background: transparent; opacity: 0; transition: opacity 0.18s ease; }

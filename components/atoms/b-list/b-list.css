@@ -9,13 +9,13 @@
 .list[data-variant="ordered"] .list__item { counter-increment: li; }
 .list[data-variant="ordered"] .list__item::before { content: counter(li) "."; }
 
-/* ---- AI / in-transit: an item the desk is writing reads grain (the label swaps via the
+/* ---- AI / in-transit: an item the AI is writing reads grain (the label swaps via the
    inherited --type-font); its marker recedes to faint while pending, settling on commit.
    Same vocabulary as the other atoms (AI-INTERFACE §5). */
 .list__item[data-commit="pending"]::before,
 [data-grade="grain"] .list__item::before { color: var(--ink-faint); }
 
-/* While the desk writes an item it's momentarily EMPTY (appended, not yet typed). Reserve
+/* While the AI writes an item it's momentarily EMPTY (appended, not yet typed). Reserve
    a line so the list doesn't collapse then grow back — that jumpy shrink before writing. */
 .list__item:empty { min-height: 1.55em; }   /* ≈ one --leading-relaxed line */
 

@@ -1,0 +1,67 @@
+/* organisms/app-shell — the WORKSPACE layout (the "work-y" archetype): a full-viewport
+   grid of five regions — a left rail, a top bar, the main pane, a right aside (the
+   assistant), and a bottom console. It HOSTS arbitrary page content, so it's a layout
+   the page applies via region classes (the render engine can't project children into a
+   component), not a data-bound tag. Re-skins via tokens like everything else. Coexists
+   with the single-column editorial `.container`; the product composes it via app-frame
+   (project/components/organisms/app-frame) on /dashboard and /loop. */
+
+.app-shell {
+  display: grid;
+  height: 100dvh;
+  grid-template-columns: var(--shell-rail, 15rem) minmax(0, 1fr) var(--shell-aside, 20rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "rail topbar  topbar"
+    "rail main    aside"
+    "rail console console";
+  background: var(--color-bg);
+  color: var(--color-fg);
+  overflow: hidden;
+}
+.app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
+
+/* ---- the regions (grid slots) ---- */
+.app-shell__rail    { grid-area: rail;    min-height: 0; }
+.app-shell__topbar  { grid-area: topbar;  min-width: 0; display: flex; align-items: stretch;
+                      border-bottom: 1px solid var(--color-line); background: var(--color-surface); }
+.app-shell__main    { grid-area: main;    min-width: 0; overflow: auto; }
+.app-shell__aside   { grid-area: aside;   min-height: 0; overflow: auto;
+                      border-left: 1px solid var(--color-line); background: var(--color-surface); }
+.app-shell__console { grid-area: console; border-top: 1px solid var(--color-line);
+                      background: var(--color-bg); }
+.app-shell__scrim   { display: none; }   /* only used as the drawer scrim on mobile */
+
+/* ---- narrow desktop: keep all three columns but tighten the aside so the assistant
+   stays reachable (dropping it here stranded the chat on laptop-width windows) ---- */
+@media (max-width: 1100px) {
+  .app-shell { --shell-aside: 16rem; }
+}
+
+/* ---- mobile: single column; the rail becomes an off-canvas drawer. The aside (assistant)
+   is hidden here until its bottom-sheet form lands — reach the AI on wider screens. ---- */
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "topbar" "main" "console";
+  }
+  .app-shell__aside { display: none; }
+  .app-shell[data-rail-collapsed="true"] { --shell-rail: 15rem; }   /* collapse-width is desktop-only */
+  .app-shell__rail {
+    position: fixed; inset: 0 auto 0 0; z-index: 40;
+    width: min(78vw, 18rem);
+    transform: translateX(-100%); transition: transform 0.3s ease;
+    border-right: 1px solid var(--color-line); background: var(--color-surface);
+  }
+  .app-shell[data-rail-open="true"] .app-shell__rail { transform: none; }
+  .app-shell__scrim {
+    display: block; position: fixed; inset: 0; z-index: 39;
+    background: color-mix(in srgb, var(--ink) 32%, transparent);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .app-shell[data-rail-open="true"] .app-shell__scrim { opacity: 1; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__rail, .app-shell__scrim { transition: none; }
+}

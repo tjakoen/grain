@@ -1,0 +1,10 @@
+/* atoms/b-icon — a monochrome line glyph. Inherits color (currentColor) so it flips
+   ink↔grain with whatever it sits in; sized in rem so it scales with the layout, not
+   a fixed pixel. One class (.icon); size is an attribute (DESIGN-SYSTEM §4). */
+.icon {
+  display: inline-block; flex: 0 0 auto; vertical-align: middle;
+  width: 1.25rem; height: 1.25rem;   /* default */
+  color: currentColor;               /* the sprite's stroke reads this */
+}
+.icon[data-size="sm"] { width: 1rem;   height: 1rem; }
+.icon[data-size="lg"] { width: 1.5rem; height: 1.5rem; }

@@ -2,7 +2,7 @@
    Layer 1: raw PRIMITIVES (palette, grades, scale) — components never touch these.
    Layer 2: SEMANTIC aliases that point at primitives — components use ONLY these.
 
-   This is the "Department of Time" theme (docs/DESIGN-SYSTEM.md): monochrome
+   This is the "Bread" theme (docs/DESIGN-SYSTEM.md): monochrome
    e-ink / Swiss-editorial. The whole re-skin is done HERE — every existing
    component restyles because it only ever read the Layer-2 aliases. */
 
@@ -130,4 +130,30 @@
   /* how slowly the spotlight box glides onto the next surface when the AI switches
      focus. Keep it ≤ the reasoner's SETTLE_MS (480ms) so the box lands before it acts. */
   --ai-focus-move: 0.45s;
+
+  /* AI takeover STACKING — one source of truth so the AI module (grain/ai/ai.css) and any
+     consumer chrome (e.g. the product's app-frame console/chat) agree without duplicating
+     magic z-index numbers. veil < spotlit surface < the AI surfaces that stay above the veil. */
+  --z-ai-veil: 9000;      /* the dimming backdrop */
+  --z-ai-spot: 9001;      /* the spotlit surface, lifted out of the dim */
+  --z-ai-surface: 9002;   /* AI surfaces kept above the veil (acting label, console, chat) */
+}
+
+/* ---- Dark theme — a TOKEN-ONLY re-skin (the whole point of the two-layer system): only the
+   Layer-1 PRIMITIVES flip; the Layer-2 aliases point at them, so every component re-colours with
+   ZERO component edits. Still warm + soft (no pure black/white) to keep the e-ink feel.
+   Follows the OS by default; `data-theme` on <html> forces it either way (manual toggle). ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1B1A16; --paper-2: #232219; --panel: #232219;
+    --ink: #E4E1D8; --ink-muted: #9A968B; --ink-faint: #6B6862;
+    --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
+    --ai-veil: color-mix(in srgb, #000 50%, transparent);   /* dark: dimming darkens further */
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1B1A16; --paper-2: #232219; --panel: #232219;
+  --ink: #E4E1D8; --ink-muted: #9A968B; --ink-faint: #6B6862;
+  --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
+  --ai-veil: color-mix(in srgb, #000 50%, transparent);
 }

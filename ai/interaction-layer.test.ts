@@ -2,6 +2,7 @@
 import { test, expect } from "bun:test";
 import { createInteractionLayer } from "./interaction-layer.ts";
 import { makeStubReasoner } from "./reasoner.ts";
+import type { Reasoner, ReasonTools } from "./reasoner.ts";
 import type { Intent, RenderOp, OpChannel } from "./contract.ts";
 
 // An OpChannel double that records what got pushed and to whom (GRAIN's only port).
@@ -94,4 +95,39 @@ test("say.stream emits type tokens over SSE and settles with a committed done op
   const last = typeOps[typeOps.length - 1]!;
   expect(last.done).toBe(true);
   expect(last.commit).toBe("committed");                     // grain settles to clean
+});
+
+// --- stop control is keyed PER TURN (not per session) ---------------------------
+// A long turn that yields between steps and reports whether it saw the stop.
+function longTurn(onEnd: (cancelled: boolean) => void): Reasoner {
+  return {
+    async decide(i, tools: ReasonTools) {
+      if (i.action === "demo.run") {
+        for (let n = 0; n < 12; n++) { await tools.delay(0); if (tools.cancelled()) { onEnd(true); return { ok: true, ops: [] }; } }
+        onEnd(false);
+      }
+      return { ok: true, ops: [] };
+    },
+  };
+}
+const layerWith = (reasoner: Reasoner) =>
+  createInteractionLayer({ reasoner, stream: fakeStream().stream, archiveItem: async () => {}, renderSurface: async () => "" });
+
+test("desk.stop halts the running turn (it polls cancelled and hands back)", async () => {
+  let cancelled = false;
+  const layer = layerWith(longTurn((c) => { cancelled = c; }));
+  const running = layer.handleIntent(intent({ surface: "screen", action: "demo.run" }));
+  await layer.handleIntent(intent({ surface: "screen", action: "desk.stop" }));
+  await running;
+  expect(cancelled).toBe(true);
+});
+
+test("a concurrent chat mid-run does NOT clear the running turn's stop (per-turn keying)", async () => {
+  let cancelled = false;
+  const layer = layerWith(longTurn((c) => { cancelled = c; }));
+  const running = layer.handleIntent(intent({ surface: "screen", action: "demo.run" }));   // the AI starts working
+  await layer.handleIntent(intent({ surface: "screen", action: "desk.stop" }));            // user asks it to stop
+  await layer.handleIntent(intent({ surface: "chat-log", action: "chat.send", payload: { text: "hi" } })); // …then chats
+  await running;
+  expect(cancelled).toBe(true);   // the run still saw the stop despite the concurrent chat
 });

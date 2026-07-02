@@ -1,0 +1,21 @@
+/* organisms/side-rail — the vertical navigation rail inside the app-shell: a brand at the
+   top, nav-items, a spacer, then footer items (settings). Collapses to icons-only when the
+   shell carries data-rail-collapsed (labels are dropped, glyphs center). Composed with
+   b-icon + nav-item; a layout class, not a data-bound tag. */
+.side-rail {
+  display: flex; flex-direction: column; gap: 2px;
+  height: 100%; padding: var(--space-3) var(--space-2);
+  overflow: hidden;
+}
+.side-rail__brand {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  font-family: var(--font-accent); letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.side-rail__spacer { flex: 1 1 auto; }
+
+/* ---- collapsed: drop the labels, center the glyphs (rail width does the rest) ---- */
+[data-rail-collapsed="true"] .side-rail__brand span,
+[data-rail-collapsed="true"] .nav-item__label { display: none; }
+[data-rail-collapsed="true"] .nav-item { justify-content: center; }

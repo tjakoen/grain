@@ -60,7 +60,8 @@ test("demo.run: appends a 3-item list, erases (back), commits clean, clicks, the
   const { tools, emitted } = fakeTools();
   const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run" }), tools);
   expect(d.ok).toBe(true);
-  expect(emitted.filter((o) => o.op === "append")).toHaveLength(3);                       // 3 bullets
+  expect(emitted.filter((o) => o.op === "append" && o.target === "plan")).toHaveLength(3); // 3 bullets
+  expect(emitted.some((o) => o.target === "console" && o.op === "append")).toBe(true);     // narrated its steps to the console
   expect(emitted.some((o) => o.op === "type" && (o.back ?? 0) > 0)).toBe(true);           // backspaces (overwrite)
   expect(emitted.filter((o) => o.op === "replace" && o.commit === "committed").length)   // list items + badges
     .toBeGreaterThanOrEqual(4);
@@ -74,4 +75,28 @@ test("demo.run halts gracefully when cancelled: still releases the spotlight, no
   const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run" }), tools);
   expect(d.ok).toBe(true);
   expect(spots(emitted).at(-1)?.active).toBe(false);   // graceful hand-back even on stop
+});
+
+test("chat.send: your message settles clean, the AI's reply streams into a grain bubble", async () => {
+  const { tools, emitted } = fakeTools();
+  const d = await reasoner.decide(intent({ surface: "chat-log", action: "chat.send", payload: { text: "plan my day" } }), tools);
+  expect(d.ok).toBe(true);
+  const appends = emitted.filter((o) => o.op === "append");
+  expect(appends).toHaveLength(2);                            // your bubble + the AI's (empty) bubble
+  expect(appends[0]?.provenance).toBe("user");
+  expect(appends[0]?.commit).toBe("committed");              // your words settle clean
+  expect(appends[0]?.html).toContain("plan my day");
+  expect(appends[1]?.provenance).toBe("ai");
+  expect(appends[1]?.html).toContain('data-grade="grain"');  // the AI's bubble is grain
+  const types = emitted.filter((o) => o.op === "type");
+  expect(types.length).toBeGreaterThan(1);                   // the reply streams char by char
+  expect(types.at(-1)?.done).toBe(true);                     // and finishes
+});
+
+test("chat.send escapes user input (no HTML injection at the single writer)", async () => {
+  const { tools, emitted } = fakeTools();
+  await reasoner.decide(intent({ surface: "chat-log", action: "chat.send", payload: { text: "<img src=x onerror=alert(1)>" } }), tools);
+  const you = emitted.find((o) => o.op === "append" && o.provenance === "user");
+  expect(you?.html).not.toContain("<img");
+  expect(you?.html).toContain("&lt;img");
 });

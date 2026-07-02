@@ -5,9 +5,12 @@ and operable by both a human and an AI through one shared vocabulary, with the A
 presence shown as a visible signal (*grain = AI*). It runs on a **substrate** (BATCH is
 the reference one) but imports nothing from it.
 
+- **The beliefs behind it:** [`../PHILOSOPHY.md`](../PHILOSOPHY.md)
 - **Overview / why:** [`../docs/GRAIN.md`](../docs/GRAIN.md)
 - **The full contract** (intent envelope, render ops, manifest, the AI-acts protocol,
   the two write paths): [`../docs/AI-INTERFACE.md`](../docs/AI-INTERFACE.md)
+- **Built on top of GRAIN:** [`MILL`](../mill/PLAN.md), the Markdown→pages CMS (a layer above).
+- **Roadmap / planned features:** [`PLAN.md`](PLAN.md)
 
 This file is the practical reference: what a host must provide, the markup conventions,
 and how to wire it.
@@ -109,7 +112,7 @@ Example (GRAIN's text atom):
 
 ## 4. The token slots (GRAIN's default theme — override to re-skin)
 
-GRAIN ships a **default theme** in `styles/variables.css` (the *Department of Time* look:
+GRAIN ships a **default theme** in `styles/variables.css` (the *Bread* look:
 monochrome paper/ink + self-hosted Redaction grades). The mechanism (`styles/grain.css`)
 and atoms read these token *slots*, so a consumer re-skins by **overriding the slots** in
 its own sheet (linked after GRAIN's) — no component changes:

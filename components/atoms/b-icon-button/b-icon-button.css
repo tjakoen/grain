@@ -1,0 +1,32 @@
+/* atoms/b-icon-button — the icon square. One class (.icon-btn); variant/size are
+   attributes. Mirrors b-button: ink hairline, transparent fill, invert-on-hover, no
+   shadow. Default is a ≥44px touch target (DESIGN-SYSTEM §7). */
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem;        /* ≥44px touch target */
+  padding: 0;
+  border: var(--border); border-radius: var(--radius-sm);
+  background: transparent; color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+/* ---- sizes / variants (attributes) ---- */
+.icon-btn[data-size="sm"] { width: 2rem; height: 2rem; }
+.icon-btn[data-size="lg"] { width: 3.25rem; height: 3.25rem; }
+.icon-btn[data-variant="ghost"] { border-color: transparent; }   /* rail / toolbar use */
+
+/* ---- pseudo-states. Hover = invert to ink (DESIGN-SYSTEM §5), not a new hue ---- */
+.icon-btn:hover, .icon-btn[data-force~="hover"] { background: var(--ink); color: var(--paper); }
+.icon-btn:focus-visible, .icon-btn[data-force~="focus"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.icon-btn:active, .icon-btn[data-force~="active"] { transform: translateY(1px); }
+.icon-btn:disabled, .icon-btn[disabled] { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+/* ---- AI / in-transit: the same non-text grain as b-button — a dashed "terminal"
+   edge while the writer uses the control (AI-INTERFACE §5). ---- */
+.icon-btn[data-commit="pending"],
+.icon-btn[data-grade="grain"],
+[data-grade="grain"] .icon-btn {
+  border-style: dashed; border-color: var(--ink);
+  pointer-events: none;
+}

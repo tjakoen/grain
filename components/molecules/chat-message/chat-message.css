@@ -1,0 +1,17 @@
+/* molecules/chat-message — one line of the assistant conversation. `data-role="you"` is
+   clean and right-aligned (your words, committed); `data-role="ai"` carries data-grade="grain"
+   so the AI's speech stays grain (grain = AI, AI-INTERFACE §5). A CSS class composed in a
+   flex chat log; the single writer emits matching markup over the door. */
+.chat-message {
+  max-width: 88%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.chat-message[data-role="you"] { align-self: flex-end;   background: var(--color-bg); }
+.chat-message[data-role="ai"]  { align-self: flex-start; background: transparent; }   /* grain via data-grade */
+.chat-message__who {
+  display: block; margin-bottom: 2px;
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint);
+}
+.chat-message__body { display: block; }

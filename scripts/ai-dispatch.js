@@ -63,6 +63,8 @@
     ensureSpotlight();
     backdrop.classList.add("is-on");
     actingLabel.hidden = false;
+    // shell takeover (if the page uses the app-shell): the chat retracts + the console narrates
+    document.querySelector(".app-shell")?.setAttribute("data-acting", "true");
     const el = find(target);
     if (spotlit && spotlit !== el) clearActing(spotlit);   // moving on → release the previous surface
     if (el) {
@@ -94,6 +96,8 @@
     hideConfirm();
     if (backdrop) backdrop.classList.remove("is-on");
     if (actingLabel) actingLabel.hidden = true;
+    const sh = document.querySelector(".app-shell");
+    if (sh) { sh.removeAttribute("data-acting"); sh.removeAttribute("data-chat-open"); sh.removeAttribute("data-console-open"); }   // hand back: everything resets
     clearActing(spotlit); spotlit = null;
     for (const t of [...pendingTriggers.keys()]) clearTrigger(t);   // backstop: turn over → nothing stays "working"
   }
@@ -160,7 +164,11 @@
         if (el && typeof op.html === "string") el.outerHTML = op.html;   // confirmed (clean) fragment
         return;
       case "append":
-        if (el && typeof op.html === "string") el.insertAdjacentHTML("beforeend", op.html);
+        if (el && typeof op.html === "string") {
+          el.insertAdjacentHTML("beforeend", op.html);
+          const oy = getComputedStyle(el).overflowY;              // a scrolling log (chat / terminal) stays pinned to newest
+          if (oy === "auto" || oy === "scroll") el.scrollTo({ top: el.scrollHeight });   // honors CSS scroll-behavior (gentle)
+        }
         return;
       case "flash":
         if (!el) return;
@@ -239,14 +247,22 @@
   // click a button/link with a verb
   document.addEventListener("click", (ev) => {
     if (ev.target.closest(".ai-confirm")) return;        // the confirm popup handles its own clicks
-    if (isActing()) { ev.preventDefault(); interrupt(); return; }   // any click while acting = interrupt
+    // the assistant (chat) + the console are the desk's OWN surfaces — interacting there
+    // (chatting, preparing your next message, switching chat⇄terminal) is NOT an interrupt.
+    if (ev.target.closest(".app-shell__aside, .app-shell__console")) return;
+    if (isActing()) { ev.preventDefault(); interrupt(); return; }   // clicking the WORKING page = ask it to stop
     const trig = ev.target.closest && ev.target.closest("[data-action]");
     if (!trig || trig.tagName === "INPUT" || trig.tagName === "TEXTAREA") return;
     const action = trig.getAttribute("data-action");
     const target = targetOf(trig);
     if (!action || !target) return;
     ev.preventDefault();
-    submit(action, target, {}, trig);
+    // a control may pull its payload text from an input surface (data-from) — e.g. a Send button
+    const from = trig.getAttribute("data-from");
+    const src = from ? find(from) : null;
+    const payload = src && "value" in src ? { text: src.value } : {};
+    submit(action, target, payload, trig);
+    if (src && "value" in src) src.value = "";
   });
 
   // Escape while the desk is acting → interrupt (ask to stop), don't force-kill

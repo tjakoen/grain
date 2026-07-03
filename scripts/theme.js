@@ -11,6 +11,7 @@
 // <head> bootstrap to pre-set the attributes before styles apply. See README §4/§6.
 (() => {
   "use strict";
+  if (window.grain && window.grain.theme) return;   // idempotent: safe if loaded per-page AND globally
 
   // ---- theming vocabulary (single source of these strings) ---------------------------------
   const ATTR    = { scheme: "data-color-scheme", theme: "data-theme", list: "data-themes" };

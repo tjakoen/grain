@@ -11,7 +11,7 @@
 .field__input::placeholder { color: var(--ink-faint); }
 /* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
    the button) — never `autofocus`, which would steal focus + scroll the catalog on load. */
-.field__input:focus-visible, .field__input[data-force~="focus"] { outline: 2px solid var(--ink); outline-offset: 1px; }
+.field__input:focus-visible, .field__input[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 1px; }
 
 /* invalid state — native, no JS. Monochrome: a heavier rule, not a red one. */
 .field__input:user-invalid { border-width: 2px; }

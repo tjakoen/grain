@@ -115,7 +115,7 @@ Example (GRAIN's text atom):
 
 ## 4. The token slots (GRAIN's default theme — override to re-skin)
 
-GRAIN ships a **default theme** in `styles/variables.css` (the *Bread* look:
+GRAIN ships a **default theme** in `styles/variables.css` (the *Sourdough* look:
 monochrome paper/ink + self-hosted Redaction grades). The mechanism (`styles/grain.css`)
 and atoms read these token *slots*, so a consumer re-skins by **overriding the slots** in
 its own sheet (linked after GRAIN's) — no component changes:
@@ -153,3 +153,51 @@ const layer = createInteractionLayer({
 > (`archiveItem` …) are currently entangled with GRAIN rather than fully app-injected.
 > Pushing the vocabulary down to the consumer is a known next step (see
 > `docs/AI-INTERFACE.md` §1b note). Until then, edit `ai/contract.ts` to add verbs.
+
+---
+
+## 6. Build your own — a theme + components (consumer guide)
+
+GRAIN is meant to be **consumed, not forked.** Two independent extension points — and they
+compose: **one token override re-skins your components and GRAIN's together.** The decider for
+*where* something lives is one question: **"would another product on GRAIN want this?"** Yes →
+it's reusable design, contribute it to `grain/`. No → it's yours, keep it in your app. This repo
+is the worked example: `project/` and `portfolio/` are two consumers doing exactly the below.
+
+### A · A theme (re-skin) — override token slots, never components
+
+1. Write a stylesheet that redefines the §4 token slots (`--paper`, `--ink`, `--font-*`,
+   `--space-*`, `--radius-*`, `--ai-veil`, …). **Touch no component CSS.**
+2. Link it **after** GRAIN's `variables.css` in your pages. Every `b-*` atom re-skins.
+
+```css
+/* my-theme.css — linked after grain/styles/variables.css */
+:root { --paper:#0f1115; --ink:#e8e6df; --font-grain:"IBM Plex Mono"; --radius-md:12px;
+        --ai-veil: color-mix(in srgb, var(--ink) 30%, transparent); }
+```
+
+To make it **switchable at runtime** (light/dark or multiple flavours), scope the block to an
+attribute and flip it on `<html>` — `[data-theme="mine"] { … }` / `[data-color-scheme="dark"] { … }`.
+Grade-as-signal is load-bearing: keep `--font-grain` visibly distinct from `--font-smooth` in
+every theme, and verify it still reads in dark.
+
+### B · A component — author in the binding vocabulary
+
+1. Create your own **component-root dir** (e.g. `myapp/components/`). Drop a component:
+   `mywidget/mywidget.html` + `mywidget.css` (+ `mywidget.md` for the catalog). One **root
+   class**, variants as **attributes** (`[data-variant]`), and **read token slots** — so it
+   inherits any theme + dark mode for free. Author the markup in the §3 vocabulary
+   (`data-field` / `data-bind-*` / `each` / `<slot-tag>`).
+2. Register the dir at your **composition root** so the host composes `<mywidget>` and bundles
+   its CSS: add it to the renderer's component roots + the style bundle + the catalog
+   (this repo: `componentRoots` / `styleRoots` in `project/config.ts`; a standalone consumer
+   passes its dir to `createRenderer` / the style bundle / `createCatalog`). It then appears
+   in `/catalog` automatically.
+
+### C · Make it AI-operable (optional — the payoff)
+
+Add the §2 conventions and the shared dispatcher drives it with **no bespoke JS**:
+`data-surface="kind:id"` (its address), `data-kind` + `data-accepts="verb"` (harvested into the
+manifest), a `data-action="verb"` trigger, and express AI-mode off `data-commit`/`data-grade`.
+Register the verb in the vocabulary (`ai/contract.ts` — see the §5 rough-edge note). That's the
+whole path: a themed, catalogued, AI-operable component without editing GRAIN.

@@ -1,6 +1,6 @@
-# 🍞 Bread — GRAIN's default theme
+# 🍞 Sourdough — GRAIN's default theme
 
-*Bread* is the visual identity GRAIN ships by default; a consuming product re-skins by overriding token
+*Sourdough* is the visual identity GRAIN ships by default; a consuming product re-skins by overriding token
 slots (CONVENTIONS §1), never by editing components. A monochrome, e-ink / Swiss-editorial aesthetic. The whole identity rests on three
 things: a warm paper surface, soft inky black, and Redaction's grainy serif. No
 color, no shadows, no gradients. Restraint is the brand.
@@ -62,6 +62,23 @@ Monochrome only. Six values do everything.
 
 Note: states are made with **opacity + size**, not new colors. A "today" dot is just
 a bigger `--ink` dot. An "off" tracker dot is `--ink-faint`. Keep the palette closed.
+
+### The one signature hue (accent doctrine)
+
+The palette stays closed, with **exactly one exception: a single accent hue.** GRAIN ships a
+`--color-accent` slot (+ `-hover`/`-contrast`/`-soft`) that a theme or consuming product sets — the
+one brand knob.
+
+- **Full reach.** The accent reaches everywhere brand colour belongs: **links, focus rings,
+  `::selection`, and the primary button fill** (`--color-primary` chains to it). Set one token,
+  colour the whole surface.
+- **One hue, still closed.** There is **only ever one** accent. **Success and danger keep no hue of
+  their own** — they're signalled by weight/treatment/opulence, never a red or green (the "no red
+  errors" rule holds).
+- **Hueless by default.** The default theme (Sourdough) sets `--color-accent: var(--ink)`, so it
+  renders identically to the pure-monochrome system — only `::selection` gains a subtle *ink* tint,
+  not a colour. Accented flavors (Baguette's soft blue, Brioche's honey-gold) opt in by overriding
+  just the four accent tokens. See `styles/variables.css` (the accent + flavor blocks).
 
 ---
 

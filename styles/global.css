@@ -53,8 +53,14 @@ p { margin: 0 0 var(--space-4); text-wrap: pretty; }   /* no orphans/ragged brea
 }
 .section-head .action { font-size: var(--text-sm); }
 
-/* ---- Links: always underlined; the underline IS the affordance --------------- */
-a { color: var(--color-fg); text-decoration: underline; text-underline-offset: 2px; }
+/* ---- Links: always underlined; the underline IS the affordance. Colour = the ONE accent
+   (hueless by default: accent = ink); an accented theme tints links with its signature hue. --- */
+a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ::selection — part of the accent's "full reach", kept SUBTLE: a low-alpha wash of the one accent
+   (text keeps its own colour, stays readable). Hueless by default (accent = ink → a quiet grey
+   tint); an accented theme tints the selection with its signature hue. */
+::selection { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
 
 /* form layout helper — a native <form> composed of atomic fields on a page */
 .add-form { display: flex; gap: var(--space-2); align-items: flex-end; margin-bottom: var(--space-6); }

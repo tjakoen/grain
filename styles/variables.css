@@ -2,7 +2,7 @@
    Layer 1: raw PRIMITIVES (palette, grades, scale) — components never touch these.
    Layer 2: SEMANTIC aliases that point at primitives — components use ONLY these.
 
-   This is the "Bread" theme (docs/DESIGN-SYSTEM.md): monochrome
+   This is the "Sourdough" theme (docs/DESIGN-SYSTEM.md): monochrome
    e-ink / Swiss-editorial. The whole re-skin is done HERE — every existing
    component restyles because it only ever read the Layer-2 aliases. */
 
@@ -44,6 +44,10 @@
   --font-smooth: "Redaction",    "Times New Roman", Georgia, serif;
   --font-grain:  "Redaction 50", "Redaction 35", "Times New Roman", Georgia, serif;
   --font-accent: "Redaction 70", "Times New Roman", Georgia, serif;
+
+  /* monospace — code blocks / inline code (grade-independent: code stays mono, the AI
+     signal for code is the dashed edge, not a font swap). System stack, nothing to host. */
+  --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 
   --font-weight-regular: 400;      /* house weight — even for headlines */
   --font-weight-medium: 500;
@@ -92,14 +96,27 @@
   --color-muted: var(--ink-muted);
   --color-line: var(--line-soft);
 
-  /* "primary" is just ink — bordered, no fill (no accent hue in a closed palette) */
-  --color-primary: var(--ink);
-  --color-primary-hover: var(--ink);
-  --color-primary-contrast: var(--paper);
-  --color-primary-soft: var(--paper-2);
+  /* ACCENT — the ONE signature hue (doctrine: "full reach, single hue"). This is the single
+     brand knob a theme/product sets. REACH is full — links, focus rings, ::selection, and the
+     primary button fill all point here. COUNT is one — the palette stays CLOSED: exactly one
+     accent, and success/danger NEVER get their own hue (below). The default (Sourdough) keeps
+     it HUELESS by setting it to ink, so nothing gains colour except a subtle ink ::selection.
+     An accented theme (Baguette, Brioche) overrides just these four. See DESIGN-SYSTEM.md §2. */
+  --color-accent: var(--ink);              /* hueless default — a flavor overrides to its one hue */
+  --color-accent-hover: var(--ink);
+  --color-accent-contrast: var(--paper);
+  --color-accent-soft: var(--paper-2);
+
+  /* "primary" now chains to the accent (was hardcoded ink) — so the primary button fill follows
+     the one brand hue automatically; hueless by default because accent = ink. */
+  --color-primary: var(--color-accent);
+  --color-primary-hover: var(--color-accent-hover);
+  --color-primary-contrast: var(--color-accent-contrast);
+  --color-primary-soft: var(--color-accent-soft);
 
   /* success / danger collapse to ink in monochrome — signalled by weight/treatment,
-     not hue (DESIGN-SYSTEM §2: states from opacity + size, palette stays closed) */
+     not hue (DESIGN-SYSTEM §2: states from opacity + size, palette stays closed —
+     the ONE hue is the accent above; states never get their own) */
   --color-success: var(--ink);
   --color-success-hover: var(--ink);
   --color-success-contrast: var(--paper);
@@ -139,21 +156,91 @@
   --z-ai-surface: 9002;   /* AI surfaces kept above the veil (acting label, console, chat) */
 }
 
-/* ---- Dark theme — a TOKEN-ONLY re-skin (the whole point of the two-layer system): only the
-   Layer-1 PRIMITIVES flip; the Layer-2 aliases point at them, so every component re-colours with
-   ZERO component edits. Still warm + soft (no pure black/white) to keep the e-ink feel.
-   Follows the OS by default; `data-theme` on <html> forces it either way (manual toggle). ---- */
+/* ============================================================================================
+   THEMING — two ORTHOGONAL axes, both pure TOKEN re-skins (the whole point of the two-layer
+   system): only Layer-1 PRIMITIVES flip; Layer-2 aliases point at them, so every component
+   re-colours with ZERO edits. See grain/README.md §4 + §6 (consumer guide).
+     • `data-color-scheme` = light | dark   (follows the OS; force it on <html> to override)
+     • `data-theme`        = the FLAVOR      (default = Sourdough via :root; add bread varieties)
+   They compose: any flavor in either scheme. `grain/scripts/theme.js` sets both on <html> (persisted).
+   ============================================================================================ */
+
+/* ---- Color scheme: dark (flavor-agnostic — applies to whatever flavor is active). Warm+soft,
+   no pure black/white, to keep the e-ink feel. Auto by OS unless forced light. ---- */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-color-scheme="light"]) {
     --paper: #1B1A16; --paper-2: #232219; --panel: #232219;
     --ink: #E4E1D8; --ink-muted: #9A968B; --ink-faint: #6B6862;
     --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
     --ai-veil: color-mix(in srgb, #000 50%, transparent);   /* dark: dimming darkens further */
   }
 }
-:root[data-theme="dark"] {
+:root[data-color-scheme="dark"] {
   --paper: #1B1A16; --paper-2: #232219; --panel: #232219;
   --ink: #E4E1D8; --ink-muted: #9A968B; --ink-faint: #6B6862;
   --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
+  --ai-veil: color-mix(in srgb, #000 50%, transparent);
+}
+
+/* ============================================================================================
+   FLAVORS (`data-theme`) — bread varieties, each a pure token override (light + composed dark).
+   Sourdough is the :root default (hueless). An accented flavor overrides the four --color-accent
+   slots with its ONE signature hue; success/danger stay monochrome (doctrine above). The
+   flavor+dark selector (0,3,0) outranks the plain dark block (0,2,0), so it wins in dark mode.
+   `theme.js` switches any value; add a variety by copying a block. See grain/README §4/§6.
+   ============================================================================================ */
+
+/* ---- Baguette — clean / Notion: crisp near-white light, near-black dark, hairline greys, with a
+   soft-blue accent. ---- */
+:root[data-theme="baguette"] {
+  --paper: #FAFAF8; --paper-2: #F2F2F0; --panel: #FFFFFF;
+  --ink: #232326; --ink-muted: #6B6B70; --ink-faint: #A6A6AB;
+  --hairline: #232326; --line-soft: rgba(35, 35, 38, 0.11);
+  --color-accent: #2F6FE0; --color-accent-hover: #2559C0;
+  --color-accent-contrast: #FFFFFF; --color-accent-soft: #E7EEFB;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="baguette"]:not([data-color-scheme="light"]) {
+    --paper: #17181A; --paper-2: #202126; --panel: #202126;
+    --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
+    --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
+    --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
+    --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
+    --ai-veil: color-mix(in srgb, #000 50%, transparent);
+  }
+}
+:root[data-theme="baguette"][data-color-scheme="dark"] {
+  --paper: #17181A; --paper-2: #202126; --panel: #202126;
+  --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
+  --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
+  --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
+  --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
+  --ai-veil: color-mix(in srgb, #000 50%, transparent);
+}
+
+/* ---- Brioche — warm cream + honey-gold accent (the one colorful theme). ---- */
+:root[data-theme="brioche"] {
+  --paper: #F5EEDD; --paper-2: #FBF5E7; --panel: #FFFDF6;
+  --ink: #2C2416; --ink-muted: #7C6F55; --ink-faint: #B9AC8E;
+  --hairline: #2C2416; --line-soft: rgba(44, 36, 22, 0.14);
+  --color-accent: #B77F1E; --color-accent-hover: #9A6A16;
+  --color-accent-contrast: #FFFFFF; --color-accent-soft: #F3E7CC;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="brioche"]:not([data-color-scheme="light"]) {
+    --paper: #1D180F; --paper-2: #262016; --panel: #262016;
+    --ink: #EFE6D2; --ink-muted: #9C907A; --ink-faint: #6A6152;
+    --hairline: #EFE6D2; --line-soft: rgba(239, 230, 210, 0.16);
+    --color-accent: #E3B457; --color-accent-hover: #EEC777;
+    --color-accent-contrast: #1D180F; --color-accent-soft: rgba(227, 180, 87, 0.16);
+    --ai-veil: color-mix(in srgb, #000 50%, transparent);
+  }
+}
+:root[data-theme="brioche"][data-color-scheme="dark"] {
+  --paper: #1D180F; --paper-2: #262016; --panel: #262016;
+  --ink: #EFE6D2; --ink-muted: #9C907A; --ink-faint: #6A6152;
+  --hairline: #EFE6D2; --line-soft: rgba(239, 230, 210, 0.16);
+  --color-accent: #E3B457; --color-accent-hover: #EEC777;
+  --color-accent-contrast: #1D180F; --color-accent-soft: rgba(227, 180, 87, 0.16);
   --ai-veil: color-mix(in srgb, #000 50%, transparent);
 }

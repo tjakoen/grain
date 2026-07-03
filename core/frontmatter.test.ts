@@ -1,0 +1,44 @@
+// mill/core/frontmatter.test.ts — the YAML-ish frontmatter splitter.
+import { test, expect } from "bun:test";
+import { parseFrontmatter } from "./frontmatter.ts";
+
+test("splits scalars and returns the body", () => {
+  const { data, body } = parseFrontmatter(`---\ntitle: Hello\ntype: note\n---\n# Body\n\ntext`);
+  expect(data.title).toBe("Hello");
+  expect(data.type).toBe("note");
+  expect(body).toBe("# Body\n\ntext");
+});
+
+test("no frontmatter → empty data, body untouched", () => {
+  const { data, body } = parseFrontmatter(`# Just markdown\n\nno fence`);
+  expect(data).toEqual({});
+  expect(body).toBe("# Just markdown\n\nno fence");
+});
+
+test("no closing fence is NOT treated as frontmatter", () => {
+  const raw = `---\ntitle: dangling`;
+  const { data, body } = parseFrontmatter(raw);
+  expect(data).toEqual({});
+  expect(body).toBe(raw);
+});
+
+test("inline list syntax (simple comma split; quote a value to keep spaces)", () => {
+  const { data } = parseFrontmatter(`---\ntags: [ai, "design systems", htmx]\n---\nx`);
+  expect(data.tags).toEqual(["ai", "design systems", "htmx"]);
+});
+
+test("dash list under a key", () => {
+  const { data } = parseFrontmatter(`---\ntags:\n  - ai\n  - design\n---\nx`);
+  expect(data.tags).toEqual(["ai", "design"]);
+});
+
+test("strips surrounding quotes and a leading BOM", () => {
+  const { data } = parseFrontmatter(`﻿---\ntitle: "Quoted Title"\n---\nx`);
+  expect(data.title).toBe("Quoted Title");
+});
+
+test("carriage returns are tolerated", () => {
+  const { data, body } = parseFrontmatter(`---\r\ntitle: CRLF\r\n---\r\nbody`);
+  expect(data.title).toBe("CRLF");
+  expect(body).toBe("body");
+});

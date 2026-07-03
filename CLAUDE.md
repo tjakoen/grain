@@ -1,8 +1,10 @@
 # CLAUDE.md — mill
 
-Onboarding for anyone (AI or human) working in `mill/`: MILL ("Markdown In, Living Layouts"), a
-planned standalone CMS. Nothing is built yet; only the plan exists. Read the plan first, it is the
-source of truth.
+Onboarding for anyone (AI or human) working in `mill/`: MILL ("Markdown In, Living Layouts"), the
+stack's content rendering engine (a content plugin for GRAIN). Read the plan first, it is the
+source of truth. **Built so far (pieces 1–2, 2026-07-03):** the framework-agnostic core engine
+(`core/`) + the reference BATCH+GRAIN adapter (`adapters/grain/`), all unit-tested. Live-route
+mounting and consumer wiring (`/notes`) are still deferred (pieces 3–4).
 
 > This file follows `../portfolio/standards/CLAUDE.starter.md`. Personal standards live in
 > `../portfolio/standards/`.
@@ -26,6 +28,13 @@ build it.
 
 - **A layer above, not inside.** MILL depends on grain (components) + batch (substrate), never the
   reverse.
-- **Framework-agnostic core.** The engine talks to a render-adapter port; the batch + grain adapter
-  is one implementation, not baked in.
-- **Nothing built yet.** Only `PLAN.md` exists. Build against the plan and keep it canonical.
+- **Framework-agnostic core.** The engine (`core/`) talks to a render-adapter port (a total
+  node→handler map + layout lookup); it imports **nothing** from grain/batch. The BATCH+GRAIN
+  adapter (`adapters/grain/`) is one implementation, not baked in — proven by a fake-adapter test.
+- **Emit final HTML with grain CSS classes, not data-bound `<b-…>` tags.** BATCH's `createRenderer`
+  replaces a registered component tag's children with its own template, so a `<b-text>prose</b-text>`
+  would lose the prose. Bare `<p>/<h*>/<li>` are already grain-styled; the escape hatch (raw `<b-…>`
+  in the `.md`) still passes through for BATCH to compose.
+- **Grade guardrail.** MILL output is human-authored → clean ink (`data-grade="smooth"`, never grain,
+  never `data-commit`). `renderGrainDocument` enforces it (`core/grade.ts`). Only the AI grains.
+- **Build against the plan and keep it canonical.** `PLAN.md` tracks what's built vs. deferred.

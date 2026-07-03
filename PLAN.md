@@ -1,11 +1,24 @@
 # MILL — plan
 
-> Status: **planned, not built (decision + design only, 2026-07-02).** MILL — **"Markdown In, Living
-> Layouts"** — is the platform's **content rendering engine**: feed it Markdown + images and it
-> renders pages out of components. It is its **own top-level project** (a sibling of `batch/`,
-> `grain/`, `project/`, `portfolio/`) and is designed as a **reusable, open-source** tool. The
-> **portfolio** is its first consumer. This file is the **canonical MILL plan**; `portfolio/PLAN.md`
-> holds the *consumer* view and points here.
+> Status: **planned, not built (decision + design only, 2026-07-02; positioning revised
+> 2026-07-03).** MILL — **"Markdown In, Living Layouts"** — is the platform's **content rendering
+> engine**: feed it Markdown + images and it renders pages out of components. It is its **own
+> top-level project** (a sibling of `batch/`, `grain/`, `project/`, `portfolio/`) and is designed
+> as a **reusable, open-source** tool. The **portfolio** is its first consumer. This file is the
+> **canonical MILL plan**; `portfolio/PLAN.md` holds the *consumer* view and points here. The
+> cross-layer sequencing (MILL is Track C) lives in [`../ROADMAP.md`](../ROADMAP.md).
+
+## Positioning (decision, 2026-07-03)
+
+MILL is **a content plugin for GRAIN** — the stack's content layer, published — **not a
+standalone CMS play.** Competing with Eleventy/Astro/Hugo on their turf (taxonomies, image
+pipelines, ecosystems) is a **non-goal**; "CMS" overpromises and is retired from the pitch in
+favor of "content rendering engine." What MILL is *for*, in order: (1) prove the layers compose
+(`batch → grain → MILL`, ports at every seam); (2) let the portfolio be maintained by editing
+Markdown; (3) the one lane no incumbent occupies — **content that is AI-answerable and
+AI-operable by construction** (see "AI-facing outputs" below). It stays small on purpose; the
+"framework-agnostic core" is an architecture discipline (the adapter port), not a marketing
+claim — we don't lead with agnosticism that only one adapter ever tests.
 
 ## What MILL is
 
@@ -17,6 +30,36 @@ output), so a site is *maintained by editing content, not HTML*.
 
 MILL **enhances** a site's content; it does **not** build the site. A consumer's bespoke surfaces
 stay its own work — the portfolio's hero AI, calendar, etc. are custom BATCH + GRAIN, not MILL.
+
+## What MILL gives you (capabilities — PLANNED)
+
+The capabilities, **tiered** — headliners first, then the useful-but-quieter ones. **Marked PLANNED:**
+pieces 1–2 (the framework-agnostic core + the reference adapter) are built; pieces 3–4 (live route,
+consumer wiring, AI-facing outputs) are not. Nothing here is buried. **This list is the single source**
+(any README/landing teaser projects from it); add or drop a capability → update this list (the
+`../CLAUDE.md` alignment table Track C row → `AUDIT.md` check 11).
+
+**Hero — the reasons MILL exists:**
+
+- **Markdown in → GRAIN pages out.** Feed it a folder of `.md` + images and it renders pages by
+  **mapping Markdown to components** (not inventing a renderer) — a site is *maintained by editing
+  content, not HTML*. (§"The mapping model".) *(core built; live route = piece 3.)*
+- **AI-answerable by construction.** The same source that renders a human page also emits semantic
+  HTML + per-page meta, schema.org JSON-LD, `llms.txt`, `knowledge.json` (RAG chunks), and
+  `data-surface` addresses on content — so *AI-operable ≈ AI-answerable* falls out of authoring, not
+  a separate pipeline. (§"AI-facing outputs".) *(piece 4b.)*
+
+**Also — useful features, deliberately listed:**
+
+- **The escape hatch (no MDX build).** Raw `<b-…>` component tags written inside a `.md` pass through
+  untouched for BATCH to compose — Markdown for prose, components for power, no build step.
+- **Grade guardrail.** MILL output is human-authored → **clean ink** (`data-grade="smooth"`, never
+  grain), machine-enforced (`core/grade.ts`). Only the AI grains — preserves the honest signal. *(built.)*
+- **Framework-agnostic core.** The engine talks to a render-adapter port (a total node→handler map);
+  it imports nothing from GRAIN/BATCH. The BATCH+GRAIN adapter is the default, proven swappable by a
+  fake-adapter test. *(built.)*
+- **mermaid → SVG figures** — server-side diagram conversion (FIGURES.md). **Deferred** (heavy dep);
+  until then figures ship as pre-rendered SVG.
 
 ## Where MILL sits (layering)
 
@@ -78,26 +121,99 @@ RAG, and (c) publish rendered docs. For the portfolio, both the **notes/blog** *
 docs** (`docs/*.md` → `/grain/docs`, `/batch/docs`) flow through MILL. Authoring = commit: edit a
 `.md` → the GitHub Action reboots the app, crawls, deploys.
 
+## AI-facing outputs (first-class; added 2026-07-03)
+
+The piece that makes MILL serve the stack's thesis rather than sit beside it: **"AI-operable ≈
+AI-answerable."** The same source that renders a human page also emits, by construction:
+
+- **Semantic HTML + per-page meta** — frontmatter → `<title>`/description/OG tags; headings and
+  landmarks stay real HTML (SEO/AEO floor, and what GUI agents and answer engines actually parse).
+- **schema.org JSON-LD** — frontmatter `type` → Article/TechArticle etc.; emitted with the page.
+- **`llms.txt`** — generated from the content tree, alongside `sitemap.xml` (same page list).
+- **`knowledge.json`** — the RAG corpus chunks (feeds the assistant's retrieval port — memory:
+  `ai-content-retrieval-layer`).
+- **`data-surface` addresses on rendered content** — rendered notes/regions get stable surface
+  addresses so the assistant can *operate* them (spotlight, navigate, summarize-this) through the
+  one vocabulary, even though the content itself stays clean-grade (human-authored) and outside
+  the write path.
+
+These are adapter outputs, not core concerns: the core maps nodes; the BATCH+GRAIN adapter emits
+the AI-facing artifacts. Scope guard: emit + wire, no ranking/embedding logic in MILL itself (the
+retrieval port and models live with the consumer).
+
+## Prerequisites and deferred dependencies (honest list, 2026-07-03)
+
+- **`batch/export` now exists** (ROADMAP Track B.1, Tier 1 shipped 2026-07-04) — the hosting
+  adapter's freeze path can build on it (`bun run export` → `dist/`). Live render works without it too.
+- **GRAIN is missing content components** a markdown renderer needs out of the box: **code block
+  (mono), figure/clipped-photo, callout/blockquote**. Build these in grain before or with piece 3
+  — a technical note is unrenderable without them.
+- **mermaid→SVG** (FIGURES.md requires server-side conversion; the converter is a heavy
+  dependency) — explicitly **deferred**, not implied. Until then, figures ship as pre-rendered
+  SVG per the FIGURES.md scaffold.
+
 ## Pieces to build
 
-1. **Scaffold `mill/`** — the project folder + this plan; imports kept clean (GRAIN + BATCH public
-   seams only).
-2. **Core engine** (framework-agnostic) — frontmatter parse → Markdown AST walk → node→tag map →
-   layout wrap, driven by a **render-adapter port**. Ship with tests (CONVENTIONS §6).
+1. ✅ **Scaffold `mill/`** (done 2026-07-03) — module layout: `core/` (the framework-agnostic
+   engine) + `adapters/grain/` (the reference adapter) + `index.ts`. Imports kept clean — the
+   engine imports **nothing** from GRAIN or BATCH; the coupling is a name/CSS-class contract
+   (strings), the cleanest seam. (Runtime coupling — `createRenderer` to compose escape-hatch
+   `<b-…>` tags, and serving — arrives with piece 3.)
+2. ✅ **Core engine** (framework-agnostic, done 2026-07-03) — `frontmatter.ts` → `markdown.ts`
+   (blocks + inline AST) → the render-adapter port (`types.ts`) → layout wrap (`engine.ts`),
+   with the grade guardrail (`grade.ts`) machine-checked. Ships the **BATCH+GRAIN adapter** as a
+   plain module (no route). Colocated tests, tsc + bun test green. Decisions this piece resolved:
+   - **Markdown parser → tiny hand-rolled subset, zero runtime deps** (respects batch's
+     "zero third-party runtime deps" bar; `catalog.ts` already hand-rolls a line parser). It is a
+     documented SUBSET, not CommonMark: headings, paragraphs, ordered/unordered lists, fenced code,
+     blockquotes, standalone images, thematic breaks, and a raw-HTML/component **passthrough** (the
+     escape hatch). Inline: `**strong**`, `*em*`, `` `code` ``, `[link]`, `![img]` — **emphasis is
+     asterisk-only** (underscore dropped so `snake_case` in technical prose never becomes `<em>`).
+   - **Render-adapter port shape → a total node→handler map + layout lookup.** Every AST node type
+     has a handler (a missing type is a compile error in *every* adapter — drift protection);
+     handlers get a `RenderContext` to recurse (`renderInline`/`renderBlocks`) — the mdast→hast
+     pattern. Proven non-GRAIN-agnostic by an engine test driving a bracket-notation fake adapter.
+   - **GRAIN adapter emits FINAL semantic HTML with grain CSS classes, NOT data-bound component
+     tags.** Reason: BATCH's `createRenderer` *replaces* a registered component tag's children with
+     its own template, so `<b-text>literal prose</b-text>` would discard the prose. Bare
+     `<p>/<h*>/<a>/<li>` are already styled by grain's `global.css`+`grain.css`; the three content
+     components ship their own CSS. Authors keep the escape hatch: raw `<b-…>` in the `.md` passes
+     through untouched and BATCH composes *those* (they are genuinely data-bound).
+   - **Grade guardrail enforced:** output is clean/human (`data-grade="smooth"` asserted on the
+     article root; never grain, never `data-commit`). `renderGrainDocument` runs `assertHumanGrade`.
+   - **GRAIN content-component prereqs built** in `grain/components/**`: `atoms/code-block` (+ inline
+     code; added the `--font-mono` token), `molecules/figure` (+ `clipped` variant),
+     `molecules/callout`. CSS-only (composed by MILL, no data-binding), auto-appear in `/catalog`.
 3. **BATCH+GRAIN adapter** — emit GRAIN tags; mount a live content route; plug into `batch/export`
    (projection, not re-render — memory: static-export-decision).
 4. **Consumer wiring (in `portfolio/`)** — the `type → layout` registry + block overrides; render
    `/notes` (+ `/notes/:slug`), `/grain/docs`, `/batch/docs`; feed the RAG-corpus prep.
+   - **Layer-docs source = package-resolved, never a hardcoded sibling path or a copy.** The
+     `/grain/docs` + `/batch/docs` collections read their `.md` from the *installed layer package*
+     via `import.meta.resolve('@tjakoen/grain/docs')` / `@tjakoen/batch/docs` (both layers now ship a
+     `./docs/*` `exports` entry). In the monorepo this resolves to the sibling `grain/docs/` /
+     `batch/docs/` folder; post-split it resolves into the git-dep — **same code, both eras, always
+     synced to `#main` via `bun update`, zero copied files.** Do **not** wire these against a literal
+     `../grain/docs` relative path — that would break on the split and reintroduce the copy problem.
+     Portfolio-owned content (`/notes`) still reads from the portfolio repo's own content dir. See
+     [`../SPLIT-PLAN.md`](../SPLIT-PLAN.md) § "Layer docs travel inside the package".
+4b. **AI-facing outputs** (see section above) — meta/OG + JSON-LD emission, `llms.txt`,
+   `knowledge.json`, `data-surface` addresses on rendered content. Ships with the adapter, after
+   the minimal proof-of-value (pieces 1–4) renders `/notes` live.
 5. **Platform docs** — layer-count update in `CLAUDE.md` + `docs/ARCHITECTURE.md` (done 2026-07-02); this
    file stays the canonical MILL plan.
 
 ## Open questions
 
-- **Markdown parser** — which library (or a tiny hand-rolled subset) stays no-build-friendly on Bun.
-- **Render-adapter interface shape** — the exact port (node→tag, layout lookup) so non-GRAIN adapters fit.
-- **Where layouts live** — MILL ships layout *primitives* vs. all layouts consumer-supplied. Lean:
-  MILL ships primitives, the consumer supplies its set.
-- **Slug / link resolution** — the internal `note:slug` scheme + collision rules.
+- ✅ **Markdown parser** (resolved 2026-07-03) — tiny hand-rolled subset, zero runtime deps
+  (`mill/core/markdown.ts`). See piece 2 for the supported subset + the asterisk-only-emphasis call.
+- ✅ **Render-adapter interface shape** (resolved 2026-07-03) — total node→handler map + layout
+  lookup, handlers recurse via a `RenderContext` (`mill/core/types.ts`). See piece 2.
+- ✅ **Where layouts live** (resolved 2026-07-03) — MILL ships a **default** layout (editorial
+  note masthead); the consumer supplies its `type → layout` registry via `GrainAdapterOptions`
+  (the "engine implemented by the consumer" model). MILL stays framework-generic.
+- **Slug / link resolution** — default is `note:slug` → `/notes/slug`, overridable per consumer via
+  `GrainAdapterOptions.resolveLink`. **Collision rules still open** (deferred to piece 4 wiring).
 
 ## Relationship to the platform
 

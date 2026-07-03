@@ -1,52 +1,76 @@
 // grain/scripts/theme.js — the theming controls (GRAIN). Sets the two ORTHOGONAL token axes on
-// <html>: `data-color-scheme` (light | dark, or unset = follow the OS) and `data-theme` (the
-// flavor; unset = the default, Sourdough). Both are pure TOKEN re-skins (grain/styles/variables.css)
-// — a client-side VIEW PREFERENCE: static-safe, no deps, NOT the AI door. Persists to localStorage.
+// <html>: data-color-scheme (light | dark, or unset = follow the OS) and data-theme (the flavor;
+// unset = the default). Both are pure TOKEN re-skins (grain/styles/variables.css) — a client-side
+// VIEW PREFERENCE: static-safe, no deps, NOT the AI door. Persists to localStorage.
 //
-// Declarative: any control drives it with `data-toggle-scheme` (light⇄dark), `data-set-scheme="…"`,
-// or `data-set-theme="…"` — no per-page handlers. Also exposed as `window.grain.theme`.
-// NOTE (FOUC): saved prefs are applied when this module runs (deferred), so a non-default saved
-// pref can flash once on first paint; the shell phase adds an inline <head> bootstrap to pre-set
-// the attributes before styles apply. See README §4/§6.
+// The theming VOCABULARY (attribute + value + control names + storage keys) is defined ONCE in the
+// constant block below — no raw strings scattered through the logic (CONVENTIONS §3: browser-JS
+// literals kept to a single source). Those attribute names are mirrored in CSS selectors
+// (variables.css) and in the control markup; keep the three in sync.
+// NOTE (FOUC): saved prefs apply when this deferred module runs; the shell phase adds an inline
+// <head> bootstrap to pre-set the attributes before styles apply. See README §4/§6.
 (() => {
   "use strict";
+
+  // ---- theming vocabulary (single source of these strings) ---------------------------------
+  const ATTR    = { scheme: "data-color-scheme", theme: "data-theme", list: "data-themes" };
+  const SCHEME  = { light: "light", dark: "dark", auto: "auto" };
+  const CTRL    = { toggleScheme: "data-toggle-scheme", cycleTheme: "data-cycle-theme",
+                    setScheme: "data-set-scheme", setTheme: "data-set-theme" };
+  const KEY     = { scheme: "grain-color-scheme", theme: "grain-theme" };
+  const MQ_DARK = "(prefers-color-scheme: dark)";
+
   const html = document.documentElement;
-  const KEY_S = "grain-color-scheme", KEY_T = "grain-theme";
   const store = (() => { try { return window.localStorage; } catch { return null; } })();
   const get = (k) => { try { return store && store.getItem(k); } catch { return null; } };
   const put = (k, v) => { try { if (store) v == null ? store.removeItem(k) : store.setItem(k, v); } catch {} };
 
-  // scheme: "light" | "dark" | "auto"  (auto = drop the attr → follow prefers-color-scheme)
+  // ---- color scheme (light | dark | auto; auto drops the attr → follow the OS) --------------
   function setScheme(s) {
-    if (!s || s === "auto") { html.removeAttribute("data-color-scheme"); put(KEY_S, null); }
-    else { html.setAttribute("data-color-scheme", s); put(KEY_S, s); }
+    if (!s || s === SCHEME.auto) { html.removeAttribute(ATTR.scheme); put(KEY.scheme, null); }
+    else { html.setAttribute(ATTR.scheme, s); put(KEY.scheme, s); }
   }
-  const scheme = () => html.getAttribute("data-color-scheme") || "auto";
+  const scheme = () => html.getAttribute(ATTR.scheme) || SCHEME.auto;
   function toggleScheme() {
-    const eff = scheme() === "auto"
-      ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    const eff = scheme() === SCHEME.auto
+      ? (matchMedia(MQ_DARK).matches ? SCHEME.dark : SCHEME.light)
       : scheme();
-    setScheme(eff === "dark" ? "light" : "dark");
+    setScheme(eff === SCHEME.dark ? SCHEME.light : SCHEME.dark);
   }
-  // flavor: any data-theme value ("" / "sourdough" = the default)
+
+  // ---- flavor (data-theme). The ordered list is CONSUMER-DECLARED on <html data-themes="…"> —
+  // GRAIN hardcodes no theme names. list[0] is the DEFAULT (rendered by the bare :root, so
+  // selecting it just drops the attribute). Add/rename/reorder purely in the markup + CSS. -------
+  const themes = () => (html.getAttribute(ATTR.list) || "").split(/\s+/).filter(Boolean);
+  const defaultTheme = () => themes()[0] || "";
   function setTheme(t) {
-    if (!t || t === "sourdough") { html.removeAttribute("data-theme"); put(KEY_T, null); }
-    else { html.setAttribute("data-theme", t); put(KEY_T, t); }
+    if (!t || t === defaultTheme()) { html.removeAttribute(ATTR.theme); put(KEY.theme, null); }
+    else { html.setAttribute(ATTR.theme, t); put(KEY.theme, t); }
   }
-  const theme = () => html.getAttribute("data-theme") || "sourdough";
+  const theme = () => html.getAttribute(ATTR.theme) || defaultTheme();
+  function cycleTheme() {
+    const list = themes(); if (list.length < 2) return;
+    setTheme(list[(list.indexOf(theme()) + 1) % list.length]);
+  }
 
-  // apply saved prefs (no saved scheme → stay auto, so the OS wins with no forced-override flash)
-  const s = get(KEY_S); if (s) html.setAttribute("data-color-scheme", s);
-  const t = get(KEY_T); if (t) html.setAttribute("data-theme", t);
+  // ---- apply saved prefs (no saved scheme → stay auto, so the OS wins, no forced-override flash) --
+  const savedScheme = get(KEY.scheme); if (savedScheme) html.setAttribute(ATTR.scheme, savedScheme);
+  const savedTheme  = get(KEY.theme);  if (savedTheme)  html.setAttribute(ATTR.theme,  savedTheme);
 
+  // ---- declarative controls (any element drives theming; no per-page handlers) ---------------
+  const HANDLERS = {
+    [CTRL.toggleScheme]: ()   => toggleScheme(),
+    [CTRL.cycleTheme]:   ()   => cycleTheme(),
+    [CTRL.setScheme]:    (el) => setScheme(el.getAttribute(CTRL.setScheme)),
+    [CTRL.setTheme]:     (el) => setTheme(el.getAttribute(CTRL.setTheme)),
+  };
+  const SELECTOR = Object.keys(HANDLERS).map((a) => `[${a}]`).join(",");
   document.addEventListener("click", (e) => {
-    const el = e.target.closest("[data-toggle-scheme],[data-set-scheme],[data-set-theme]");
+    const el = e.target.closest(SELECTOR);
     if (!el) return;
-    if (el.hasAttribute("data-toggle-scheme")) toggleScheme();
-    else if (el.hasAttribute("data-set-scheme")) setScheme(el.getAttribute("data-set-scheme"));
-    else if (el.hasAttribute("data-set-theme")) setTheme(el.getAttribute("data-set-theme"));
+    for (const attr of Object.keys(HANDLERS)) if (el.hasAttribute(attr)) { HANDLERS[attr](el); break; }
   });
 
   window.grain = window.grain || {};
-  window.grain.theme = { setScheme, setTheme, toggleScheme, scheme, theme };
+  window.grain.theme = { setScheme, setTheme, toggleScheme, cycleTheme, scheme, theme, themes };
 })();

@@ -1,0 +1,52 @@
+/* organisms/sidebar-panel — the workspace's right-hand panel that fills `.app-shell__aside`: a
+   header / scrolling body / composer column. Its default use is the ASSISTANT (chat). During an AI
+   takeover (the shell raises `data-acting`) it slides away so the console can narrate; on mobile it
+   becomes a bottom sheet. Persona-neutral — the consumer supplies any label/name. CSS-only pattern:
+   compose `.assistant` inside `.app-shell__aside`; see sidebar-panel.md. Re-skins via tokens.
+   (Loads after app-shell.css in the sorted bundle, so its aside overrides win.) */
+
+/* the panel (assistant form): header · scrolling log · composer */
+.assistant { display: flex; flex-direction: column; height: 100%; }
+.assistant__head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-line); font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+.assistant__log { flex: 1; overflow: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);
+  scroll-behavior: smooth; }
+.assistant__log > :first-child { margin-top: auto; }   /* bottom-pin the conversation — no mid-panel dead space */
+.assistant__composer { border-top: 1px solid var(--color-line); padding: var(--space-3); display: flex; gap: var(--space-2); }
+.assistant__composer input { flex: 1; font: inherit; font-size: var(--text-sm); color: var(--color-fg);
+  background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+.assistant__composer input::placeholder { color: var(--ink-faint); }
+
+/* TAKEOVER: the shell raises `data-acting` (grain/scripts/ai-dispatch.js) → the panel GENTLY slides
+   away (standard AI-motion easing) so the console rises to narrate. The AI's own surfaces stay above
+   the spotlight veil (grain/ai/ai.css .ai-backdrop, z 9000). Switching to chat mid-run
+   (`data-chat-open`) brings the panel back and collapses the console. */
+.app-shell__aside { transition: transform var(--ai-focus-move, 0.45s) ease, opacity var(--ai-focus-move, 0.45s) ease; }
+.app-shell[data-acting="true"] { --shell-aside: 0px; }
+.app-shell[data-acting="true"] .app-shell__aside { transform: translateX(100%); opacity: 0;   /* slide, don't squish */
+  position: relative; z-index: var(--z-ai-surface, 9002); }   /* only the AI surfaces stay above the veil */
+.app-shell[data-acting="true"][data-chat-open] { --shell-aside: 20rem; }
+.app-shell[data-acting="true"][data-chat-open] .app-shell__aside { transform: none; opacity: 1; }
+
+/* mobile (<768px): the panel becomes a bottom SHEET. The shell drops the aside column, so re-show it
+   fixed to the bottom, collapsed to its header as a grab bar; tap the header to raise the full panel. */
+@media (max-width: 768px) {
+  .app-shell__aside {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-ai-surface, 9002);
+    height: 85dvh; opacity: 1;
+    transform: translateY(calc(100% - 2.75rem));           /* collapsed: the head peeks as a bar */
+    border: 0; border-top: 1px solid var(--ink); border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+  .assistant__head { cursor: pointer; }                    /* the grab bar toggles the sheet */
+  .assistant__head::after { content: "▴"; color: var(--ink-faint); }
+  .app-shell[data-aside-open] .assistant__head::after { content: "▾"; }
+  .app-shell[data-aside-open] .app-shell__aside { transform: translateY(0); }
+  /* while acting, the floating console is the AI surface — hide the idle sheet unless the chat is
+     explicitly opened, then raise it full. */
+  .app-shell[data-acting="true"] .app-shell__aside { transform: translateY(100%); }
+  .app-shell[data-acting="true"][data-chat-open] .app-shell__aside { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__aside { transition: none; }
+  .assistant__log { scroll-behavior: auto; }
+}

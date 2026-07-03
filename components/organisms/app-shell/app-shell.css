@@ -65,3 +65,11 @@
 @media (prefers-reduced-motion: reduce) {
   .app-shell__rail, .app-shell__scrim { transition: none; }
 }
+
+/* ---- single-page feel: the shell chrome PERSISTS across cross-document navigations (each name is
+   present once per page, so it morphs in place); only <main> is in the root snapshot and cross-fades.
+   Reduced-motion disables view transitions globally (grain/styles/global.css). ---- */
+.app-shell__rail    { view-transition-name: shell-rail; }
+.app-shell__topbar  { view-transition-name: shell-topbar; }
+.app-shell__aside   { view-transition-name: shell-aside; }
+.app-shell__console { view-transition-name: shell-console; }

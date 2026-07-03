@@ -15,7 +15,21 @@
 }
 .side-rail__spacer { flex: 1 1 auto; }
 
+/* ---- grouped nav — a collapsible section for nested navigation (e.g. a BREAD group over
+   BATCH / GRAIN / MILL). Native <details>/<summary>, no JS: the summary IS a nav-item, the
+   sub-items indent under it. Open/closed is the browser's; a rotating chevron shows state. ---- */
+.side-rail__group { display: contents; }                 /* the <details> itself adds no box */
+.side-rail__group > summary { list-style: none; cursor: pointer; }
+.side-rail__group > summary::-webkit-details-marker { display: none; }
+.side-rail__group > summary .nav-item__chev { margin-left: auto; color: var(--ink-faint);
+  transition: transform 0.2s ease; }
+.side-rail__group[open] > summary .nav-item__chev { transform: rotate(90deg); }
+.side-rail__sub { display: flex; flex-direction: column; gap: 2px; }
+.side-rail__sub .nav-item { padding-left: var(--space-6); }   /* indent children under the group */
+
 /* ---- collapsed: drop the labels, center the glyphs (rail width does the rest) ---- */
 [data-rail-collapsed="true"] .side-rail__brand span,
 [data-rail-collapsed="true"] .nav-item__label { display: none; }
 [data-rail-collapsed="true"] .nav-item { justify-content: center; }
+[data-rail-collapsed="true"] .side-rail__group > summary .nav-item__chev { display: none; }
+[data-rail-collapsed="true"] .side-rail__sub .nav-item { padding-left: 0; }

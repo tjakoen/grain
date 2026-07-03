@@ -1,0 +1,8 @@
+/* organisms/topbar — the app-shell top bar's CONTENT: a right-aligned control cluster (the theme +
+   light/dark toggles, ⌘K, a presence indicator). CSS-only pattern — place a `.topbar-ctl` inside the
+   shell's `.app-shell__topbar` region (the shell owns the bar's grid slot + border, app-shell.css).
+   Persona-neutral: the toggles are grain `.icon-btn`s carrying the theming controls
+   (`data-toggle-scheme`, `data-cycle-theme` — see grain/scripts/theme.js). Consumers supply the
+   brand/presence text. See topbar.md. */
+.topbar-ctl { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; padding: 0 var(--space-4); }
+.presence { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--color-muted); font-size: var(--text-sm); }

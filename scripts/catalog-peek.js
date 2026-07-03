@@ -35,9 +35,11 @@
     if (v && !frame.getAttribute("src")) frame.setAttribute("src", "/catalog");   // lazy-load the catalog
   };
   // [data-peek] hooks: "open" forces open, "close" forces closed, "toggle" (default) flips.
+  // preventDefault so a hook can be a real <a> (the Catalog tab is href="/grain" for no-JS nav /
+  // for pages without the peek, e.g. /loop) yet open the peek in place where this island runs.
   for (const t of document.querySelectorAll("[data-peek]")) {
     const mode = t.getAttribute("data-peek");
-    t.addEventListener("click", () => setOpen(mode === "open" ? true : mode === "close" ? false : !isOpen()));
+    t.addEventListener("click", (e) => { e.preventDefault(); setOpen(mode === "open" ? true : mode === "close" ? false : !isOpen()); });
   }
   panel.querySelector(".catalog-peek__close")?.addEventListener("click", () => setOpen(false));
 

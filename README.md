@@ -1,5 +1,9 @@
 # MILL
 
+[![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
+[![Status](https://img.shields.io/badge/status-planned-lightgrey)](PLAN.md)
+
 **Markdown In, Living Layouts** — a Markdown → GRAIN-pages CMS. Feed it a folder of `.md` +
 frontmatter + images; it renders them as real GRAIN pages by mapping Markdown nodes to components.
 
@@ -20,10 +24,10 @@ first-class **BATCH+GRAIN adapter** as the default. That MILL exists at all is p
 BATCH + GRAIN proving they compose into a real, reusable tool.
 
 MILL **renders live** on the BATCH app at request time; `batch/export` then freezes the output —
-never a build-time re-render (keeps [export-as-projection](../ARCHITECTURE.md) intact).
+never a build-time re-render (keeps [export-as-projection](../batch/docs/ARCHITECTURE.md) intact).
 
 ## Read next
 
 - **[mill/PLAN.md](PLAN.md)** — the canonical plan (design, seams, mapping model, build pieces).
-- **[../PHILOSOPHY.md](../PHILOSOPHY.md)** — why content is Markdown and pages are a projection of it.
+- **[../portfolio/PHILOSOPHY.md](../portfolio/PHILOSOPHY.md)** — why content is Markdown and pages are a projection of it.
 - **[../CLAUDE.md](../CLAUDE.md)** — how MILL fits the four concerns.

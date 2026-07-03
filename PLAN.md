@@ -88,7 +88,7 @@ docs** (`docs/*.md` → `/grain/docs`, `/batch/docs`) flow through MILL. Authori
    (projection, not re-render — memory: static-export-decision).
 4. **Consumer wiring (in `portfolio/`)** — the `type → layout` registry + block overrides; render
    `/notes` (+ `/notes/:slug`), `/grain/docs`, `/batch/docs`; feed the RAG-corpus prep.
-5. **Platform docs** — layer-count update in `CLAUDE.md` + `ARCHITECTURE.md` (done 2026-07-02); this
+5. **Platform docs** — layer-count update in `CLAUDE.md` + `docs/ARCHITECTURE.md` (done 2026-07-02); this
    file stays the canonical MILL plan.
 
 ## Open questions

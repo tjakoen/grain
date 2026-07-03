@@ -1,0 +1,10 @@
+{
+  "//": "Placeholder for the future standalone repo (see ../SPLIT-PLAN.md). PLANNED — nothing built yet; hence 0.0.0.",
+  "name": "@tjakoen/mill",
+  "version": "0.0.0",
+  "description": "MILL — Markdown In, Living Layouts: a Markdown → GRAIN-pages CMS (planned; design only).",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
+  "homepage": "https://tjakoen.github.io/mill"
+}

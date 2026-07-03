@@ -81,11 +81,11 @@ test("demo.run on the /grain screen: narrates to the terminal, drives the /grain
   // drives the /grain surface addresses — NOT the /loop scenario's
   const targets = new Set(emitted.map((o) => o.target));
   expect(targets.has("grain-ask")).toBe(true);
-  expect(targets.has("chat-log")).toBe(true);
+  expect(targets.has("chat-log:grain")).toBe(true);        // the surface's OWN chat (distinct from the shell's)
   expect(targets.has("grain-task-badge")).toBe(true);
   expect(targets.has("plan")).toBe(false);                 // the loop scenario's surface — must not fire here
   // the AI reply bubble is grain and stays grain (provenance persists)
-  expect(emitted.find((o) => o.op === "append" && o.target === "chat-log")?.html).toContain('data-grade="grain"');
+  expect(emitted.find((o) => o.op === "append" && o.target === "chat-log:grain")?.html).toContain('data-grade="grain"');
   // hands back at the end: the LAST spotlight releases the screen (so the veil always drops)
   const s = spots(emitted);
   expect(s.at(-1)?.target).toBe("screen");

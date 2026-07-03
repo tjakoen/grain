@@ -118,12 +118,15 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         const bubble = (role: string, grade: string, inner: string) =>
           `<div class="chat-message" data-role="${role}"${grade ? ` data-grade="${grade}"` : ""}>` +
           `<span class="chat-message__who">${role === "you" ? "You" : "Desk"}</span>${inner}</div>`;
+        // append to the chat-log the intent TARGETED (the shell's "chat-log", or a page's own
+        // "chat-log:<id>" — same kind), so multiple chat surfaces on a page don't collide.
+        const log = intent.surface;
         // 1) your message — clean (human, committed)
-        tools.emit({ target: "chat-log", op: "append", provenance: "user", commit: "committed",
+        tools.emit({ target: log, op: "append", provenance: "user", commit: "committed",
           html: bubble("you", "", `<span class="chat-message__body">${esc(text || "…")}</span>`) });
         // 2) an empty AI bubble to stream into — grain (AI), pending until it settles
         const id = `chat-msg:${++chatSeq}`;
-        tools.emit({ target: "chat-log", op: "append", provenance: "ai", commit: "pending",
+        tools.emit({ target: log, op: "append", provenance: "ai", commit: "pending",
           html: bubble("ai", "grain", `<span class="chat-message__body" data-surface="${id}"></span>`) });
         // 3) the AI thinks a beat, then types its reply into the bubble (grain persists)
         await beat(HOLD_MS);
@@ -165,10 +168,11 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           tools.emit({ target: "grain-ask", op: "type", done: true, provenance: "ai", commit: "committed" });
           if (stopped()) return handBack;
 
-          // 3) reply into the chat log — a fresh AI bubble that STAYS grain (provenance persists)
+          // 3) reply into the surface's OWN chat (chat-log:grain — visible in the main pane during
+          //    the takeover, since the shell assistant slides away). A fresh grain bubble.
           narrate("writes", "replying in the thread");
-          await moveTo("chat-log");
-          tools.emit({ target: "chat-log", op: "append", provenance: "ai", commit: "pending",
+          await moveTo("chat-log:grain");
+          tools.emit({ target: "chat-log:grain", op: "append", provenance: "ai", commit: "pending",
             html: `<div class="chat-message" data-role="ai" data-grade="grain"><span class="chat-message__who">GRAIN</span><span class="chat-message__body" data-surface="grain-reply"></span></div>` });
           await stream("grain-reply", "On it — three deep-work blocks, review at 2.");
           await beat(HOLD_MS);

@@ -1,10 +1,20 @@
 {
-  "//": "Placeholder for the future standalone repo (see ../SPLIT-PLAN.md). Not consumed yet — today the monorepo root package.json + relative imports are authoritative.",
+  "//": "Staged for the future standalone repo (see ../SPLIT-PLAN.md). Not consumed yet — today the monorepo root package.json + relative imports are authoritative. The exports/files maps below are live-ready so consumers can resolve grain's docs + assets from the installed package (e.g. import.meta.resolve('@tjakoen/grain/docs/GRAIN.md')), which is how the portfolio renders /grain/docs without copying files. Root '.' entry (the TS composition surface) is added at extraction.",
   "name": "@tjakoen/grain",
   "version": "0.1.0",
   "description": "GRAIN — an AI-interaction design system where every surface is operable by both a human and an AI through one shared vocabulary.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
-  "homepage": "https://tjakoen.github.io/grain"
+  "homepage": "https://tjakoen.github.io/grain",
+  "exports": {
+    "./docs/*": "./docs/*",
+    "./ai/*": "./ai/*",
+    "./components/*": "./components/*",
+    "./styles/*": "./styles/*",
+    "./scripts/*": "./scripts/*",
+    "./assets/*": "./assets/*",
+    "./fonts/*": "./fonts/*"
+  },
+  "files": ["ai", "assets", "components", "docs", "fonts", "scripts", "styles"]
 }

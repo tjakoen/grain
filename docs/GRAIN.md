@@ -21,6 +21,56 @@ BATCH's SSE hub satisfies structurally. BATCH answers "how do I render and serve
 components with no build step"; GRAIN answers "how does an AI drive that UI, visibly,
 through one door" — and would answer it the same on a different substrate.
 
+## What GRAIN gives you (capabilities)
+
+The capabilities, **tiered** — headliners first, then the useful-but-quieter ones. Nothing here is
+buried: everything GRAIN does is either a hero or an explicitly-listed feature. **This list is the
+single source** — the README and the `/grain` landing page are teasers of it, and if you add or drop
+a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 11 keeps them honest).
+
+**Hero — the reasons GRAIN exists:**
+
+- **One vocabulary, two operators.** Every surface is addressable and operable by *both* a human and
+  an AI through one closed set of verbs, entering **one server-side door** (`POST /intent`) and
+  returning as `RenderOp`s. A human click and an AI decision become the *same* `Intent` — there is no
+  privileged AI→DOM back channel. (The pieces table below; `AI-INTERFACE.md`.)
+- **Grade-as-signal — the AI's presence is visible.** Provenance is *typography*: grain texture = AI /
+  in-transit, clean = human / committed. The honesty of the signal **is** the design system.
+  (`DESIGN-SYSTEM.md` §3.)
+- **Self-documenting — the live catalog.** Every component carries its own `.md` and **auto-appears in
+  a live component catalog** (`/catalog`) — the design system browses itself, no hand-maintained
+  index. (Harvested from the component tree; the catalog *mechanism* lives in BATCH, the content is
+  GRAIN's — one source, many uses: `AI-INTERFACE.md` §4.)
+
+**Also — useful features, deliberately listed (not headline, never hidden):**
+
+- **The manifest — a drift-proof machine map.** A per-screen, machine-readable projection of what's
+  addressable (`targets`) and invokable (`actions`) *right now*, **harvested** from components (never
+  hand-typed) so it can't drift from the UI. This is how an AI "sees" a page. (`ai/manifest.ts`,
+  `AI-INTERFACE.md` §4.)
+- **Auditable by design.** Every interaction — human or AI — is one `source`-tagged `Intent` through
+  one server-side door, so a complete human+AI **interaction log** is a server-side drop-in. GRAIN
+  provides the chokepoint + provenance; **the consuming app owns the log sink** (see PROJECT-PLAN
+  §10). Not built inside GRAIN by design — it's an affordance, not a feature GRAIN ships.
+- **The design system works with no AI.** The `b-*` atoms + the grade mechanism are usable in any
+  BATCH app with the `ai/` layer dropped entirely (grade also encodes draft/saved, focus/editing).
+- **Re-skin by token override.** Change the whole look by overriding token slots (README §4), never
+  by editing components.
+- **Machine-readable by construction (SEO/AEO).** Semantic HTML + a self-describing surface tree —
+  *AI-operable ≈ AI-answerable*.
+- **Built on the modern web platform — native, not framework JS.** The platform got good enough:
+  GRAIN leans on *shipped browser primitives* instead of reimplementing them in JavaScript. Page
+  transitions are the native cross-document **View Transitions API** (`@view-transition { navigation:
+  auto }` — one CSS declaration, no router); modals are **`<dialog>`** (⌘K, the interrupt confirm —
+  free focus-trap, `::backdrop`, top-layer); disclosures are **`<details>`**; forms use **native
+  constraint validation** (no JS validators); tabs/nav are **plain `<a>` + CSS**; and the styling
+  leans on **`:has()`**, **`:focus-within`**, **`color-mix()`**, **`@starting-style`**, `text-wrap:
+  balance/pretty`, and CSS `scroll-behavior` — all native. **The standing rule:** when a UI need has
+  a platform primitive (**Popover API**, **anchor positioning**, **container queries**,
+  scroll-driven animations), reach for it before writing JS. This is what makes "near-zero framework
+  JS" (`bun run audit`) *real* rather than aspirational — the only client JS that remains is the
+  load-bearing `/intent` dispatcher, not UI chrome. (ARCHITECTURE §11.3 + §0; CONVENTIONS §1.)
+
 ## Substrate contract — what GRAIN needs to run
 
 GRAIN is portable if its host provides three things (BATCH provides all three; another
@@ -56,12 +106,12 @@ Everything else GRAIN needs (the write capability, the render-a-surface function
 
 ```
 Product (the assistant) — domain components + pages + wiring (+ optional theme override)
-   └─ GRAIN   — the AI-operable design system + its DEFAULT theme, "Bread"
+   └─ GRAIN   — the AI-operable design system + its DEFAULT theme, "Sourdough"
         │        (tokens, Redaction fonts, base/skin, grade mechanism, the AI layer)
         └─ BATCH — no-build hypermedia substrate (ARCHITECTURE.md)
 ```
 
-*Design system vs. theme:* GRAIN ships the **Bread** look as its **default
+*Design system vs. theme:* GRAIN ships the **Sourdough** look as its **default
 theme** — it's GRAIN's identity (the warm-paper, Redaction-grain, bread vibe). A product
 on GRAIN uses it directly and only **overrides token slots** (in its own sheet, linked
 after GRAIN's) if it wants a different vibe. New design work generally lands **in GRAIN**

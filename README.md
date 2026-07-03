@@ -18,6 +18,16 @@ the reference one) but imports nothing from it.
 This file is the practical reference: what a host must provide, the markup conventions,
 and how to wire it.
 
+**What GRAIN gives you** (the full, tiered list is the source in [`docs/GRAIN.md`](docs/GRAIN.md) §"What GRAIN gives you"):
+
+- **Hero:** one vocabulary, two operators (human + AI, one door → `RenderOp`s) · grade-as-signal
+  (the AI's presence is visible) · self-documenting (a live `/catalog`).
+- **Also:** the manifest (a drift-proof machine map the AI reads) · auditable by design (every
+  interaction is a source-tagged Intent → an interaction log is a server-side drop-in) · the design
+  system works with no AI · re-skin by token override · machine-readable (SEO/AEO) · **built on the
+  modern web platform** (native View Transitions, `<dialog>`, `<details>`, `:has()`, `color-mix()` —
+  not framework JS).
+
 ---
 
 ## 0. Two layers — the AI interface is optional

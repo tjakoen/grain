@@ -131,6 +131,17 @@ A click, a drag, a checkbox, and a sentence the AI decides to act on all produce
 door." The chat sidebar is its first client; the dashboard its second (MVP §"One
 interface, one path").
 
+> **Auditable by design (an affordance GRAIN provides, not a feature it ships).**
+> Because *every* interaction — human or AI — is one `source`-tagged `Intent` passing
+> through one server-side function (`handleIntent`, `ai/interaction-layer.ts`), a complete
+> human+AI **interaction log** is a server-side drop-in: log the `Intent` on the way in and
+> the `Decision`/`RenderOp`s on the way out. The `source` field is stamped at the entrance
+> and never taken from the client, so provenance in the log can't be forged. GRAIN
+> deliberately does **not** ship the log — the sink (where entries persist, retention,
+> redaction) is app policy, so **the consuming app owns it** (see PROJECT-PLAN §10, "one
+> trace, four uses"). Reads/navigation go through plain htmx GETs, not this door — so this
+> covers *operations* (who did what to the app), not page views.
+
 ### 2b. RenderOp — what the single writer emits
 
 The interaction layer never returns "data for the client to render." It returns

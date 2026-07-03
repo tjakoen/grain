@@ -1,0 +1,19 @@
+/* molecules/callout — a blockquote / margin-note aside for content prose. A quiet ruled
+   block, not a coloured box (monochrome, DESIGN-SYSTEM §2). CSS-only (CONVENTIONS §4): MILL
+   maps Markdown blockquotes to <blockquote class="callout">; nothing data-binds it. */
+.callout {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) 0 var(--space-2) var(--space-4);
+  border-left: 2px solid var(--ink);
+  color: var(--color-muted);
+  font-style: italic;
+}
+.callout > :last-child { margin-bottom: 0; }
+
+/* tone via attribute (not a second class): a stronger note keeps full ink, upright */
+.callout[data-status="strong"] { color: var(--color-fg); font-style: normal; }
+
+/* ---- AI / in-transit: dashed terminal edge (non-text grain), same idiom as the atoms.
+   MILL output is human-authored → never triggers; the catalog grain-flip demonstrates it. */
+.callout[data-commit="pending"],
+[data-grade="grain"] .callout { border-left-style: dashed; }

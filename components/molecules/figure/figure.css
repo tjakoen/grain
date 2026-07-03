@@ -1,0 +1,19 @@
+/* molecules/figure — an image with an optional caption for content prose. The `clipped`
+   variant gives the editorial clipped-photo edge. CSS-only (CONVENTIONS §4): MILL maps a
+   standalone Markdown image to <figure class="figure">; nothing data-binds it, no template. */
+.figure { margin: 0 0 var(--space-6); }
+.figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--color-line); }
+.figure__caption {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  line-height: var(--leading-normal);
+}
+
+/* clipped-photo variant: a hard editorial clip instead of a straight rectangle */
+.figure[data-variant="clipped"] img { border: 0; clip-path: polygon(0 0, 100% 0, 100% 94%, 96% 100%, 0 100%); }
+
+/* ---- AI / in-transit: dashed terminal edge (non-text grain), same idiom as the atoms.
+   MILL output is human-authored → never triggers; the catalog grain-flip demonstrates it. */
+.figure[data-commit="pending"] img,
+[data-grade="grain"] .figure img { border-style: dashed; border-color: var(--ink); }

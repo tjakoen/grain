@@ -1,0 +1,42 @@
+/* atoms/code-block — a monospace code block (and a .code-inline run) for content prose.
+   CSS-only (CONVENTIONS §4): MILL hand-composes <pre class="code-block">, nothing data-binds
+   it, so there's no .html template. Reads --font-mono, so code stays mono in either grade. */
+.code-block {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  overflow-x: auto;                         /* long lines scroll, never break the column */
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-fg);
+}
+.code-block code { font-family: inherit; }
+
+/* optional language tag: `data-lang` renders a quiet eyebrow above the block */
+.code-block[data-lang]::before {
+  content: attr(data-lang);
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+/* inline code — a quiet mono run inside prose */
+.code-inline {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 0 var(--space-1);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- AI / in-transit: same vocabulary as the atoms (CONVENTIONS §4). A code block the AI
+   is writing wears the dashed "terminal" edge (non-text grain). MILL output is human-authored,
+   so it never triggers this; the catalog grain-flip demonstrates it. */
+.code-block[data-commit="pending"],
+[data-grade="grain"] .code-block { border-style: dashed; border-color: var(--ink); }

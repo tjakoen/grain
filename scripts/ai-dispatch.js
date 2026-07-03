@@ -223,6 +223,18 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
 
   // ---- SSE: the server→client push channel -------------------------------------
   const es = new EventSource(`/stream?session=${encodeURIComponent(session)}`);
+  // Ops are pushed to a SUBSCRIBED session only — SSE has NO replay. So an Intent must not be
+  // sent before this stream's subscriber is registered SERVER-SIDE, or the first RenderOps are
+  // lost: typically the `spotlight` op that makes the page "acting". Then the demo appears to do
+  // nothing AND can't be interrupted (isActing() stays false, so clicks/Escape never raise the
+  // "stop?" prompt). The native `open` event is NOT enough — it fires on response headers, which
+  // can precede the server registering the subscriber. We wait for the server's `ready` handshake
+  // (emitted from inside the stream's start(), after registration). Contract: AI-INTERFACE §3 —
+  // the door's reply channel must be LIVE before an intent is raised.
+  let sseIsOpen = false, markSseReady;
+  const sseReady = new Promise((res) => { markSseReady = res; });
+  es.addEventListener("ready", () => { sseIsOpen = true; markSseReady(); }, { once: true });
+  setTimeout(() => markSseReady(), 3000);   // fallback: never hang a click if the handshake never lands
   es.addEventListener("op", (e) => {
     try { applyOp(JSON.parse(e.data)); } catch (err) { console.error("[ai-dispatch] bad op", err); }
   });
@@ -234,11 +246,12 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     // replace → committed). Pre-graining the target wrongly grained whole regions like
     // the screen and left them stuck, since nothing cleared it.
     if (trigger) { clearTrigger(target); trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); }
-    fetch("/intent", {
+    const send = () => fetch("/intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ source: "user", session, screen, surface: target, action, payload }),
     }).catch(() => clearTrigger(target));                        // couldn't reach the door → undo
+    sseIsOpen ? send() : sseReady.then(send);                    // wait for the stream so no early ops are lost
   }
 
   // click a button/link with a verb

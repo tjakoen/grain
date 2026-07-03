@@ -11,7 +11,7 @@ grain works, update this file.
 
 GRAIN is a UI where **every surface is addressable and operable by both a human and an AI through
 one shared vocabulary**, with the AI's presence shown as a visible signal (*grain = AI*). It's
-**two layers, one direction**: the **design system** (the `b-*` atoms, the *Bread* default theme,
+**two layers, one direction**: the **design system** (the `b-*` atoms, the *Sourdough* default theme,
 the grade-as-signal mechanism) — usable with no AI at all — and the **optional AI-interaction layer**
 (`ai/*`, the dispatcher, the spotlight). It runs on a substrate (BATCH is the reference) but imports
 **nothing** from it except the `OpChannel` port. `README.md` is the practical wiring reference.
@@ -28,6 +28,10 @@ the grade-as-signal mechanism) — usable with no AI at all — and the **option
 
 The SSOT for what's operable is **`ai/contract.ts`** (`SurfaceKind`, `ActionName`, `ACTIONS`,
 `RenderOp`). The doc map for the whole monorepo is [`../DOCS.md`](../DOCS.md).
+
+**What's next for grain lives in [`../ROADMAP.md`](../ROADMAP.md) — Track A** (finish the modality,
+then wire the live model at M★). Read it before starting substantive grain work; it's the canonical
+cross-layer execution plan and this file stays canonical for grain's rules.
 
 ## Non-negotiables
 
@@ -73,6 +77,29 @@ instead of the vocabulary GRAIN already ships, and contracts that fail *silently
 5. **If you keep getting something wrong, the contract is unclear.** Fix the contract (design the
    mistake out) or add a **conformance test** that catches misuse — don't just patch the instance.
    An AI tripping on the system is a measurement of the system, not just the AI.
+6. **The reply channel must be LIVE before an intent is raised — SSE has no replay.** An `Intent`
+   posted before the `/stream` subscriber is registered *server-side* silently drops its first
+   `RenderOp`s. When the dropped op is the `spotlight`-on, the page never enters "acting"
+   (`isActing()` stays false) → the AI **looks stuck and can't be interrupted** (clicks/Escape never
+   raise the stop prompt), yet nothing errors. The native EventSource `open` is **not** sufficient —
+   it fires on response headers, which can precede `start()` registering the subscriber. Fix: the
+   stream emits a `ready` handshake **from inside `start()`** and the dispatcher gates every submit
+   on it (`grain/scripts/ai-dispatch.js`, `batch/http/stream.ts`). Symptom→cause: *a demo that does
+   nothing for a beat, or can't be stopped* = dropped early ops, not reasoner logic.
+7. **An AI run must be LEGIBLE and must always RELEASE.** Every run narrates its steps somewhere the
+   user can see (the app-shell console on `/loop`; a `.surface-term` terminal on `/grain`, both the
+   `console` push-surface) so a multi-second run never reads as frozen — silence looks like "stuck".
+   And every path (natural completion *and* graceful stop) must end by releasing the spotlight
+   (`spot("screen", false)`); **test the natural-completion release**, not just the stop path — the
+   gap that let #6 ship was an e2e that asserted outcomes but never that the veil drops on its own.
+8. **The "AI is acting" treatment must be defined for every surface KIND, not just block regions.**
+   `.ai-spotlit` (paper lift + offset outline) was authored for cards/lists/regions; on a bare
+   `<input>` it lit only the input (label left in the dim) and its offset outline **doubled** the
+   input's native focus ring. A form control's spotlit surface is the whole labeled **`.field`** —
+   `ai.css` now lights `.field:has(.ai-spotlit)` and suppresses the inner control's box. When you add
+   a new operable surface shape (control group, table row, canvas…), define its lit treatment in
+   `ai.css` + add a conformance assertion — don't assume the block-surface box fits. (Design-system
+   gap, not architectural: the dispatcher lit the right element; the *visual* wasn't defined for it.)
 
 ## Definition of done
 

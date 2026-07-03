@@ -24,6 +24,21 @@
   transition: background-color var(--ai-focus-move, 0.4s) ease,
               outline-color var(--ai-focus-move, 0.4s) ease;
 }
+/* Form controls are a special surface: the `.ai-spotlit` box above was authored for BLOCK
+   surfaces (cards, lists, regions). On a bare <input> it lights the input alone — leaving its
+   label in the dim ("just the input") — and its offset outline stacks with the input's native
+   focus ring into a heavy double box. So when the spotlit element is a field control, light the
+   whole labeled FIELD as one card and let the input show only its own focus. (grain lesson 3:
+   a treatment that doesn't hold for one case is a design gap — define it, don't leave it silent.) */
+.field:has(.ai-spotlit) {
+  position: relative; z-index: var(--z-ai-spot, 9001);
+  background: var(--paper); border-radius: var(--radius-md);
+  outline: 1px solid var(--ink); outline-offset: 4px;
+  transition: outline-color var(--ai-focus-move, 0.4s) ease;
+}
+.field .ai-spotlit {                 /* the control inside a lit field — don't double the box */
+  outline: none; background: transparent; z-index: auto;
+}
 /* the "AI clicked here" pulse. Self-sufficient: .is-click alone renders it (position:relative
    anchors its own ::before), so pulsing never silently no-ops for want of a sibling .ai-spotlit.
    (.ai-spotlit already establishes a positioned context, so spotlit elements are unaffected.) */

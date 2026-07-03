@@ -179,6 +179,13 @@ small island of JS when a feature wants it") — is:
   (`replace` / `append` / `remove` / `flash`) and intercepts `[data-action]` clicks,
   turning them into `POST /intent`.
 
+**The reply channel must be LIVE before an intent is raised** — SSE has no replay, so an
+`Intent` posted before its `/stream` subscriber is registered *server-side* silently loses its
+first `RenderOp`s (often the `spotlight`-on — the page then never reads as "acting" and can't be
+interrupted). The native `open` event is not enough (it fires on headers, before the server's
+`start()` registers the subscriber), so the stream emits a **`ready` handshake from inside
+`start()`** and the dispatcher gates every submit on it. See grain/CLAUDE.md lesson 6.
+
 **Why SSE, not WebSocket:** push is one-directional (server→client); intent goes up
 over a plain `POST`. SSE auto-reconnects and needs no duplex socket. **Why a custom
 dispatcher, not htmx's `sse-swap`:** the render-op model (op kind + provenance +
@@ -290,9 +297,10 @@ commits**, then releases — the working state spans the whole action, never a f
 dispatcher does this by holding the trigger in **`pendingTriggers`** and releasing it in
 `clearTrigger(target)` when the committed op (or a `flash`/rollback) for that surface arrives
 (see the light path, §above). Nested work nests: a run's trigger stays pending for the whole run
-while each sub-control holds for its own action. **Any client-side driver (e.g. a showcase demo
-that emits ops locally) must reproduce this lifecycle** — it is the contract, not an ai-dispatch
-implementation detail.
+while each sub-control holds for its own action. **This lifecycle is the contract, not an
+ai-dispatch implementation detail** — any alternate driver must reproduce it. (The `/grain`
+showcase demo doesn't need to: it runs through the real dispatcher and door like every other
+surface — there is no showcase-only client-side op emitter.)
 
 ---
 

@@ -141,6 +141,61 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         // graceful stop: hand back cleanly if asked — never a force-kill (PROJECT-PLAN §9).
         const stopped = (): boolean => { if (!tools.cancelled()) return false; spot("screen", false); return true; };
 
+        // --- /grain showcase scenario: the SAME door drives the showcase surface. This is the
+        //     page whose whole claim is "no privileged AI→DOM back channel" — so its "Watch the
+        //     AI act" demo goes through POST /intent → RenderOps over SSE, exactly like /loop, and
+        //     targets the /grain composition's own surface addresses. (Stub-demo choreography; the
+        //     live model at M★ reads the manifest instead of hard-coded surfaces.) ---
+        if (intent.screen === "grain") {
+          // Narrate every step to the terminal so a run is always LEGIBLE (never reads as "stuck").
+          // The /grain page shows a console feed (data-surface="console") while acting.
+          clearConsole();
+
+          // 1) read the surface
+          narrate("reads", "checking today's tasks");
+          await moveTo("grain-rail");
+          await beat(HOLD_MS);
+          if (stopped()) return handBack;
+
+          // 2) compose a request in the Ask field like a human, then "submit" (clears it)
+          narrate("types", "composing “Plan Thursday…”");
+          await moveTo("grain-ask");
+          await stream("grain-ask", "Plan Thursday around the review", false);
+          await beat(HOLD_MS);
+          tools.emit({ target: "grain-ask", op: "type", done: true, provenance: "ai", commit: "committed" });
+          if (stopped()) return handBack;
+
+          // 3) reply into the chat log — a fresh AI bubble that STAYS grain (provenance persists)
+          narrate("writes", "replying in the thread");
+          await moveTo("chat-log");
+          tools.emit({ target: "chat-log", op: "append", provenance: "ai", commit: "pending",
+            html: `<div class="chat-message" data-role="ai" data-grade="grain"><span class="chat-message__who">GRAIN</span><span class="chat-message__body" data-surface="grain-reply"></span></div>` });
+          await stream("grain-reply", "On it — three deep-work blocks, review at 2.");
+          await beat(HOLD_MS);
+          if (stopped()) return handBack;
+
+          // 4) complete a task — a click that flips its badge to done (committed)
+          narrate("commits", "completing “Draft the Q3 plan”");
+          await moveTo("grain-task", true);
+          tools.emit({ target: "grain-task-badge", op: "replace", provenance: "ai", commit: "committed",
+            html: `<span class="badge" data-status="archived" data-surface="grain-task-badge">done</span>` });
+          await beat(HOLD_MS);
+          if (stopped()) return handBack;
+
+          // 5) draft a follow-up task of its own — AI-authored, so it STAYS grain
+          narrate("types", "drafting a follow-up");
+          tools.emit({ target: "grain-tasks", op: "append", provenance: "ai", commit: "pending",
+            html: `<li class="list__item" data-grade="grain" data-surface="grain-draft"></li>` });
+          await moveTo("grain-draft");
+          await stream("grain-draft", "Block 9–11am for deep work");
+          await beat(HOLD_MS);
+
+          // 6) hand back
+          narrate("done", "handed back to you");
+          spot("screen", false);
+          return { ok: true, ops: [], reply: "(demo) the AI read, replied, completed a task, and drafted one — all through the door." };
+        }
+
         // Write a committed VALUE into a surface: stream it in grain (you watch it type),
         // then settle to the CLEAN committed HTML. Speech stays grain; ground-truth data
         // settles clean — the same grain→clean an item.archive shows (AI-INTERFACE §5).
@@ -208,9 +263,15 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         //    settle clean. Drives loop-card + item-card + badge, all AI-driven.
         const badge = (n: number, status: string, label: string) =>
           `<span class="badge" data-status="${status}" data-surface="task-badge:${n}">${label}</span>`;
+        // archive the finished task — a REAL write through the scoped tool (not a cosmetic flip):
+        // the AI mutates state via the service, then renders the COMMITTED card back over SSE.
+        // Re-runnable: archiveItem is idempotent, so replaying re-archives the same demo fixture
+        // (a harmless no-op write). The id is a demo fixture; the live model reads the manifest.
+        const reviewSurface = "item:ITM-demo-1";
         narrate("clicks", "archiving “Review doc”");
-        await moveTo("task:1");                     // the finished one → archive it
-        tools.emit({ target: "task-badge:1", op: "replace", html: badge(1, "archived", "archived"), provenance: "ai", commit: "committed" });
+        await moveTo(reviewSurface, true);         // the finished one → click to archive it
+        await tools.archiveItem(surfaceId(reviewSurface));
+        tools.emit({ target: reviewSurface, op: "replace", html: await tools.renderSurface(reviewSurface), provenance: "ai", commit: "committed" });
         await beat(HOLD_MS);
         if (stopped()) return handBack;
         narrate("clicks", "scheduling the deep-work block");

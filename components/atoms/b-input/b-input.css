@@ -9,7 +9,9 @@
   border: var(--border); border-radius: var(--radius-sm);   /* hard edge — you tap it */
 }
 .field__input::placeholder { color: var(--ink-faint); }
-.field__input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+/* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
+   the button) — never `autofocus`, which would steal focus + scroll the catalog on load. */
+.field__input:focus-visible, .field__input[data-force~="focus"] { outline: 2px solid var(--ink); outline-offset: 1px; }
 
 /* invalid state — native, no JS. Monochrome: a heavier rule, not a red one. */
 .field__input:user-invalid { border-width: 2px; }
@@ -26,7 +28,9 @@
    A field the AI is touching (live pending, or any grain ancestor) wears the dashed
    "terminal" edge; the label + value already swap to the grain family via --type-font.
    EXCEPTION: while the AI is actively COMPOSING, the dispatcher sets data-grade="smooth"
-   on the input itself (clean ink, real caret, like a human typing) — so that stays solid. */
-.field[data-commit="pending"] .field__input,
-[data-grade="grain"] .field__input { border-style: dashed; }
+   on the input itself (clean ink, real caret, like a human typing) — so that stays solid.
+   The `:not([data-grade="smooth"])` guard makes the exception explicit: a self-smooth input
+   never matches the dashed rule, so the outcome doesn't depend on stylesheet source order. */
+.field[data-commit="pending"] .field__input:not([data-grade="smooth"]),
+[data-grade="grain"] .field__input:not([data-grade="smooth"]) { border-style: dashed; }
 .field__input[data-grade="smooth"] { border-style: solid; }

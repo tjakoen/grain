@@ -4,8 +4,8 @@
 > (`grain/ai/contract.ts`), the one door (`grain/ai/interaction-layer.ts`), the harvested manifest
 > (`/ai/manifest`), grade-as-signal, and the SSE dispatcher island. This file is GRAIN's **roadmap**:
 > planned/deferred features, one line each. It is an *index*, **not** a second source of truth — the AI
-> contract lives in [`../docs/AI-INTERFACE.md`](../docs/AI-INTERFACE.md), the build rules in
-> [`../CONVENTIONS.md`](../CONVENTIONS.md), the beliefs in [`../PHILOSOPHY.md`](../PHILOSOPHY.md). When a
+> contract lives in [`docs/AI-INTERFACE.md`](docs/AI-INTERFACE.md), the build rules in
+> [`../batch/docs/CONVENTIONS.md`](../batch/docs/CONVENTIONS.md), the beliefs in [`../portfolio/PHILOSOPHY.md`](../portfolio/PHILOSOPHY.md). When a
 > feature is built, follow the CLAUDE.md alignment table (contract → reasoner → tests → docs).
 
 ## Planned

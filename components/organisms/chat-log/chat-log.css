@@ -1,0 +1,5 @@
+/* organisms/chat-log — a vertical thread of chat-message molecules. chat-message positions itself
+   with align-self (you → right, the AI → left), which ONLY works inside a flex COLUMN — so the log
+   is required, not optional. Composing messages in a chat-log makes correct alignment structural
+   (correct-by-construction) instead of a silent trap. */
+.chat-log { display: flex; flex-direction: column; gap: var(--space-2); }

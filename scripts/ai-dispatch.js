@@ -6,6 +6,14 @@
 //   2. Open an SSE stream and apply RenderOps the server PUSHES, addressed by the
 //      semantic surface (data-surface) — never by tag or CSS class.
 // It knows render ops + the door; nothing about specific verbs.
+//
+// The "AI is acting" spotlight (backdrop / label / lit surface / click pulse) is GRAIN's shared
+// primitive — grain/scripts/ai-spotlight.js. This dispatcher keeps the product ORCHESTRATION around
+// it (surface-address resolution, per-kind AI-mode, scroll-into-view, the pending-trigger lifecycle,
+// the app-shell takeover, the 20s safety timeout, and the mediated interrupt) and delegates only the
+// raw DOM to createSpotlight — so the demo and the dispatcher light the page the same way.
+import { createSpotlight } from "/scripts/ai-spotlight.js";
+
 (() => {
   "use strict";
 
@@ -29,21 +37,13 @@
   }
 
   // ---- "the desk is acting": spotlight the surface the AI is touching --------------
-  let backdrop = null, actingLabel = null, confirmEl = null;
+  // The backdrop/label/lit/pulse DOM is grain's shared createSpotlight; the orchestration below is
+  // this dispatcher's. clicking the veil → interrupt (ask, don't force-kill).
+  const spotlight = createSpotlight({ onInterrupt: interrupt });
+  let confirmEl = null;
   let spotlit = null, spotlightTimer = null;
-  const isActing = () => !!backdrop && backdrop.classList.contains("is-on");
+  const isActing = () => spotlight.isOn();
 
-  function ensureSpotlight() {
-    if (backdrop) return;
-    backdrop = document.createElement("div");
-    backdrop.className = "ai-backdrop";
-    backdrop.addEventListener("click", interrupt);   // interrupt → ask, don't force-kill
-    actingLabel = document.createElement("div");
-    actingLabel.className = "ai-acting-label";
-    actingLabel.textContent = "✶ the desk is acting…";
-    actingLabel.hidden = true;
-    document.body.append(backdrop, actingLabel);
-  }
   // release a surface from the spotlight. A control the AI is "using" keeps its
   // working state (data-commit) until its OUTPUT completes — held in pendingTriggers,
   // released by clearTrigger on the output's committed op — so it isn't dropped here.
@@ -60,9 +60,7 @@
     if (!held) el.removeAttribute("data-commit");
   }
   function spotlightOn(target, click) {
-    ensureSpotlight();
-    backdrop.classList.add("is-on");
-    actingLabel.hidden = false;
+    spotlight.on("✶ the desk is acting…");   // grain's backdrop + label
     // shell takeover (if the page uses the app-shell): the chat retracts + the console narrates
     document.querySelector(".app-shell")?.setAttribute("data-acting", "true");
     const el = find(target);
@@ -70,7 +68,7 @@
     if (el) {
       el.classList.add("ai-spotlit");
       el.scrollIntoView({ block: "center" });   // smoothness owned by CSS scroll-behavior (honors reduced-motion)
-      if (click) { el.classList.remove("is-click"); void el.offsetWidth; el.classList.add("is-click"); }  // pulse ONLY on a real click
+      if (click) spotlight.pulse(el);            // pulse ONLY on a real click
       // each KIND of surface reads AI-mode its own way:
       const tag = el.tagName, out = el.getAttribute("data-target");
       if (tag === "INPUT" || tag === "TEXTAREA") {
@@ -94,8 +92,7 @@
   function spotlightOff() {
     clearTimeout(spotlightTimer);
     hideConfirm();
-    if (backdrop) backdrop.classList.remove("is-on");
-    if (actingLabel) actingLabel.hidden = true;
+    spotlight.off();                              // drop grain's backdrop + label
     const sh = document.querySelector(".app-shell");
     if (sh) { sh.removeAttribute("data-acting"); sh.removeAttribute("data-chat-open"); sh.removeAttribute("data-console-open"); }   // hand back: everything resets
     clearActing(spotlit); spotlit = null;

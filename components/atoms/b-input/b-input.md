@@ -18,7 +18,7 @@ bare boolean, and the tag may self-close.
 ```html
 <label class="field">
   <span class="field__label">Name</span>
-  <input class="field__input" name="name" value="Jane" autofocus>
+  <input class="field__input" name="name" value="Jane" data-force="focus">
 </label>
 ```
 

@@ -1,14 +1,17 @@
 # GRAIN — usage
 
+[![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
+
 GRAIN is the **AI-interaction design system**: a UI where every surface is addressable
 and operable by both a human and an AI through one shared vocabulary, with the AI's
 presence shown as a visible signal (*grain = AI*). It runs on a **substrate** (BATCH is
 the reference one) but imports nothing from it.
 
-- **The beliefs behind it:** [`../PHILOSOPHY.md`](../PHILOSOPHY.md)
-- **Overview / why:** [`../docs/GRAIN.md`](../docs/GRAIN.md)
+- **The beliefs behind it:** [`../portfolio/PHILOSOPHY.md`](../portfolio/PHILOSOPHY.md)
+- **Overview / why:** [`docs/GRAIN.md`](docs/GRAIN.md)
 - **The full contract** (intent envelope, render ops, manifest, the AI-acts protocol,
-  the two write paths): [`../docs/AI-INTERFACE.md`](../docs/AI-INTERFACE.md)
+  the two write paths): [`docs/AI-INTERFACE.md`](docs/AI-INTERFACE.md)
 - **Built on top of GRAIN:** [`MILL`](../mill/PLAN.md), the Markdown→pages CMS (a layer above).
 - **Roadmap / planned features:** [`PLAN.md`](PLAN.md)
 
@@ -49,7 +52,7 @@ GRAIN is portable to any host that supplies three things:
    from its own contract, never the implementation. *(Future, additive: a durable
    sibling — a per-actor turn-status store — lets a reconnecting client reflect a
    still-running turn. It sits beside this port; the component conventions don't change.
-   See `../docs/AI-INTERFACE.md` §5d.)*
+   See `docs/AI-INTERFACE.md` §5d.)*
 2. **A renderer that understands the binding vocabulary** below (§3). BATCH's
    composition engine implements it; another substrate must too.
 3. **A filesystem** (`ai/accepts.ts` reads component files to harvest the manifest) —
@@ -149,4 +152,4 @@ const layer = createInteractionLayer({
 > **Rough edge (honest):** the action *vocabulary values* and the reasoner's *tools*
 > (`archiveItem` …) are currently entangled with GRAIN rather than fully app-injected.
 > Pushing the vocabulary down to the consumer is a known next step (see
-> `../docs/AI-INTERFACE.md` §1b note). Until then, edit `ai/contract.ts` to add verbs.
+> `docs/AI-INTERFACE.md` §1b note). Until then, edit `ai/contract.ts` to add verbs.

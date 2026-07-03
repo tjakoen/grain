@@ -14,4 +14,6 @@
   display: block; margin-bottom: 2px;
   font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint);
 }
-.chat-message__body { display: block; }
+/* the body reads the inherited grade font (a <span> isn't in grain.css's type selector), so the
+   AI's line actually renders grain when the message carries data-grade="grain". */
+.chat-message__body { display: block; font-family: var(--type-font); }

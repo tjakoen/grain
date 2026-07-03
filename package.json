@@ -1,0 +1,10 @@
+{
+  "//": "Placeholder for the future standalone repo (see ../SPLIT-PLAN.md). Not consumed yet — today the monorepo root package.json + relative imports are authoritative.",
+  "name": "@tjakoen/grain",
+  "version": "0.1.0",
+  "description": "GRAIN — an AI-interaction design system where every surface is operable by both a human and an AI through one shared vocabulary.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
+  "homepage": "https://tjakoen.github.io/grain"
+}

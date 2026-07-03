@@ -13,6 +13,10 @@
 .is-ai,    [data-grade="grain"]  { --type-font: var(--font-grain); }
 .is-human, [data-grade="smooth"] { --type-font: var(--font-smooth); }
 [data-grade="accent"]            { --type-font: var(--font-accent); }
+/* An element that CARRIES a grade also renders in it — not only its covered descendants. So
+   data-grade works on any element (a bare <span>, a <div>), not just .t/p/li/h*. Children still
+   inherit and covered primitives still re-read --type-font, so nested grades keep working. */
+[data-grade] { font-family: var(--type-font); }
 
 /* a field is "yours, right now": draft (grain) at rest, clean while editing */
 .field              { --type-font: var(--font-grain); }

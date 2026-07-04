@@ -3,7 +3,7 @@ import { test, expect, beforeAll, afterAll } from "bun:test";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createMillRoutes, dirSource, packageDocsSource, type MillCollection } from "./serve.ts";
+import { createMillRoutes, dirSource, listMillRoutes, packageDocsSource, type MillCollection } from "./serve.ts";
 
 let dir: string;
 
@@ -69,6 +69,13 @@ test("collection chrome overrides the default and gets the frontmatter", async (
   });
   expect(await (await handler("/notes/newer"))!.text()).toBe("[entry:Newer Note:2026-07-03]");
   expect(await (await handler("/notes"))!.text()).toBe("[index:Notes:]");
+});
+
+test("listMillRoutes enumerates the index + every entry; index:false drops the index route", async () => {
+  const routes = await listMillRoutes([notes()]);
+  expect(routes).toEqual(["/notes", "/notes/newer", "/notes/older"]);
+  const noIndex = await listMillRoutes([{ ...notes(), index: false }]);
+  expect(noIndex).toEqual(["/notes/newer", "/notes/older"]);
 });
 
 test("packageDocsSource resolves layer docs from the installed package (never a sibling path)", async () => {

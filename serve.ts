@@ -166,6 +166,21 @@ function byDateDesc(a: IndexEntry, b: IndexEntry): number {
 // ---- the routes ---------------------------------------------------------------------
 export type MillRequestHandler = (pathname: string) => Promise<Response | null>;
 
+/**
+ * Every route a set of collections serves, enumerated: the index (`prefix`, unless
+ * `index: false`) plus one `${prefix}/${slug}` per entry. The single source consumers
+ * use to feed a sitemap or a static-export allowlist — MILL routes are content pages
+ * and MUST export (ARCHITECTURE §18); deriving them here keeps new entries automatic.
+ */
+export async function listMillRoutes(collections: MillCollection[]): Promise<string[]> {
+  const out: string[] = [];
+  for (const c of collections) {
+    if (c.index ?? true) out.push(c.prefix);
+    for (const slug of await c.source.list()) out.push(`${c.prefix}/${slug}`);
+  }
+  return out.sort();
+}
+
 const html = (body: string) =>
   new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 

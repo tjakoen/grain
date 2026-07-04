@@ -1,0 +1,23 @@
+/* molecules/table — a content data table (MILL maps Markdown pipe tables to it), wrapped
+   in .table-scroll so wide tables scroll inside their own box instead of breaking the page.
+   Monochrome and ruled, not zebra-striped (DESIGN-SYSTEM §2). CSS-only: composed by MILL
+   or written by hand; nothing data-binds it. */
+.table-scroll { overflow-x: auto; margin: 0 0 var(--space-4); }
+.table { border-collapse: collapse; width: 100%; font-size: var(--text-sm); }
+.table th {
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 2px solid var(--ink);
+  padding: var(--space-2) var(--space-3);
+}
+.table td {
+  border-bottom: 1px solid var(--color-line);
+  padding: var(--space-2) var(--space-3);
+  vertical-align: top;
+  line-height: var(--leading-normal);
+}
+.table th:first-child, .table td:first-child { padding-left: 0; }
+
+/* AI / in-transit: dashed terminal edge (non-text grain idiom, same as the atoms) */
+.table[data-commit="pending"],
+[data-grade="grain"] .table { border: 1px dashed var(--ink); }

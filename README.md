@@ -188,6 +188,11 @@ is the worked example: `project/` and `portfolio/` are two consumers doing exact
 
 To make it **switchable at runtime** (light/dark or multiple flavours), scope the block to an
 attribute and flip it on `<html>` — `[data-theme="mine"] { … }` / `[data-color-scheme="dark"] { … }`.
+Wire the two theming scripts once at the composition root: `scripts/theme.js` (deferred — the
+declarative controls + localStorage persistence) and `scripts/theme-boot.js` **render-blocking in
+`<head>`** (pre-sets the saved attributes before first paint; without it every navigation flashes
+the default theme). Inject them on *every* page shell — including any page that builds its own
+`<html>` outside the page server — or that page silently ignores the saved theme.
 Grade-as-signal is load-bearing: keep `--font-grain` visibly distinct from `--font-smooth` in
 every theme, and verify it still reads in dark.
 

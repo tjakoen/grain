@@ -89,6 +89,14 @@ substrate could):
 Everything else GRAIN needs (the write capability, the render-a-surface function) is
 **injected** by the composition root, so GRAIN names no concrete dependency.
 
+One consequence worth stating: GRAIN doesn't only render server-side. The client-door mode runs
+the interaction layer **in the browser**, and the static export ships GRAIN pages as plain files —
+in both, server-side memoization never reaches the user, so **client-side caching is a GRAIN
+concern, not an afterthought**: cacheable module graph + style bundles (HTTP semantics, immutable
+once exported), a per-screen manifest snapshot invalidated by applied ops rather than refetched,
+and view preferences in `localStorage` (theme.js already does this). The plan is ROADMAP Track
+B.6e; the header mechanism lives in the substrate, the manifest policy here.
+
 ## The pieces
 
 | Piece | What it is | Where |

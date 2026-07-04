@@ -7,8 +7,10 @@
 // constant block below — no raw strings scattered through the logic (CONVENTIONS §3: browser-JS
 // literals kept to a single source). Those attribute names are mirrored in CSS selectors
 // (variables.css) and in the control markup; keep the three in sync.
-// NOTE (FOUC): saved prefs apply when this deferred module runs; the shell phase adds an inline
-// <head> bootstrap to pre-set the attributes before styles apply. See README §4/§6.
+// NOTE (FOUC): saved prefs apply when this deferred module runs; theme-boot.js (loaded
+// render-BLOCKING in <head> by the composition root) pre-sets the attributes before first
+// paint so navigation never flashes the default. It mirrors the KEY/ATTR strings below —
+// change them here, change them there.
 (() => {
   "use strict";
   if (window.grain && window.grain.theme) return;   // idempotent: safe if loaded per-page AND globally

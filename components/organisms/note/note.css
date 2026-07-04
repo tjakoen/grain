@@ -1,0 +1,19 @@
+/* organisms/note — the editorial content article MILL's default layout emits:
+   .note / .note__head / .note__lede / .note__tags. CSS-only (CONVENTIONS §4): composed by
+   MILL at request time, nothing data-binds it. MILL content is human-authored → the layout
+   stamps data-grade="smooth", so the AI-mode idiom never triggers from MILL itself; the
+   text grain would still apply if a consumer ever marked one in-transit. */
+.note { max-width: 72ch; }
+.note > p, .note > ul, .note > ol, .note > blockquote { line-height: var(--leading-relaxed); }
+
+.note__head .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-xs); }
+.note__head .masthead { font-size: var(--text-3xl); margin-bottom: var(--space-3); }
+.note__lede {
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  max-width: 60ch;
+  margin: 0 0 var(--space-4);
+}
+.note__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-4); }
+.note__head > .rule { margin-top: var(--space-4); }

@@ -38,6 +38,20 @@
   // the terminal's expand control (the "desk is acting" indicator) reveals/hides the narration feed
   shell.querySelector('[data-shell="console-toggle"]')?.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
 
+  // OPTIONAL PANEL MODES (sidebar-panel): mode tabs ([data-shell-mode]) switch the assistant
+  // between its panes — data-mode on .assistant, hidden on the inactive panes, aria-selected on
+  // the tabs. Value-agnostic (the consumer names the modes); a panel with no panes has no tabs,
+  // so this is a no-op there. stopPropagation keeps a tab click off the mobile grab bar below.
+  const assistant = shell.querySelector(".assistant");
+  const setAsideMode = (mode) => {
+    if (!assistant) return;
+    assistant.setAttribute("data-mode", mode);
+    for (const p of assistant.querySelectorAll(".assistant__pane")) p.hidden = p.getAttribute("data-pane") !== mode;
+    for (const b of assistant.querySelectorAll("[data-shell-mode]")) b.setAttribute("aria-selected", b.getAttribute("data-shell-mode") === mode ? "true" : "false");
+  };
+  for (const b of shell.querySelectorAll(".assistant__modes [data-shell-mode]"))
+    b.addEventListener("click", (e) => { e.stopPropagation(); setAsideMode(b.getAttribute("data-shell-mode")); });
+
   // mobile: the assistant is a bottom sheet — tap its header (the grab bar) to raise/lower it
   shell.querySelector(".assistant__head")?.addEventListener("click", () => {
     if (mobile.matches) shell.toggleAttribute("data-aside-open");

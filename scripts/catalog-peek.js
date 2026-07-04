@@ -1,18 +1,22 @@
-// grain/scripts/catalog-peek.js — a DEMO-only island: a Catalog sidebar in the reference app
-// that bridges usage → specimen. On a hovering pointer, hovering a component in the demo REVEALS
-// that component's entry in the embedded /catalog (one at a time, cross-fading — no scrolling).
+// grain/scripts/catalog-peek.js — a DEMO-only island: the sidebar-panel's CATALOG pane in the
+// reference app, bridging usage → specimen. On a hovering pointer, hovering a component in the
+// demo REVEALS that component's entry in the embedded /catalog (one at a time, cross-fading — no
+// scrolling). The pane itself is a sidebar-panel MODE (shell.js owns the Chat⇄Catalog switch);
+// this island only adds the catalog behaviours: [data-peek] open/close hooks, the lazy iframe
+// load, and the hover bridge.
 //
-// It EMBEDS /catalog in an <iframe> and maps each rendered CSS class to its catalog section slug
-// (the .md title slug — stable for grain's components). The catalog exposes a "single" mode
-// (data-peek-single + .is-peek-active, driven here via window.__catSetActive). The reveal mechanic
-// is POINTER-ONLY: on touch/coarse devices the sidebar shows the full, scrollable catalog instead.
-// Only runs where the panel exists.
+// It EMBEDS /catalog in the pane's <iframe> and maps each rendered CSS class to its catalog
+// section slug (the .md title slug — stable for grain's components). The catalog exposes a
+// "single" mode (data-peek-single + .is-peek-active, driven here via window.__catSetActive). The
+// reveal mechanic is POINTER-ONLY: on touch/coarse devices the pane shows the full, scrollable
+// catalog instead. Only runs where the pane exists.
 (() => {
   "use strict";
-  const panel = document.querySelector(".catalog-peek");
+  const shell = document.querySelector(".app-shell");
+  const pane = document.querySelector('.assistant__pane[data-pane="catalog"]');
   const demo = document.querySelector("[data-peek-root]");   // the site's content root (chrome sits outside it)
-  if (!panel || !demo) return;
-  const frame = panel.querySelector(".catalog-peek__frame");
+  if (!shell || !pane || !demo) return;
+  const frame = pane.querySelector("iframe");
   // the hover-to-reveal mechanic only makes sense with a hovering pointer (desktop mouse) —
   // on touch it would be undrivable, so there we leave the full scrollable catalog.
   const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -29,22 +33,31 @@
     "icon": "icon", "t": "typography",
   };
 
-  const isOpen = () => panel.getAttribute("data-open") === "true";
+  const isOpen = () => !pane.hidden;
+  // open/close = switch the sidebar-panel's mode — REUSE the shell's one mechanic (click its mode
+  // tab; shell.js flips data-mode/hidden/aria-selected), never a parallel show/hide path. On the
+  // mobile sheet, opening also raises the sheet so the switch is visible.
+  const modeTab = (m) => shell.querySelector(`.assistant__modes [data-shell-mode="${m}"]`);
   const setOpen = (v) => {
-    panel.setAttribute("data-open", v ? "true" : "false");
-    if (v && !frame.getAttribute("src")) frame.setAttribute("src", "/catalog");   // lazy-load the catalog
+    modeTab(v ? "catalog" : "chat")?.click();
+    if (v && matchMedia("(max-width: 768px)").matches) shell.setAttribute("data-aside-open", "");
   };
   // [data-peek] hooks: "open" forces open, "close" forces closed, "toggle" (default) flips.
   // preventDefault so a hook can be a real <a> (the Catalog tab is href="/grain" for no-JS nav /
-  // for pages without the peek, e.g. /loop) yet open the peek in place where this island runs.
+  // for pages without the pane, e.g. /loop) yet switch the panel in place where this island runs.
   for (const t of document.querySelectorAll("[data-peek]")) {
     const mode = t.getAttribute("data-peek");
     t.addEventListener("click", (e) => { e.preventDefault(); setOpen(mode === "open" ? true : mode === "close" ? false : !isOpen()); });
   }
-  panel.querySelector(".catalog-peek__close")?.addEventListener("click", () => setOpen(false));
+
+  // lazy-load /catalog the first time the pane becomes visible — whichever way it opened (a
+  // [data-peek] hook or the panel's own Catalog mode tab).
+  const ensureSrc = () => { if (isOpen() && !frame.getAttribute("src")) frame.setAttribute("src", "/catalog"); };
+  new MutationObserver(ensureSrc).observe(pane, { attributes: true, attributeFilter: ["hidden"] });
+  ensureSrc();
 
   // once the embedded catalog loads, put it in "single" mode (show one entry at a time) and
-  // default to the first entry so the sidebar isn't blank before the first hover. Pointer-only:
+  // default to the first entry so the pane isn't blank before the first hover. Pointer-only:
   // on touch we skip single mode and leave the full scrollable catalog.
   frame.addEventListener("load", () => {
     if (!canHover) return;
@@ -80,8 +93,8 @@
   function peek(slug) {
     if (slug === last) return;
     last = slug;
-    panel.setAttribute("data-peek-slug", slug);   // observable state (e2e + reference)
-    showInFrame(slug);   // reveal-one: the sidebar shows just this entry, cross-fading — no scrolling
+    pane.setAttribute("data-peek-slug", slug);   // observable state (e2e + reference)
+    showInFrame(slug);   // reveal-one: the pane shows just this entry, cross-fading — no scrolling
   }
 
   demo.addEventListener("mouseover", (e) => {

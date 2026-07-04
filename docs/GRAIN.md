@@ -44,6 +44,25 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
 
 **Also — useful features, deliberately listed (not headline, never hidden):**
 
+- **The client-side door — the same contract with no backend.** The interaction layer can run
+  *in the browser* (`ai/client-door.ts`): a loopback `OpChannel` hands `RenderOp`s straight to the
+  dispatcher, so a **static host** runs the full vocabulary — same door, same ops, zero server. The
+  page opts in (`<body data-ai-transport="client">`, typically stamped by the static export) and the
+  boundary is hard: everything the client door loads is **client-safe by contract** — static-style
+  modules only, no secrets/tokens, nothing that needs a server (ARCHITECTURE §19.2–19.3).
+- **Theming — two orthogonal token axes.** `data-color-scheme` (light | dark | follow-the-OS) ×
+  `data-theme` (the flavor — Sourdough default, Baguette, Brioche), both **pure token re-skins**
+  driven by declarative controls (`scripts/theme.js`) with a render-blocking FOUC guard
+  (`theme-boot.js`). Flavors are consumer-declared (`<html data-themes="…">`) — GRAIN hardcodes no
+  theme names — and one `--color-accent` slot gives a flavor its single signature hue.
+  (`DESIGN-SYSTEM.md` §2; the boot drift-guard validates the vocabulary server-side.)
+- **The workspace shell — layout primitives for an app, not just a page.** `app-shell` (the
+  five-region workspace grid), `side-rail` (+ collapsible groups), `sidebar-panel` (the assistant,
+  with consumer-named modes), `console` (the AI's narration surface), `tab-bar`/`topbar` — CSS-only
+  patterns that re-skin by token and carry view-transition names so the chrome persists across
+  navigations.
+- **The ⌘K palette + demo-box.** A command palette island (`scripts/cmdk.js`, fed by `/search.json`)
+  and a reusable scripted-demo island (`scripts/demo-box.js`) for live, declarative walkthroughs.
 - **The manifest — a drift-proof machine map.** A per-screen, machine-readable projection of what's
   addressable (`targets`) and invokable (`actions`) *right now*, **harvested** from components (never
   hand-typed) so it can't drift from the UI. This is how an AI "sees" a page. (`ai/manifest.ts`,

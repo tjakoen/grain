@@ -129,7 +129,7 @@ Code + the right test tier(s) (unit / conformance e2e) + `tsc` and `bun test` gr
 
 ## Working notes
 
-- Commit/push only when asked; branch off `main` if you must. End commit messages with the
-  `Co-Authored-By: Claude` trailer (the receipt behind "built with Claude").
+- Commit/push only when asked; branch off `main` if you must. No AI attribution trailers on
+  commits (the "built with Claude" receipt is the README badge + footer, not commit metadata).
 - Voice for any prose in the owner's name: `../portfolio/standards/VOICE.md` (no backticks in prose).
 - README badges/footer: `../portfolio/standards/README-STANDARD.md`.

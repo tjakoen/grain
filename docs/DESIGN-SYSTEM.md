@@ -80,6 +80,26 @@ one brand knob.
   not a colour. Accented flavors (Baguette's soft blue, Brioche's honey-gold) opt in by overriding
   just the four accent tokens. See `styles/variables.css` (the accent + flavor blocks).
 
+### The two theming axes
+
+Theming is **two orthogonal attribute axes on `<html>`**, both pure token re-skins
+(`styles/variables.css`):
+
+- **`data-color-scheme`** — `light` | `dark`; unset = follow the OS. One attribute flips the
+  paper/ink stack; components never know.
+- **`data-theme`** — the *flavor*. The consumer declares its ordered list on
+  `<html data-themes="sourdough baguette brioche">`; the **first entry is the default** (rendered by
+  the bare `:root`, so it carries no attribute). GRAIN hardcodes no theme names — add/rename/reorder
+  a flavor purely in the markup + a `[data-theme="…"]` token block.
+
+The controls are declarative (`scripts/theme.js`: `data-toggle-scheme`, `data-cycle-theme`,
+`data-set-theme`/`data-set-scheme` on any element) and persist to `localStorage`;
+`theme-boot.js` (render-blocking, injected by the composition root) pre-sets the saved attributes
+before first paint so navigation never flashes the default (the FOUC guard). The server's boot
+drift-guard warns on any referenced flavor that has no token block — a typo can't silently no-op.
+Ships today as **Sourdough** (default, hueless), **Baguette** (clean, soft blue accent), and
+**Brioche** (warm, honey-gold accent).
+
 ---
 
 ## 3. Typography

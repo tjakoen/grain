@@ -236,6 +236,10 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // Client transport: the same door composed IN the page (static hosts have no backend); its
   // loopback channel hands ops straight to applyOp, so the reply channel is live by construction.
   const clientMode = document.body.dataset.aiTransport === "client";
+  // HONEST presence: <body data-ai-online="true|false"> reflects whether the door's reply
+  // channel actually came up (server `ready` handshake / client door loaded). Consumers style
+  // their presence indicator + degraded mode off this — it is set by outcome, never assumed.
+  const markOnline = (ok) => { document.body.dataset.aiOnline = ok ? "true" : "false"; };
   let sseIsOpen = false, markSseReady;
   const sseReady = new Promise((res) => { markSseReady = res; });
   let sendIntent;                                        // (intent) => Promise — set per transport
@@ -246,8 +250,8 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     const assetBase = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
     const doorPath = document.body.dataset.aiDoor || "/modules/grain/ai/client-door.js";
     const doorReady = import(assetBase + doorPath)
-      .then((m) => m.createClientDoor(applyOp))
-      .catch((err) => { console.error("[ai-dispatch] client door failed to load", err); return null; });
+      .then((m) => { const door = m.createClientDoor(applyOp); markOnline(true); return door; })
+      .catch((err) => { console.error("[ai-dispatch] client door failed to load", err); markOnline(false); return null; });
     sendIntent = (intent) => doorReady.then((door) => {
       if (!door) throw new Error("client door unavailable");
       return door.handleIntent(intent);
@@ -255,8 +259,17 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     sseIsOpen = true; markSseReady();                    // loopback: nothing to wait for
   } else {
     const es = new EventSource(`/stream?session=${encodeURIComponent(session)}`);
-    es.addEventListener("ready", () => { sseIsOpen = true; markSseReady(); }, { once: true });
-    setTimeout(() => markSseReady(), 3000); // fallback: never hang a click if the handshake never lands
+    es.addEventListener("ready", () => { sseIsOpen = true; markOnline(true); markSseReady(); }, { once: true });
+    // Degraded-mode fallback: never hang a click if the handshake never lands. This DOES re-open
+    // the early-op-drop window (AI-INTERFACE §3 wants the channel live first) — deliberately, and
+    // loudly: a submit that goes out un-acked means the stream is broken and ops may be lost.
+    setTimeout(() => {
+      if (!sseIsOpen) {
+        console.warn("[ai-dispatch] no `ready` handshake after 3s — submitting anyway; early RenderOps may be dropped (broken /stream?)");
+        markOnline(false);
+      }
+      markSseReady();
+    }, 3000);
     es.addEventListener("op", (e) => {
       try { applyOp(JSON.parse(e.data)); } catch (err) { console.error("[ai-dispatch] bad op", err); }
     });
@@ -264,6 +277,11 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(intent),
+    }).then((res) => {
+      // fetch resolves on 4xx/5xx: a door-level error pushes no ops, so the trigger's pending
+      // state would stick until the safety timeout — surface it to the caller's catch instead
+      if (!res.ok) throw new Error(`/intent ${res.status}`);
+      return res;
     });
   }
 

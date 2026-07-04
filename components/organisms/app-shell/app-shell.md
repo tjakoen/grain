@@ -10,6 +10,11 @@ data-bound tag): put `class="app-shell"` on the frame and drop content into
 narrows the rail to icons; on mobile the rail becomes a drawer (`data-rail-open`) over a
 `app-shell__scrim`. See the live composition at `/dashboard`.
 
+Two **optional full-width rows** bracket the workspace: `__window` (top — the `app-window`
+title bar) and `__status` (bottom — the `status-bar`). They're auto rows, so a shell that
+places nothing in them renders exactly as before; fill them to dress the shell as an editor
+window (see `app-window` + `status-bar`).
+
 ## Structure (capped height for the catalog; real one is `100dvh`)
 
 ```html

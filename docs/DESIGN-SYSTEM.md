@@ -74,7 +74,9 @@ one brand knob.
   colour the whole surface.
 - **One hue, still closed.** There is **only ever one** accent. **Success and danger keep no hue of
   their own** — they're signalled by weight/treatment/opulence, never a red or green (the "no red
-  errors" rule holds).
+  errors" rule holds). One sanctioned exception: the `app-window` title bar's **window dots**
+  (`--color-dot-close/-clear/-back`) — OS-chrome semantics (traffic lights), desaturated to the
+  e-ink register and revealed only on hover; never reused for content states (owner, 2026-07-05).
 - **Hueless by default.** The default theme (Sourdough) sets `--color-accent: var(--ink)`, so it
   renders identically to the pure-monochrome system — only `::selection` gains a subtle *ink* tint,
   not a colour. Accented flavors (Baguette's soft blue, Brioche's honey-gold) opt in by overriding

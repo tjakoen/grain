@@ -77,3 +77,13 @@
   .ai-confirm { transition: none; }
   .is-click::before { animation: none; display: none; }
 }
+
+/* ---- honest presence (the AI-online indicator) ---------------------------------------
+   The dispatcher stamps <body data-ai-online="true|false"> by OUTCOME (server `ready`
+   handshake received / client door actually loaded — ai-dispatch.js). A consumer's presence
+   indicator shows three states: waking (default, nothing reported yet), online, offline.
+   The wording inside the spans is the consumer's. */
+.presence__on, .presence__off { display: none; }
+body[data-ai-online] .presence__wait { display: none; }
+body[data-ai-online="true"]  .presence__on  { display: inline; }
+body[data-ai-online="false"] .presence__off { display: inline; }

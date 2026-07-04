@@ -6,22 +6,34 @@
    with the single-column editorial `.container`; the product composes it via app-frame
    (project/components/organisms/app-frame) on /dashboard and /loop. */
 
+/* Two optional full-width rows bracket the workspace: "window" (the app-window title bar)
+   and "status" (the status-bar). Auto rows collapse to zero when a page places nothing in
+   them, so shells without the editor-window dressing are untouched. */
 .app-shell {
   display: grid;
   height: 100dvh;
   grid-template-columns: var(--shell-rail, 15rem) minmax(0, 1fr) var(--shell-aside, 20rem);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   grid-template-areas:
-    "rail topbar  topbar"
-    "rail main    aside"
-    "rail console console";
+    "window window  window"
+    "rail   topbar  topbar"
+    "rail   main    aside"
+    "rail   console console"
+    "status status  status";
   background: var(--color-bg);
   color: var(--color-fg);
   overflow: hidden;
 }
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
 
+/* VS Code-style pane visibility (shell.js: data-shell="aside-toggle" / "console-hide") */
+.app-shell[data-aside-hidden="true"] { --shell-aside: 0rem; }
+.app-shell[data-aside-hidden="true"] .app-shell__aside { display: none; }
+.app-shell[data-console-hidden="true"] .app-shell__console { display: none; }
+
 /* ---- the regions (grid slots) ---- */
+.app-shell__window  { grid-area: window;  min-width: 0; }
+.app-shell__status  { grid-area: status;  min-width: 0; }
 /* the rail separates from the content with a SOFTENED hairline — present, but quieter than
    the rail's own icon-gutter line, so the eye reads gutter > rail-edge as two weights. */
 .app-shell__rail    { grid-area: rail;    min-height: 0;
@@ -50,7 +62,8 @@
 @media (max-width: 768px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "topbar" "main" "console";
+    grid-template-areas: "window" "topbar" "main" "console" "status";
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   }
   .app-shell__aside { display: none; }
   .app-shell[data-rail-collapsed="true"] { --shell-rail: 15rem; }   /* collapse-width is desktop-only */
@@ -80,3 +93,5 @@
 .app-shell__topbar  { view-transition-name: shell-topbar; }
 .app-shell__aside   { view-transition-name: shell-aside; }
 .app-shell__console { view-transition-name: shell-console; }
+.app-shell__window  { view-transition-name: shell-window; }
+.app-shell__status  { view-transition-name: shell-status; }

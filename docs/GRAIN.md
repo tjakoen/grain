@@ -57,10 +57,13 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
   theme names — and one `--color-accent` slot gives a flavor its single signature hue.
   (`DESIGN-SYSTEM.md` §2; the boot drift-guard validates the vocabulary server-side.)
 - **The workspace shell — layout primitives for an app, not just a page.** `app-shell` (the
-  five-region workspace grid), `side-rail` (+ collapsible groups), `sidebar-panel` (the assistant,
-  with consumer-named modes), `console` (the AI's narration surface), `tab-bar`/`topbar` — CSS-only
-  patterns that re-skin by token and carry view-transition names so the chrome persists across
-  navigations.
+  workspace grid: rail/topbar/main/aside/console, plus optional full-width `window`/`status` rows),
+  `app-window` (the editor-window dressing: backdrop, hairline frame, title bar with functional
+  window dots + a ⌘K search field), `status-bar` (the honest status row), `side-rail` (+ collapsible
+  groups), `sidebar-panel` (the assistant, with consumer-named modes), `console` (the AI's narration
+  surface), `tab-bar`/`topbar` — CSS-only patterns that re-skin by token and carry view-transition
+  names so the chrome persists across navigations. The dispatcher stamps `<body data-ai-online>` by
+  outcome, so a status bar's presence indicator is real, never assumed.
 - **The ⌘K palette + demo-box.** A command palette island (`scripts/cmdk.js`, fed by `/search.json`)
   and a reusable scripted-demo island (`scripts/demo-box.js`) for live, declarative walkthroughs.
 - **The manifest — a drift-proof machine map.** A per-screen, machine-readable projection of what's

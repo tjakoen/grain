@@ -20,6 +20,7 @@
   const SCHEME  = { light: "light", dark: "dark", auto: "auto" };
   const CTRL    = { toggleScheme: "data-toggle-scheme", cycleTheme: "data-cycle-theme",
                     setScheme: "data-set-scheme", setTheme: "data-set-theme" };
+  const LABEL   = "data-theme-name";   // any element carrying it shows the current flavor name
   const KEY     = { scheme: "grain-color-scheme", theme: "grain-theme" };
   const MQ_DARK = "(prefers-color-scheme: dark)";
 
@@ -49,6 +50,7 @@
   function setTheme(t) {
     if (!t || t === defaultTheme()) { html.removeAttribute(ATTR.theme); put(KEY.theme, null); }
     else { html.setAttribute(ATTR.theme, t); put(KEY.theme, t); }
+    syncLabels();
   }
   const theme = () => html.getAttribute(ATTR.theme) || defaultTheme();
   function cycleTheme() {
@@ -56,9 +58,15 @@
     setTheme(list[(list.indexOf(theme()) + 1) % list.length]);
   }
 
+  // flavor-name labels (e.g. the status bar's "◆ sourdough"): kept in sync on every change
+  const syncLabels = () => {
+    for (const el of document.querySelectorAll(`[${LABEL}]`)) el.textContent = theme();
+  };
+
   // ---- apply saved prefs (no saved scheme → stay auto, so the OS wins, no forced-override flash) --
   const savedScheme = get(KEY.scheme); if (savedScheme) html.setAttribute(ATTR.scheme, savedScheme);
   const savedTheme  = get(KEY.theme);  if (savedTheme)  html.setAttribute(ATTR.theme,  savedTheme);
+  syncLabels();   // deferred script: the DOM is parsed by now
 
   // ---- declarative controls (any element drives theming; no per-page handlers) ---------------
   const HANDLERS = {

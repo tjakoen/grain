@@ -35,6 +35,32 @@
   for (const t of shell.querySelectorAll('[data-shell="chat-toggle"]'))
     t.addEventListener("click", () => shell.toggleAttribute("data-chat-open"));
 
+  // VS Code-style pane visibility: hide/show the aside (the assistant column) and the whole
+  // console strip. Attribute-driven so app-shell.css owns the layout change; state persists.
+  const PANE_KEYS = { "aside-toggle": ["data-aside-hidden", "grain.shell.aside-hidden"],
+                      "console-hide": ["data-console-hidden", "grain.shell.console-hidden"] };
+  for (const [name, [attr, key]] of Object.entries(PANE_KEYS)) {
+    try { if (localStorage.getItem(key) === "1") shell.setAttribute(attr, "true"); } catch { /* ignore */ }
+    for (const b of shell.querySelectorAll(`[data-shell="${name}"]`))
+      b.addEventListener("click", () => {
+        const on = shell.getAttribute(attr) !== "true";
+        on ? shell.setAttribute(attr, "true") : shell.removeAttribute(attr);
+        try { localStorage.setItem(key, on ? "1" : "0"); } catch { /* ignore */ }
+      });
+  }
+
+  // focus the assistant's composer (e.g. a welcome page's "Ask…" start item). Links keep a real
+  // href fallback for no-JS; with JS we stay on the page and hand the cursor to the chat.
+  for (const el of shell.ownerDocument.querySelectorAll('[data-shell="focus-chat"]'))
+    el.addEventListener("click", (e) => {
+      const input = shell.querySelector(".assistant__composer input");
+      if (!input) return;                       // no assistant on this page → follow the link
+      e.preventDefault();
+      shell.removeAttribute("data-aside-hidden");
+      if (mobile.matches) shell.setAttribute("data-aside-open", "true");
+      input.focus();
+    });
+
   // the terminal's expand control (the "desk is acting" indicator) reveals/hides the narration feed
   shell.querySelector('[data-shell="console-toggle"]')?.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
 
@@ -50,7 +76,13 @@
     for (const b of assistant.querySelectorAll("[data-shell-mode]")) b.setAttribute("aria-selected", b.getAttribute("data-shell-mode") === mode ? "true" : "false");
   };
   for (const b of shell.querySelectorAll(".assistant__modes [data-shell-mode]"))
-    b.addEventListener("click", (e) => { e.stopPropagation(); setAsideMode(b.getAttribute("data-shell-mode")); });
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setAsideMode(b.getAttribute("data-shell-mode"));
+      // on mobile the tabs sit INSIDE the grab bar: tapping one with the sheet closed must also
+      // RAISE the sheet (otherwise the tap looks swallowed — the pane it opened stays off-screen)
+      if (mobile.matches && !shell.hasAttribute("data-aside-open")) shell.setAttribute("data-aside-open", "");
+    });
 
   // mobile: the assistant is a bottom sheet — tap its header (the grab bar) to raise/lower it
   shell.querySelector(".assistant__head")?.addEventListener("click", () => {
@@ -82,10 +114,17 @@
 
   // mark the CURRENT route in the rail + tabs — aria-current is accessible AND already styled
   // (nav-item/tab CSS targets [aria-current="page"]). The shared app-frame is identical on every
-  // page; this is what tells you where you are, from the URL.
+  // page; this is what tells you where you are, from the URL. A tab/nav-item also claims its
+  // SUBPAGES (/notes claims /notes/slug) — exact match wins, then the longest prefix; "/" only
+  // ever matches exactly.
   const here = location.pathname.replace(/\/+$/, "") || "/";
-  for (const a of shell.querySelectorAll(".side-rail .nav-item, .tab-bar .tab")) {
-    const href = (a.getAttribute("href") || "").replace(/\/+$/, "") || "/";
-    if (href === here) a.setAttribute("aria-current", "page");
+  for (const group of [".side-rail .nav-item", ".tab-bar .tab"]) {
+    let best = null, bestLen = -1;
+    for (const a of shell.querySelectorAll(group)) {
+      const href = (a.getAttribute("href") || "").replace(/\/+$/, "") || "/";
+      if (href === here) { best = a; bestLen = Infinity; break; }
+      if (href !== "/" && here.startsWith(href + "/") && href.length > bestLen) { best = a; bestLen = href.length; }
+    }
+    best?.setAttribute("aria-current", "page");
   }
 })();

@@ -81,6 +81,11 @@
     document.addEventListener("keydown", (ev) => {
       if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "k") { ev.preventDefault(); isOpen() ? close() : open(); }
     });
+    // declarative trigger: any [data-cmdk-open] element opens the palette (e.g. the title
+    // bar's search field — a button drawn as an input)
+    document.addEventListener("click", (ev) => {
+      if (ev.target.closest && ev.target.closest("[data-cmdk-open]")) { ev.preventDefault(); open(); }
+    });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

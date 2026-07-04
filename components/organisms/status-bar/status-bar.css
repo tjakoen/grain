@@ -1,0 +1,30 @@
+/* organisms/status-bar — the editor-style STATUS ROW at the bottom of the app window:
+   quiet mono meta-text (presence, build info) left, small controls (theme cycle, scheme
+   toggle, ⌘K hint) right. CSS-only pattern — place a `.status-bar` in the app-shell's
+   `.app-shell__status` grid row (app-shell.css owns the row; see status-bar.md).
+   Controls are STATUS, not content: buttons here unstyle to plain text and only sharpen
+   on hover/focus. Tokens only. */
+.status-bar {
+  display: flex; align-items: center; gap: var(--space-5);
+  padding: 0.3rem 0.9rem;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-line);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.status-bar__spacer { flex: 1; }
+.status-bar button {
+  all: unset;                    /* a status control reads as text, not a button */
+  cursor: pointer;
+  font: inherit; color: inherit;
+}
+.status-bar button:hover { color: var(--color-fg); }
+.status-bar button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+
+/* narrow screens: keep presence + controls, let the middle meta-text go */
+@media (max-width: 768px) {
+  .status-bar { gap: var(--space-4); }
+  .status-bar [data-status-optional] { display: none; }
+}

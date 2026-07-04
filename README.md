@@ -2,12 +2,15 @@
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
-[![Status](https://img.shields.io/badge/status-planned-lightgrey)](PLAN.md)
+[![Status](https://img.shields.io/badge/status-in_progress-blue)](PLAN.md)
 
 **Markdown In, Living Layouts** — a Markdown → GRAIN-pages CMS. Feed it a folder of `.md` +
 frontmatter + images; it renders them as real GRAIN pages by mapping Markdown nodes to components.
 
-> **Status: planned — design only.** This directory currently holds just the plan; nothing is built.
+> **Status: in progress — the core is live.** Pieces 1–4 are built and tested: the
+> framework-agnostic core engine (`core/`), the BATCH+GRAIN adapter (`adapters/grain/`), the live
+> content route (`serve.ts`), and the portfolio wiring (`/notes`, `/grain/docs`, `/batch/docs`).
+> What remains (AI-facing outputs, mermaid→SVG, RSS) is tracked in [PLAN.md](PLAN.md).
 
 ## Where it sits
 

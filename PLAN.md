@@ -59,6 +59,13 @@ built; piece 4b (the AI-facing outputs) is not yet. Nothing here is buried. **Th
 - **Framework-agnostic core.** The engine talks to a render-adapter port (a total node→handler map);
   it imports nothing from GRAIN/BATCH. The BATCH+GRAIN adapter is the default, proven swappable by a
   fake-adapter test. *(built.)*
+- **The ContentSource port — content from anywhere, docs from packages.** Collections read through a
+  small `list()/read()` port: `dirSource` (a folder of `.md`) covers a consumer's own content, and
+  `packageDocsSource` resolves a docs folder **out of an installed package** (`import.meta.resolve`)
+  so layer docs are rendered from the dependency itself — never copied, never a `../sibling` path,
+  same code before and after the repo split. Slugs are traversal-safe by construction. *(built —
+  `serve.ts`; plus `listMillRoutes`, the enumerated route list a consumer feeds to its sitemap /
+  static-export allowlist so content pages are always discoverable.)*
 - **mermaid → SVG figures** — server-side diagram conversion (FIGURES.md). **Deferred** (heavy dep);
   until then figures ship as pre-rendered SVG.
 

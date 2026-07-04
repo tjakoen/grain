@@ -36,7 +36,9 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     return host ? host.getAttribute("data-surface") : null;
   }
 
-  // ---- "the desk is acting": spotlight the surface the AI is touching --------------
+  const ACTING_LABEL = "✶ the AI is acting…";
+
+  // ---- "the AI is acting": spotlight the surface the AI is touching --------------
   // The backdrop/label/lit/pulse DOM is grain's shared createSpotlight; the orchestration below is
   // this dispatcher's. clicking the veil → interrupt (ask, don't force-kill).
   const spotlight = createSpotlight({ onInterrupt: interrupt });
@@ -60,15 +62,16 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (!held) el.removeAttribute("data-commit");
   }
   function spotlightOn(target, click) {
-    spotlight.on("✶ the desk is acting…");   // grain's backdrop + label
+    spotlight.on(ACTING_LABEL);   // grain's backdrop + label
     // shell takeover (if the page uses the app-shell): the chat retracts + the console narrates
     document.querySelector(".app-shell")?.setAttribute("data-acting", "true");
     const el = find(target);
     if (spotlit && spotlit !== el) clearActing(spotlit);   // moving on → release the previous surface
     if (el) {
-      el.classList.add("ai-spotlit");
-      el.scrollIntoView({ block: "center" });   // smoothness owned by CSS scroll-behavior (honors reduced-motion)
-      if (click) spotlight.pulse(el);            // pulse ONLY on a real click
+      spotlight.move(el, { click });             // the lamp glides onto it (pulse only on a real click)
+      const r = el.getBoundingClientRect();      // scroll ONLY if needed — a needless scroll cuts the lamp's glide short
+      if (r.top < 0 || r.bottom > innerHeight)
+        el.scrollIntoView({ block: "center" }); // smoothness owned by CSS scroll-behavior (honors reduced-motion)
       // each KIND of surface reads AI-mode its own way:
       const tag = el.tagName, out = el.getAttribute("data-target");
       if (tag === "INPUT" || tag === "TEXTAREA") {
@@ -115,7 +118,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     confirmEl.className = "ai-confirm";
     confirmEl.innerHTML =
       '<div class="ai-confirm__card">' +
-        '<p class="ai-confirm__msg">The desk is working. Ask it to stop?</p>' +
+        '<p class="ai-confirm__msg">The AI is working. Ask it to stop?</p>' +
         '<div class="ai-confirm__actions">' +
           '<button class="btn" data-confirm="resume">Let it finish</button>' +
           '<button class="btn" data-confirm="stop">Ask it to stop</button>' +
@@ -134,10 +137,8 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   function resume() { hideConfirm(); }                   // "let it finish" — it never actually stopped
   function requestStop() {                               // ask the desk to stop (mediated, graceful)
     hideConfirm();
-    fetch("/intent", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ source: "user", session, screen, surface: "screen", action: "desk.stop", payload: {} }),
-    }).catch(() => spotlightOff());                       // if we can't even ask, release locally
+    sendIntent({ source: "user", session, screen, surface: "screen", action: "desk.stop", payload: {} })
+      .catch(() => spotlightOff());                       // if we can't even ask, release locally
   }
 
   // triggers (buttons/inputs) held in their own grain state until their action commits
@@ -221,23 +222,50 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     }
   }
 
-  // ---- SSE: the server→client push channel -------------------------------------
-  const es = new EventSource(`/stream?session=${encodeURIComponent(session)}`);
-  // Ops are pushed to a SUBSCRIBED session only — SSE has NO replay. So an Intent must not be
-  // sent before this stream's subscriber is registered SERVER-SIDE, or the first RenderOps are
-  // lost: typically the `spotlight` op that makes the page "acting". Then the demo appears to do
-  // nothing AND can't be interrupted (isActing() stays false, so clicks/Escape never raise the
-  // "stop?" prompt). The native `open` event is NOT enough — it fires on response headers, which
-  // can precede the server registering the subscriber. We wait for the server's `ready` handshake
-  // (emitted from inside the stream's start(), after registration). Contract: AI-INTERFACE §3 —
-  // the door's reply channel must be LIVE before an intent is raised.
+  // ---- the reply channel: server door (SSE) or client door (loopback, §19.3) ----
+  // `sendIntent(intent)` is the ONE wire out; which transport backs it is the page's choice
+  // (<body data-ai-transport="client"> — set by a composition root / the static export).
+  // Server transport: POST /intent + SSE push. Ops are pushed to a SUBSCRIBED session only — SSE
+  // has NO replay. So an Intent must not be sent before this stream's subscriber is registered
+  // SERVER-SIDE, or the first RenderOps are lost: typically the `spotlight` op that makes the page
+  // "acting". Then the demo appears to do nothing AND can't be interrupted (isActing() stays false,
+  // so clicks/Escape never raise the "stop?" prompt). The native `open` event is NOT enough — it
+  // fires on response headers, which can precede the server registering the subscriber. We wait for
+  // the server's `ready` handshake (emitted from inside the stream's start(), after registration).
+  // Contract: AI-INTERFACE §3 — the door's reply channel must be LIVE before an intent is raised.
+  // Client transport: the same door composed IN the page (static hosts have no backend); its
+  // loopback channel hands ops straight to applyOp, so the reply channel is live by construction.
+  const clientMode = document.body.dataset.aiTransport === "client";
   let sseIsOpen = false, markSseReady;
   const sseReady = new Promise((res) => { markSseReady = res; });
-  es.addEventListener("ready", () => { sseIsOpen = true; markSseReady(); }, { once: true });
-  setTimeout(() => markSseReady(), 3000);   // fallback: never hang a click if the handshake never lands
-  es.addEventListener("op", (e) => {
-    try { applyOp(JSON.parse(e.data)); } catch (err) { console.error("[ai-dispatch] bad op", err); }
-  });
+  let sendIntent;                                        // (intent) => Promise — set per transport
+  if (clientMode) {
+    // Which door module? A page may bring its OWN (data-ai-door — e.g. a consumer's scripted
+    // scenario module exporting createClientDoor); default is grain's. Resolved against this
+    // script's own URL so it works unchanged on a subpath host (no base-path rewrite needed).
+    const assetBase = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+    const doorPath = document.body.dataset.aiDoor || "/modules/grain/ai/client-door.js";
+    const doorReady = import(assetBase + doorPath)
+      .then((m) => m.createClientDoor(applyOp))
+      .catch((err) => { console.error("[ai-dispatch] client door failed to load", err); return null; });
+    sendIntent = (intent) => doorReady.then((door) => {
+      if (!door) throw new Error("client door unavailable");
+      return door.handleIntent(intent);
+    });
+    sseIsOpen = true; markSseReady();                    // loopback: nothing to wait for
+  } else {
+    const es = new EventSource(`/stream?session=${encodeURIComponent(session)}`);
+    es.addEventListener("ready", () => { sseIsOpen = true; markSseReady(); }, { once: true });
+    setTimeout(() => markSseReady(), 3000); // fallback: never hang a click if the handshake never lands
+    es.addEventListener("op", (e) => {
+      try { applyOp(JSON.parse(e.data)); } catch (err) { console.error("[ai-dispatch] bad op", err); }
+    });
+    sendIntent = (intent) => fetch("/intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(intent),
+    });
+  }
 
   // ---- send an intent through the one door -------------------------------------
   function submit(action, target, payload, trigger) {
@@ -246,11 +274,8 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     // replace → committed). Pre-graining the target wrongly grained whole regions like
     // the screen and left them stuck, since nothing cleared it.
     if (trigger) { clearTrigger(target); trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); }
-    const send = () => fetch("/intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ source: "user", session, screen, surface: target, action, payload }),
-    }).catch(() => clearTrigger(target));                        // couldn't reach the door → undo
+    const send = () => sendIntent({ source: "user", session, screen, surface: target, action, payload })
+      .catch(() => clearTrigger(target));                        // couldn't reach the door → undo
     sseIsOpen ? send() : sseReady.then(send);                    // wait for the stream so no early ops are lost
   }
 

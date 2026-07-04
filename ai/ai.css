@@ -2,43 +2,44 @@
    Optional: include this ONLY when you use GRAIN's AI interface. The design system
    (grain/styles/grain.css + the b-* atoms) works without it. (AI-INTERFACE §5c) */
 
-/* When the AI (not the user) drives a surface, the page dims and the touched surface is
-   lifted into the light and pulsed like a click. Calm, monochrome, no shadows. */
-/* The "veil" — how the surroundings recede while the AI acts. Driven by ONE theme
-   token, --ai-veil, set once in the theme (variables.css) so every page fades the same.
-   The default below (a gentle ink dim) applies if a theme doesn't set the token —
-   GRAIN ships the mechanism + a sensible default, the theme picks the value. */
+/* When the AI (not the user) drives a surface, the page dims and a LAMP — one traveling
+   frame — glides onto the touched surface. Calm, monochrome, no shadows on content. */
+/* THE LAMP MODEL (the root design): the spotlight is ONE fixed-position element whose rect
+   glides between surfaces; the dim is the lamp's own cutout shadow, so hole and veil travel
+   together. The lit element is NEVER restyled — a rect is a rect, so every surface kind
+   (card, list, row, input) gets the same treatment by construction (this designed out the
+   old per-kind lit CSS, grain lesson 8). The veil color is ONE theme token, --ai-veil, set
+   once in the theme (variables.css) so every page fades the same; the default below (a
+   gentle ink dim) applies if a theme doesn't set it. */
+.ai-lamp {
+  position: fixed; top: 0; left: 0; z-index: var(--z-ai-veil, 9000);
+  border-radius: var(--radius-md);   /* no border — the lamp is just the lit hole in the veil */
+  /* the dim IS the lamp's shadow: everything outside the frame recedes, and it MOVES with it */
+  box-shadow: 0 0 0 200vmax var(--ai-veil, color-mix(in srgb, var(--ink) 22%, transparent));
+  opacity: 0; pointer-events: none;
+  /* the focus-switch glide — the lamp EASES onto the new surface, soft start and landing,
+     like a page transition (keep the duration ≤ the reasoner's SETTLE so it lands before
+     the AI acts). Travel rides `transform` (composited — GPU, never janked by layout);
+     only the box's size interpolates in layout, and it's one element. */
+  transform: translate3d(50vw, 50vh, 0);
+  will-change: transform;   /* transform only — promoting width/height forces extra invalidations */
+  transition: opacity 0.35s ease,
+              transform var(--ai-focus-move, 0.4s) var(--ai-focus-ease, ease),
+              width     var(--ai-focus-move, 0.4s) var(--ai-focus-ease, ease),
+              height    var(--ai-focus-move, 0.4s) var(--ai-focus-ease, ease);
+}
+.ai-lamp.is-on { opacity: 1; }
+/* The click-catcher: invisible (the lamp's shadow carries the dim) but it still owns the
+   interrupt gesture — clicking anywhere while the AI acts asks it to stop. AI surfaces that
+   stay live during a run (chat, console, the acting label) sit above it at --z-ai-surface. */
 .ai-backdrop {
   position: fixed; inset: 0; z-index: var(--z-ai-veil, 9000);
-  background: var(--ai-veil, color-mix(in srgb, var(--ink) 22%, transparent));
-  opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  background: transparent; pointer-events: none;
 }
-.ai-backdrop.is-on { opacity: 1; pointer-events: auto; }
-.ai-spotlit {
-  position: relative; z-index: var(--z-ai-spot, 9001);
-  background: var(--paper);                 /* lift it out of the dim */
-  outline: 1px solid var(--ink); outline-offset: 4px;
-  /* the focus-switch glide — how slowly the lit box eases onto the new surface.
-     One token so it's tunable + consistent (keep it ≤ the reasoner's SETTLE so the
-     box finishes landing before the AI acts). */
-  transition: background-color var(--ai-focus-move, 0.4s) ease,
-              outline-color var(--ai-focus-move, 0.4s) ease;
-}
-/* Form controls are a special surface: the `.ai-spotlit` box above was authored for BLOCK
-   surfaces (cards, lists, regions). On a bare <input> it lights the input alone — leaving its
-   label in the dim ("just the input") — and its offset outline stacks with the input's native
-   focus ring into a heavy double box. So when the spotlit element is a field control, light the
-   whole labeled FIELD as one card and let the input show only its own focus. (grain lesson 3:
-   a treatment that doesn't hold for one case is a design gap — define it, don't leave it silent.) */
-.field:has(.ai-spotlit) {
-  position: relative; z-index: var(--z-ai-spot, 9001);
-  background: var(--paper); border-radius: var(--radius-md);
-  outline: 1px solid var(--ink); outline-offset: 4px;
-  transition: outline-color var(--ai-focus-move, 0.4s) ease;
-}
-.field .ai-spotlit {                 /* the control inside a lit field — don't double the box */
-  outline: none; background: transparent; z-index: auto;
-}
+.ai-backdrop.is-on { pointer-events: auto; }
+/* .ai-spotlit stays as the SEMANTIC marker for the surface under the lamp (tests, per-kind
+   data-attr logic in the dispatcher) — it carries no visual of its own in the lamp model. */
+.ai-spotlit { position: relative; }
 /* the "AI clicked here" pulse. Self-sufficient: .is-click alone renders it (position:relative
    anchors its own ::before), so pulsing never silently no-ops for want of a sibling .ai-spotlit.
    (.ai-spotlit already establishes a positioned context, so spotlit elements are unaffected.) */
@@ -72,7 +73,7 @@
 .ai-confirm__actions { display: flex; gap: var(--space-3); justify-content: center; }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-backdrop { transition: none; }
+  .ai-lamp { transition: none; }
   .ai-confirm { transition: none; }
   .is-click::before { animation: none; display: none; }
 }

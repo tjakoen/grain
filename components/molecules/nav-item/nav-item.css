@@ -1,12 +1,17 @@
-/* molecules/nav-item — a rail navigation entry: an icon + a label, with an active state.
-   A styled anchor composed with b-icon (not a custom tag, so it drops into a static page).
-   Active = aria-current="page" (accessible) or data-active="true". */
+/* molecules/nav-item — a rail navigation entry: an icon in the rail's shared ICON GUTTER, then
+   the label — the two-column, editor-workspace look (icons align in their own vertical column;
+   the rail draws the gutter line). A styled anchor composed with b-icon (not a custom tag, so it
+   drops into a static page). Active = aria-current="page" (accessible) or data-active="true".
+   Grid: icon column (fixed, --rail-icon-col) | label | trailing (chevron). Iconless items (e.g.
+   a group's sub-entries) indent past the gutter instead — see side-rail. */
 .nav-item {
-  display: flex; align-items: center; gap: var(--space-3);
-  min-height: 2.25rem; padding: var(--space-2);
+  display: grid; grid-template-columns: var(--rail-icon-col, 2.5rem) 1fr auto;
+  align-items: center; column-gap: var(--space-2);
+  min-height: 2.25rem; padding-right: var(--space-2);
   border: 1px solid transparent; border-radius: var(--radius-sm);
   color: var(--color-muted); text-decoration: none; white-space: nowrap;
 }
+.nav-item > b-icon, .nav-item > .icon { justify-self: center; }   /* the icon sits centered in the gutter */
 .nav-item:hover { background: var(--color-bg); color: var(--color-fg); }
 .nav-item[aria-current="page"], .nav-item[data-active="true"] {
   color: var(--color-fg); background: var(--color-bg); border-color: var(--color-line);

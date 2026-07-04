@@ -49,8 +49,10 @@
   --btn-accent-contrast: var(--color-danger-contrast); --btn-accent-soft: var(--color-danger-soft);
 }
 
-/* ---- pseudo-states. Hover = invert to ink (DESIGN-SYSTEM §5), not a new hue ---- */
-.btn:hover, .btn[data-force~="hover"] { background: var(--ink); color: var(--paper); }
+/* ---- pseudo-states. Hover = a quiet ink WASH (DESIGN-SYSTEM §5), never an invert and
+   never a new hue — the full ink-fill invert read as a loud accent block and revealed the
+   corner radius on otherwise-flat buttons (regression, 2026-07-04). ---- */
+.btn:hover, .btn[data-force~="hover"] { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 
 .btn:focus-visible, .btn[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .btn:active,        .btn[data-force~="active"] { transform: translateY(1px); }

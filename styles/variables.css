@@ -130,6 +130,7 @@
   --color-ok-bg: transparent;
   --color-ok-fg: var(--ink);
   --color-archived-bg: transparent;
+  --color-archived-fg: var(--ink-muted);
 
   /* the inheritable grade switch — DESIGN-SYSTEM §3 "As an atom".
      Default = human/clean; ancestors flip it; CSS inheritance distributes it. */
@@ -140,13 +141,16 @@
 
   /* AI spotlight veil (GRAIN) — set ONCE here so every page fades the same way.
      Pick ONE (CSS comments don't nest — keep exactly one line uncommented): */
-  --ai-veil: color-mix(in srgb, var(--ink) 22%, transparent);   /* dim: gentle ink recede */
+  --ai-veil-alpha: 22%;   /* tweak this one number to change the dim depth everywhere */
+  --ai-veil: color-mix(in srgb, var(--ink) var(--ai-veil-alpha), transparent);   /* dim: gentle ink recede */
   /* --ai-veil: color-mix(in srgb, var(--paper) 70%, transparent); */ /* wash: bleach toward blank paper */
   /* --ai-veil: transparent; */                                      /* lift: no veil, the element pops alone */
 
-  /* how slowly the spotlight box glides onto the next surface when the AI switches
-     focus. Keep it ≤ the reasoner's SETTLE_MS (480ms) so the box lands before it acts. */
-  --ai-focus-move: 0.45s;
+  /* how slowly the spotlight box glides onto the next surface when the AI switches focus,
+     and its easing — gentle like a page transition (soft start, soft landing), never a snap.
+     Keep the duration ≤ the reasoner's SETTLE_MS (700ms) so the box lands before it acts. */
+  --ai-focus-move: 0.65s;
+  --ai-focus-ease: ease-in-out;
 
   /* AI takeover STACKING — one source of truth so the AI module (grain/ai/ai.css) and any
      consumer chrome (e.g. the product's app-frame console/chat) agree without duplicating
@@ -154,6 +158,9 @@
   --z-ai-veil: 9000;      /* the dimming backdrop */
   --z-ai-spot: 9001;      /* the spotlit surface, lifted out of the dim */
   --z-ai-surface: 9002;   /* AI surfaces kept above the veil (acting label, console, chat) */
+
+  /* paper grain SVG overlay opacity (DESIGN-SYSTEM §6) — override in dark mode to reduce contrast */
+  --paper-grain-opacity: 0.09;
 }
 
 /* ============================================================================================
@@ -173,6 +180,7 @@
     --ink: #E4E1D8; --ink-muted: #9A968B; --ink-faint: #6B6862;
     --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
     --ai-veil: color-mix(in srgb, #000 50%, transparent);   /* dark: dimming darkens further */
+    --paper-grain-opacity: 0.04;
   }
 }
 :root[data-color-scheme="dark"] {
@@ -180,6 +188,7 @@
   --ink: #E4E1D8; --ink-muted: #9A968B; --ink-faint: #6B6862;
   --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
   --ai-veil: color-mix(in srgb, #000 50%, transparent);
+  --paper-grain-opacity: 0.04;
 }
 
 /* ============================================================================================

@@ -7,14 +7,14 @@ composed by hand, so nothing data-binds it. Images never overflow the column.
 ## Caption
 ```html
 <figure class="figure">
-  <img src="/screenshots/loop-desk.png" alt="The desk mid-act">
-  <figcaption class="figure__caption">The spotlight travels to the surface it edits.</figcaption>
+  <img src="/assets/figure-sample.svg" alt="An abstract field of grain strokes">
+  <figcaption class="figure__caption">A caption sits under the image, set small.</figcaption>
 </figure>
 ```
 
 ## Clipped photo
 ```html
 <figure class="figure" data-variant="clipped">
-  <img src="/screenshots/loop-desk.png" alt="The desk, clipped">
+  <img src="/assets/figure-sample.svg" alt="The same image, clipped">
 </figure>
 ```

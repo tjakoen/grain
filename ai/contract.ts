@@ -96,6 +96,17 @@ export interface Decision {
   reason?: string;             // trace / failure note
 }
 
+// Push-only display surfaces — the AI only ever WRITES to these; no verb accepts them
+// as a kind target. Typed here so a typo is caught at the call site, not silently dropped.
+export const PUSH_SURFACES = {
+  console:       "console",        // takeover narration feed (narrate/clearConsole)
+  plan:          "plan",           // demo plan bullet list
+  summary:       "summary",        // demo summary text
+  askInput:      "ask-input",      // demo ask-input field
+  demoTaskBadge: "demo-task-badge",// demo task badge
+} as const;
+export type PushSurface = typeof PUSH_SURFACES[keyof typeof PUSH_SURFACES];
+
 // The SSE event name render ops are pushed under (the dispatcher listens for it).
 export const OP_EVENT = "op";
 

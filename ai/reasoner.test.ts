@@ -46,6 +46,16 @@ test("item.archive failure rolls back: ok:false + a flash op", async () => {
   expect(d.ops[0]?.op).toBe("flash");
 });
 
+test("say.stream: brackets with spotlight on→off and streams type tokens that settle committed", async () => {
+  const { tools, emitted } = fakeTools();
+  await reasoner.decide(intent({ surface: "say-stream", action: "say.stream", payload: {} }), tools);
+  const types = emitted.filter((o) => o.op === "type");
+  expect(types.length).toBeGreaterThan(1);
+  expect(types.at(-1)?.commit).toBe("committed");      // grain settles committed
+  expect(spots(emitted)[0]?.active).toBe(true);
+  expect(spots(emitted).at(-1)?.active).toBe(false);   // spotlight released when done
+});
+
 test("say.set: brackets with spotlight on→off and streams type tokens that settle committed", async () => {
   const { tools, emitted } = fakeTools();
   await reasoner.decide(intent({ surface: "reflection", action: "say.set", payload: { text: "hi" } }), tools);

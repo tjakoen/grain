@@ -92,14 +92,35 @@ instead of the vocabulary GRAIN already ships, and contracts that fail *silently
    And every path (natural completion *and* graceful stop) must end by releasing the spotlight
    (`spot("screen", false)`); **test the natural-completion release**, not just the stop path — the
    gap that let #6 ship was an e2e that asserted outcomes but never that the veil drops on its own.
-8. **The "AI is acting" treatment must be defined for every surface KIND, not just block regions.**
-   `.ai-spotlit` (paper lift + offset outline) was authored for cards/lists/regions; on a bare
-   `<input>` it lit only the input (label left in the dim) and its offset outline **doubled** the
-   input's native focus ring. A form control's spotlit surface is the whole labeled **`.field`** —
-   `ai.css` now lights `.field:has(.ai-spotlit)` and suppresses the inner control's box. When you add
-   a new operable surface shape (control group, table row, canvas…), define its lit treatment in
-   `ai.css` + add a conformance assertion — don't assume the block-surface box fits. (Design-system
-   gap, not architectural: the dispatcher lit the right element; the *visual* wasn't defined for it.)
+8. **The "AI is acting" treatment must hold for every surface KIND — designed out (2026-07-04) by
+   the TRAVELING LAMP.** The original spotlight restyled the *target* (`.ai-spotlit` = paper lift +
+   offset outline): every surface shape needed bespoke lit CSS, inputs broke first (label left in the
+   dim, doubled focus ring — patched with `.field:has(...)`), and **nothing ever traveled** — class
+   swap = teleport, so the `--ai-focus-move` "glide" token was a visual no-op and the AI's focus
+   switch read as an instant snap. The root fix inverted the model: the spotlight is now **one
+   fixed-position lamp** (`.ai-lamp`) whose rect glides between surfaces, carrying the dim as its
+   own cutout shadow; the lit element is never restyled (a rect is a rect — kind-agnostic by
+   construction; a control's frame is its whole `.field`, a rule in the primitive, not CSS).
+   `.ai-spotlit` remains as the semantic marker only. Meta-lesson kept: if a treatment needs a new
+   rule per surface kind, the treatment is at the wrong altitude — attach it to the *geometry*, not
+   the element. (Also: a shell pane that owns the page scroll must opt into `scroll-behavior:
+   smooth` — `scrollIntoView` uses the nearest scrollable ancestor, and `html`'s opt-in doesn't
+   cascade into `overflow:auto` panes; that regression made the AI's focus jumps instant.)
+
+9. **A design token must be MECHANICALLY CONSUMED — and a knob that changes nothing is a
+   disconnected knob, not a wrong value.** How the lamp snap survived three tuning rounds
+   (2026-07-04): `--ai-focus-move` ("how slowly the spotlight glides") existed, was documented, and
+   was wired into a `transition` — but the transition animated properties that never actually
+   changed visibly (`outline-color` on a class swap), so no duration or easing could ever produce a
+   glide. Human and AI both kept adjusting the value. The rule this bought: **before tuning a token,
+   verify the mechanism consumes it — measure the behavior (rAF-sample it, don't eyeball it); if
+   turning the knob produces no measurable change, the mechanism is broken and the tuning session is
+   over.** Corollary for authors: never ship a token whose promise ("glide", "settle", "travel") the
+   mechanism can't render — that's documented behavior with no implementation, the worst drift,
+   invisible to `tsc` and tests unless a conformance assertion covers the *motion itself*.
+   Verdict on the whole episode: a **design-system defect** (the treatment lived on the element
+   instead of the geometry — see lesson 8), *not* an architecture defect — the door, the ops, and
+   the dispatcher orchestration were all correct throughout; nothing in `contract.ts` changed to fix it.
 
 ## Definition of done
 

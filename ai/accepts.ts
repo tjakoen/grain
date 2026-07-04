@@ -7,8 +7,8 @@
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
-const KIND = /\bdata-kind="([^"]+)"/;
-const ACCEPTS = /\bdata-accepts="([^"]+)"/;
+const KIND = /\bdata-kind=["']([^"']+)["']/;
+const ACCEPTS = /\bdata-accepts=["']([^"']+)["']/;
 // every wired trigger (global — a component may have several). The negative lookbehind skips
 // the BINDING directive `data-bind-data-action="path"` (a bound view-model field, not a literal verb).
 const ACTION = /(?<![-\w])data-action="([^"]+)"/g;
@@ -41,6 +41,7 @@ export function createAccepts(componentsDir: string | string[]): Accepts {
         const kind = KIND.exec(html)?.[1];
         const accepts = ACCEPTS.exec(html)?.[1];
         if (kind && accepts) byKind[kind] = accepts.split(/\s+/).filter(Boolean);
+        else if (kind) console.warn(`[accepts] ${full}: data-kind="${kind}" found but no data-accepts — kind excluded from manifest`);
         for (const m of html.matchAll(ACTION)) actions.add(m[1]);   // data-action="verb" on any control
       }
     }

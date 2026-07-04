@@ -1,18 +1,29 @@
 /* organisms/side-rail — the vertical navigation rail inside the app-shell: a brand at the
-   top, nav-items, a spacer, then footer items (settings). Collapses to icons-only when the
-   shell carries data-rail-collapsed (labels are dropped, glyphs center). Composed with
-   b-icon + nav-item; a layout class, not a data-bound tag. */
+   top, nav-items, a spacer, then footer items (settings). The rail draws a shared ICON
+   GUTTER (a fixed column + a hairline) so every item's glyph sits in its own vertical
+   column beside the labels — the editor-workspace look. Collapses to icons-only when the
+   shell carries data-rail-collapsed (labels are dropped, the gutter line goes). Composed
+   with b-icon + nav-item; a layout class, not a data-bound tag. */
 .side-rail {
+  position: relative;
   display: flex; flex-direction: column; gap: 2px;
   height: 100%; padding: var(--space-3) var(--space-2);
   overflow: hidden;
 }
+/* the gutter line — one hairline the full height of the rail, at the icon column's edge */
+.side-rail::before {
+  content: ""; position: absolute; top: 0; bottom: 0;
+  left: calc(var(--space-2) + var(--rail-icon-col, 2.5rem));
+  width: 1px; background: var(--color-line);
+}
 .side-rail__brand {
-  display: flex; align-items: center; gap: var(--space-2);
-  padding: var(--space-2) var(--space-2) var(--space-4);
+  display: grid; grid-template-columns: var(--rail-icon-col, 2.5rem) 1fr;
+  align-items: center; column-gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-4);
   font-family: var(--font-accent); letter-spacing: 0.02em;
   white-space: nowrap;
 }
+.side-rail__brand > b-icon, .side-rail__brand > .icon { justify-self: center; }
 .side-rail__spacer { flex: 1 1 auto; }
 
 /* ---- grouped nav — a collapsible section for nested navigation (e.g. a BREAD group over
@@ -25,11 +36,17 @@
   transition: transform 0.2s ease; }
 .side-rail__group[open] > summary .nav-item__chev { transform: rotate(90deg); }
 .side-rail__sub { display: flex; flex-direction: column; gap: 2px; }
-.side-rail__sub .nav-item { padding-left: var(--space-6); }   /* indent children under the group */
+/* iconless children: skip the gutter, align labels with the parent's label column */
+.side-rail__sub .nav-item {
+  grid-template-columns: 1fr auto;
+  padding-left: calc(var(--rail-icon-col, 2.5rem) + var(--space-2));
+}
 
-/* ---- collapsed: drop the labels, center the glyphs (rail width does the rest) ---- */
+/* ---- collapsed: drop the labels + the gutter line, center the glyphs ---- */
+[data-rail-collapsed="true"] .side-rail::before { display: none; }
 [data-rail-collapsed="true"] .side-rail__brand span,
 [data-rail-collapsed="true"] .nav-item__label { display: none; }
-[data-rail-collapsed="true"] .nav-item { justify-content: center; }
+[data-rail-collapsed="true"] .nav-item { grid-template-columns: var(--rail-icon-col, 2.5rem); }
+[data-rail-collapsed="true"] .side-rail__brand { grid-template-columns: var(--rail-icon-col, 2.5rem); }
 [data-rail-collapsed="true"] .side-rail__group > summary .nav-item__chev { display: none; }
 [data-rail-collapsed="true"] .side-rail__sub .nav-item { padding-left: 0; }

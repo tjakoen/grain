@@ -78,16 +78,30 @@ A small vocabulary that grows reluctantly (PROJECT-PLAN principle 8). Each verb
 declares the surface **kinds** it applies to, a typed **payload**, and a routing
 **depth** (light = optimistic; heavy = decide-then-animate — MVP §"Gate triages").
 
-| Action | Payload | Accepts | Depth |
-|--------|---------|---------|-------|
+**Current scaffold — built and running in `grain/ai/contract.ts`:**
+
+| Verb | Payload | Accepts | Depth |
+|------|---------|---------|-------|
+| `item.archive` | `{}` | `item` | light (stands in for `task.complete`) |
+| `say.set` | `{ text }` | `reflection` | light |
+| `say.stream` | `{}` | `say-stream` | light |
+| `demo.run` | `{}` | `screen` | heavy |
+| `desk.stop` | `{}` | `screen` | light |
+| `chat.send` | `{ text }` | `chat-log` | light |
+
+**Full product vocabulary — designed, not yet registered in `contract.ts`:**
+
+These verbs are designed but not yet wired. When a verb lands, it moves to the built table above.
+
+| Verb | Payload | Accepts | Depth |
+|------|---------|---------|-------|
 | `task.capture` | `{ text }` | `task-list` | heavy (AI places it) |
-| `task.complete` | `{}` | `task` | light (optimistic) |
+| `task.complete` | `{}` | `task` | light (optimistic; `item.archive` stands in today) |
 | `task.reschedule` | `{ when }` | `task` | heavy (conflict surfacing) |
 | `task.reprioritize` | `{ priority }` | `task` | heavy |
-| `chat.send` | `{ text }` | `chat-log` | light or heavy (gate routes) |
 | `view.navigate` | `{ screen }` | — | trivial (client-only) |
 
-This table **is** the contract. It is defined once in TypeScript and everything else
+The built table **is** the live contract. It is defined once in TypeScript and everything else
 — validation, the manifest, the UI affordances — derives from it.
 
 > **Single source of truth: [`grain/ai/contract.ts`](../ai/contract.ts).**
@@ -201,6 +215,15 @@ interrupted). The native `open` event is not enough (it fires on headers, before
 over a plain `POST`. SSE auto-reconnects and needs no duplex socket. **Why a custom
 dispatcher, not htmx's `sse-swap`:** the render-op model (op kind + provenance +
 commit stamping) is richer than a single-element swap, and we want that control.
+
+**The client transport (static hosts, opt-in — ARCHITECTURE §19.3):** a page marked
+`<body data-ai-transport="client">` runs the SAME door in-browser (`grain/ai/client-door.ts`):
+`POST /intent` becomes a direct `handleIntent` call and the SSE channel becomes a loopback that
+hands ops straight to the dispatcher's `applyOp` — live by construction, so the `ready` gate is
+satisfied immediately. Same vocabulary, same validation, same single writer; only the wire
+differs. Its capabilities are inert (stub reasoner, no storage), so only service-free scenarios
+are honest there — the client-safe boundary (§19.2) applies to everything it imports. The static
+export freezes the door's module graph and stamps the marker; the live server keeps the server door.
 
 htmx still handles the **client-initiated** half normally (initial loads,
 navigation). SSE + the dispatcher are purely additive and live **entirely in the app
@@ -349,16 +372,25 @@ A human click and an AI action both go through the door, but only the **AI as ac
 gets a spotlight — that's how the user *sees* the AI working (vs. their own clicks,
 which are silent).
 
+**The mechanism is a traveling LAMP** (`grain/scripts/ai-spotlight.js` + `ai.css`): ONE
+fixed-position frame whose rect *glides* between surfaces (`--ai-focus-move` duration,
+`--ai-focus-ease` easing), carrying the dim as its own cutout shadow — hole and veil move
+together, and the lamp follows its surface through scrolls/resizes. The lit element is
+**never restyled** (a rect is a rect — cards, rows, and inputs all get the same treatment
+by construction; a form control's frame is its whole labeled `.field`). `.ai-spotlit` is
+purely the semantic marker for the surface under the lamp.
+
 **The established "AI acts on a surface" protocol — one rule, used everywhere:**
 
-1. **`spotlight active:true target:S`** — the screen dims, S is lifted into the light,
-   gently scrolled into view, and pulsed like a click; **and S itself enters AI mode**
-   (the dispatcher sets `data-commit="pending"` on S, so a button reads terminal, an
-   input/text reads grain). The surface the AI touches *looks* AI-driven.
+1. **`spotlight active:true target:S`** — the lamp glides onto S (the rest of the screen
+   recedes into its shadow), S is gently scrolled into view and pulsed like a click; **and
+   S itself enters AI mode** (the dispatcher sets `data-commit="pending"` on S, so a button
+   reads terminal, an input/text reads grain). The surface the AI touches *looks* AI-driven.
 2. **the AI acts on S** — types into it. Text streams into a region; for a real **input**
    it drives `.value` and a final `done` clears it, exactly like a human pressing Enter.
-3. **move on** — `spotlight active:true` on the next surface (the previous one is released,
-   the backdrop stays up); or **`spotlight active:false`** to hand back (undim, release).
+3. **move on** — `spotlight active:true` on the next surface (the lamp glides there,
+   the previous one is released); or **`spotlight active:false`** to hand back (the lamp
+   fades in place, undim, release).
 
 Authored text keeps its grain *after* release (the `type` op's `data-grade` persists =
 AI provenance); the spotlight's `data-commit` is only the *transient* "acting now" state.

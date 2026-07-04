@@ -1,5 +1,5 @@
 /* atoms/b-icon-button — the icon square. One class (.icon-btn); variant/size are
-   attributes. Mirrors b-button: ink hairline, transparent fill, invert-on-hover, no
+   attributes. Mirrors b-button: ink hairline, transparent fill, quiet wash on hover, no
    shadow. Default is a ≥44px touch target (DESIGN-SYSTEM §7). */
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -16,8 +16,10 @@
 .icon-btn[data-size="lg"] { width: 3.25rem; height: 3.25rem; }
 .icon-btn[data-variant="ghost"] { border-color: transparent; }   /* rail / toolbar use */
 
-/* ---- pseudo-states. Hover = invert to ink (DESIGN-SYSTEM §5), not a new hue ---- */
-.icon-btn:hover, .icon-btn[data-force~="hover"] { background: var(--ink); color: var(--paper); }
+/* ---- pseudo-states. Hover = a quiet ink WASH (DESIGN-SYSTEM §5), never an invert —
+   the ink-fill invert read as a loud block and made ghost buttons (invisible at rest)
+   pop in as a rounded box out of nowhere (regression, 2026-07-04). ---- */
+.icon-btn:hover, .icon-btn[data-force~="hover"] { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .icon-btn:focus-visible, .icon-btn[data-force~="focus"] { outline: 2px solid var(--ink); outline-offset: 2px; }
 .icon-btn:active, .icon-btn[data-force~="active"] { transform: translateY(1px); }
 .icon-btn:disabled, .icon-btn[disabled] { opacity: 0.5; cursor: not-allowed; pointer-events: none; }

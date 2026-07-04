@@ -1,8 +1,11 @@
 # Nav item
 
-A rail navigation entry — an icon + a label with an active state. A styled anchor composed
-with `b-icon`. Mark the current one with `aria-current="page"` (accessible) or
-`data-active="true"`. In a collapsed rail the label is hidden and the glyph centers.
+A rail navigation entry — the icon sits in the rail's shared icon **gutter** (a fixed
+column, `--rail-icon-col`), the label beside it; all glyphs align in one vertical column
+and the side-rail draws the gutter hairline. A styled anchor composed with `b-icon`. Mark
+the current one with `aria-current="page"` (accessible) or `data-active="true"`. In a
+collapsed rail the label is hidden and the glyph centers. Iconless entries (a group's
+sub-items) indent past the gutter — the side-rail handles that.
 
 ## States
 

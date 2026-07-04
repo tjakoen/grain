@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Sample figure: an abstract field of grain strokes">
+  <!-- Neutral doc-example image for the figure component (referenced from figure.md).
+       Fixed grays on purpose: this is content, not themed UI chrome. -->
+  <rect width="640" height="360" fill="#efece6"/>
+  <g stroke="#8a857c" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M80 300 q6 -60 0 -120 m0 -30 q-18 24 -36 30 m36 -30 q18 24 36 30"/>
+    <path d="M180 305 q-6 -70 0 -135 m0 -30 q-18 24 -36 30 m36 -30 q18 24 36 30"/>
+    <path d="M280 298 q8 -55 0 -110 m0 -30 q-18 24 -36 30 m36 -30 q18 24 36 30"/>
+    <path d="M380 306 q-8 -72 0 -140 m0 -30 q-18 24 -36 30 m36 -30 q18 24 36 30"/>
+    <path d="M480 300 q6 -62 0 -122 m0 -30 q-18 24 -36 30 m36 -30 q18 24 36 30"/>
+    <path d="M560 304 q-5 -50 0 -100 m0 -30 q-18 24 -36 30 m36 -30 q18 24 36 30"/>
+  </g>
+  <line x1="40" y1="312" x2="600" y2="312" stroke="#c9c3b8" stroke-width="2"/>
+</svg>

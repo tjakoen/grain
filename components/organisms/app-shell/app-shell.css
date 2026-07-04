@@ -22,10 +22,17 @@
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
 
 /* ---- the regions (grid slots) ---- */
-.app-shell__rail    { grid-area: rail;    min-height: 0; }
+/* the rail separates from the content with a SOFTENED hairline — present, but quieter than
+   the rail's own icon-gutter line, so the eye reads gutter > rail-edge as two weights. */
+.app-shell__rail    { grid-area: rail;    min-height: 0;
+                      border-right: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent); }
 .app-shell__topbar  { grid-area: topbar;  min-width: 0; display: flex; align-items: stretch;
                       border-bottom: 1px solid var(--color-line); background: var(--color-surface); }
-.app-shell__main    { grid-area: main;    min-width: 0; overflow: auto; }
+/* __main owns the page scroll inside the shell — it must OPT INTO the smooth-scroll contract
+   (global.css sets it on html, but scrollIntoView scrolls the nearest scrollable ancestor,
+   which in a shell is this pane; without it the AI's focus jumps are instant). */
+.app-shell__main    { grid-area: main;    min-width: 0; overflow: auto; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { .app-shell__main { scroll-behavior: auto; } }
 .app-shell__aside   { grid-area: aside;   min-height: 0; overflow: auto;
                       border-left: 1px solid var(--color-line); background: var(--color-surface); }
 .app-shell__console { grid-area: console; border-top: 1px solid var(--color-line);

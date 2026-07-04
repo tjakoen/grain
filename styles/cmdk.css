@@ -1,0 +1,38 @@
+/* grain/styles/cmdk.css — styles for the global command palette (cmdk.js).
+   Uses only design tokens — no hardcoded colors or sizes. */
+
+.cmdk {
+  max-width: 560px; width: calc(100% - 2rem); margin: 12vh auto auto; padding: 0;
+  border: 1px solid var(--ink); border-radius: var(--radius-md); overflow: hidden;
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-smooth);
+  opacity: 0; transition: opacity .18s ease;
+}
+.cmdk[open] { opacity: 1; }
+@starting-style { .cmdk[open] { opacity: 0; } }
+.cmdk::backdrop { background: color-mix(in srgb, var(--ink) 35%, transparent); }
+@media (prefers-reduced-motion: reduce) { .cmdk { transition: none; } }
+
+.cmdk__input {
+  width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--ink);
+  background: transparent; padding: .85rem 1rem;
+  font-family: inherit; font-size: 1.1rem; color: inherit; outline: none;
+}
+.cmdk__input::placeholder { color: var(--ink-faint); }
+
+.cmdk__list { list-style: none; margin: 0; padding: .25rem; max-height: 52vh; overflow: auto; }
+.cmdk__item { display: flex; align-items: baseline; gap: .6rem; padding: .5rem .75rem; border-radius: 2px; cursor: pointer; }
+.cmdk__item.is-sel { background: var(--ink); color: var(--paper); }
+
+.cmdk__sub { color: var(--ink-muted); font-size: .85em; }
+.cmdk__item.is-sel .cmdk__sub { color: var(--paper); }
+
+.cmdk__kind { margin-left: auto; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); }
+.cmdk__item.is-sel .cmdk__kind { color: var(--paper); }
+
+.cmdk__empty { padding: .75rem 1rem; color: var(--ink-muted); }
+
+.cmdk__hint {
+  padding: .5rem 1rem; border-top: 1px solid var(--line-soft);
+  font-size: .7rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .06em;
+}

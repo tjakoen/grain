@@ -7,7 +7,7 @@
 // PLUMBING, never faked judgment (MVP §"Build Order").
 
 import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
-import { ACTIONS, surfaceId } from "./contract.ts";
+import { ACTIONS, PUSH_SURFACES, surfaceId } from "./contract.ts";
 
 // Escape untrusted text before it goes into an emitted HTML fragment. Canned demo strings
 // are trusted; chat carries USER input, so it must be escaped at the single writer.
@@ -35,7 +35,7 @@ export interface Reasoner {
 // reads consistently (e-ink implies stillness, not a teletype burst).
 const TYPE_MS = 32;     // per character while typing
 const BACK_MS = 16;     // per character while ERASING — quicker than typing, reads as scrubbing
-const SETTLE_MS = 480;  // after the spotlight lands on a surface, before it acts (≥ the dim's fade-in)
+const SETTLE_MS = 700;  // after the spotlight lands on a surface, before it acts (≥ the focus glide, --ai-focus-move)
 const HOLD_MS = 650;    // after an action finishes, before attention moves on
 
 export interface StubOptions {
@@ -82,10 +82,10 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       // Narrate a step to the bottom console as an ACTION BADGE — the AI's verb vocabulary
       // (contract.ts) made visible. The shell surfaces this feed while it takes over.
       const narrate = (verb: string, desc: string) =>
-        tools.emit({ target: "console", op: "append", provenance: "ai", commit: "committed",
+        tools.emit({ target: PUSH_SURFACES.console, op: "append", provenance: "ai", commit: "committed",
           html: `<div class="console__line"><span class="action-badge">${verb}</span><span class="console__desc">${esc(desc)}</span></div>` });
       const clearConsole = () =>
-        tools.emit({ target: "console", op: "replace", provenance: "ai", commit: "committed",
+        tools.emit({ target: PUSH_SURFACES.console, op: "replace", provenance: "ai", commit: "committed",
           html: `<div class="console__feed" data-surface="console"></div>` });
 
       // --- say.stream: button → the AI types a reflection. Spotlit: a human clicked, but
@@ -212,7 +212,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         // Append a bullet to the plan list, then write its text and settle it clean.
         const liHtml = (n: number, text: string) => `<li class="list__item" data-surface="plan-item:${n}">${text}</li>`;
         const addBullet = async (n: number, text: string) => {
-          tools.emit({ target: "plan", op: "append", html: liHtml(n, ""), provenance: "ai", commit: "pending" });
+          tools.emit({ target: PUSH_SURFACES.plan, op: "append", html: liHtml(n, ""), provenance: "ai", commit: "pending" });
           await commitText(`plan-item:${n}`, text, liHtml(n, text));
         };
         // REVISE an already-written surface: backspace the old text one char at a time
@@ -234,11 +234,11 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         narrate("reads", "checking what's in view — 3 tasks");
 
         // 1) compose the request in the input like a human would, then "submit"
-        await moveTo("ask-input");
-        narrate("types", "composing “Plan my Thursday”");
-        await stream("ask-input", "Plan my Thursday", false);
+        await moveTo(PUSH_SURFACES.askInput);
+        narrate("types", 'composing "Plan my Thursday"');
+        await stream(PUSH_SURFACES.askInput, "Plan my Thursday", false);
         await beat(HOLD_MS);
-        tools.emit({ target: "ask-input", op: "type", done: true, provenance: "ai", commit: "committed" });  // Enter → clears it
+        tools.emit({ target: PUSH_SURFACES.askInput, op: "type", done: true, provenance: "ai", commit: "committed" });  // Enter → clears it
         if (stopped()) return handBack;
 
         // 2) reflect — the AI SPEAKING, so it stays grain
@@ -265,8 +265,8 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
 
         // 5) triage today's task CARDS — spotlight each (it goes grain), flip its b-badge,
         //    settle clean. Drives loop-card + item-card + badge, all AI-driven.
-        const badge = (n: number, status: string, label: string) =>
-          `<span class="badge" data-status="${status}" data-surface="task-badge:${n}">${label}</span>`;
+        const badge = (surface: string, status: string, label: string) =>
+          `<span class="badge" data-status="${status}" data-surface="${surface}">${label}</span>`;
         // archive the finished task — a REAL write through the scoped tool (not a cosmetic flip):
         // the AI mutates state via the service, then renders the COMMITTED card back over SSE.
         // Re-runnable: archiveItem is idempotent, so replaying re-archives the same demo fixture
@@ -279,8 +279,8 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         await beat(HOLD_MS);
         if (stopped()) return handBack;
         narrate("clicks", "scheduling the deep-work block");
-        await moveTo("task:2");                     // the deep-work one → schedule it
-        tools.emit({ target: "task-badge:2", op: "replace", html: badge(2, "active", "Thu 09:00"), provenance: "ai", commit: "committed" });
+        await moveTo("item:ITM-demo-2");                     // the deep-work one → schedule it
+        tools.emit({ target: PUSH_SURFACES.demoTaskBadge, op: "replace", html: badge(PUSH_SURFACES.demoTaskBadge, "active", "Thu 09:00"), provenance: "ai", commit: "committed" });
         await beat(HOLD_MS);
         if (stopped()) return handBack;
 
@@ -292,8 +292,8 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
 
         // 7) summarise — speech again (grain) — then hand back
         narrate("writes", "summarising");
-        await moveTo("summary");
-        await stream("summary", "Plan's set — deep-work at nine, one already done. Two to go.");
+        await moveTo(PUSH_SURFACES.summary);
+        await stream(PUSH_SURFACES.summary, "Plan's set — deep-work at nine, one already done. Two to go.");
         await beat(HOLD_MS);
         spot("screen", false);                     // hand back to you
         return { ok: true, ops: [], reply: "(demo) the AI planned, triaged, committed, then handed back." };

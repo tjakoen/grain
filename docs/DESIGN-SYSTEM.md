@@ -92,15 +92,16 @@ grades let the type carry *meaning* (see Grade as signal, below).
 
 - **Weight:** Regular (400) is the house weight, including for headlines — at this grade the
   grain reads finer and more refined than bold. Bold (700) is reserved for rare extra punch.
-- **Grades in play:** `Redaction` (clean) and `Redaction 35` are the working pair. `70` /
-  `100` are display-only accents — never body text.
-- **Body:** clean `Redaction` holds up at reading sizes; `Redaction 35` stays legible for
+- **Grades in play:** `Redaction` (clean) and `Redaction 50` are the working pair. `Redaction 70`
+  is the display accent — never body text. (`Redaction 100` exists in the type family but is not
+  loaded in this bundle.)
+- **Body:** clean `Redaction` holds up at reading sizes; `Redaction 50` stays legible for
   short passages but not long body copy.
 
 ```css
 :root {
   --font-smooth: "Redaction", "Times New Roman", Georgia, serif;     /* clean — human/default */
-  --font-grain:  "Redaction 35", "Times New Roman", Georgia, serif;  /* light grain — AI/draft */
+  --font-grain:  "Redaction 50", "Times New Roman", Georgia, serif;  /* grain — AI/draft */
   --font-accent: "Redaction 70", "Times New Roman", Georgia, serif;  /* display accent only */
 }
 ```
@@ -133,12 +134,12 @@ A working **grade legend**:
 | Grade          | Means                           | Where it shows up                       |
 |----------------|---------------------------------|-----------------------------------------|
 | Clean          | Human / committed / present     | What you wrote; saved, settled content  |
-| Redaction 35   | Machine / in-transit / draft    | AI output, streaming text, unsaved edits|
+| Redaction 50   | Machine / in-transit / draft    | AI output, streaming text, unsaved edits|
 | 70 / 100       | Heavily ephemeral / decorative  | Rare display accents only               |
 
 Two patterns this enables:
 
-- **Provenance (AI vs human).** Render AI-generated text in `35`, human text clean. The
+- **Provenance (AI vs human).** Render AI-generated text in `50`, human text clean. The
   grain reads as "transmitted, not-quite-settled" — a fitting metaphor for machine output.
   **AI text *stays* grain after it finishes** — grain = AI, so provenance persists; it must not
   resolve to clean (that would make machine output look human). Only a *human's* optimistic value
@@ -262,7 +263,9 @@ Primary line in `--ink`, then each subsequent line steps down toward `--ink-fain
 - **Bottom bar:** three bordered elements in a row — icon / primary / icon.
 - **Prompt button:** full-width bordered, sentence-case ("Do you feel good about your time spent?").
 
-No fills, no shadows. Hover = `background: var(--paper-2)` or invert to `--ink` bg / `--paper` text.
+No fills, no shadows. Hover = a **quiet ink wash** (`color-mix(in srgb, var(--ink) 8%, transparent)`) —
+never a full invert and never a new hue. (The old invert-to-ink hover read as a loud accent block and
+made ghost buttons — invisible at rest — pop in as a rounded box out of nowhere; retired 2026-07-04.)
 
 ### Links
 Always underlined, inline, same ink color. The underline *is* the affordance — no color change.

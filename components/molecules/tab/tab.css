@@ -1,16 +1,25 @@
-/* molecules/tab — one open view in the tab-bar. A styled link; the active tab connects to
-   the pane below with an inset ink underline. Optional close affordance (.tab__close). */
+/* molecules/tab — one open view in the tab-bar, editor-style (the workspace metaphor): a boxed
+   tab with an icon, a mono label, and a close affordance — the active tab carries a top accent
+   line and merges into its pane. Composed: icon (.tab__icon, optional) + label text + close
+   (.tab__close, optional). The close is PRESENTATIONAL by default (pointer-events off — a click
+   lands on the tab link); a consumer with genuinely closable views wires it as a real button. */
 .tab {
   display: flex; align-items: center; gap: var(--space-2);
-  height: 2.5rem; padding: 0 var(--space-3);
-  font-size: var(--text-sm); color: var(--color-muted);
-  text-decoration: none; white-space: nowrap;
+  height: 2.5rem; padding: 0 var(--space-2) 0 var(--space-3);
+  font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.01em;
+  color: var(--color-muted); text-decoration: none; white-space: nowrap;
   border-right: 1px solid var(--color-line);
 }
-.tab:hover { color: var(--color-fg); }
+.tab:hover { color: var(--color-fg); background: color-mix(in srgb, var(--color-bg) 55%, transparent); }
+.tab__icon { display: inline-flex; color: var(--ink-faint); }
 .tab[aria-current="page"], .tab[data-active="true"] {
   color: var(--color-fg); background: var(--color-bg);
-  box-shadow: inset 0 -2px 0 var(--ink);   /* the active tab meets its pane */
+  box-shadow: inset 0 2px 0 var(--color-accent, var(--ink));   /* the editor tab's top accent line */
 }
-.tab__close { display: inline-flex; color: var(--ink-faint); }
-.tab__close:hover { color: var(--ink); }
+.tab[aria-current="page"] .tab__icon, .tab[data-active="true"] .tab__icon { color: var(--color-accent, var(--ink)); }
+.tab__close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.15rem; height: 1.15rem; border-radius: var(--radius-sm);
+  color: transparent; pointer-events: none;   /* hidden until the tab is hovered/active */
+}
+.tab:hover .tab__close, .tab[aria-current="page"] .tab__close, .tab[data-active="true"] .tab__close { color: var(--ink-faint); }

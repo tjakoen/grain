@@ -13,9 +13,9 @@
   scroll-behavior: smooth; }
 .assistant__log > :first-child { margin-top: auto; }   /* bottom-pin the conversation — no mid-panel dead space */
 .assistant__composer { border-top: 1px solid var(--color-line); padding: var(--space-3); display: flex; gap: var(--space-2); }
-.assistant__composer input { flex: 1; font: inherit; font-size: var(--text-sm); color: var(--color-fg);
+.assistant__composer .field__input { flex: 1; font: inherit; font-size: var(--text-sm); color: var(--color-fg);
   background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
-.assistant__composer input::placeholder { color: var(--ink-faint); }
+.assistant__composer .field__input::placeholder { color: var(--ink-faint); }
 
 /* TAKEOVER: the shell raises `data-acting` (grain/scripts/ai-dispatch.js) → the panel GENTLY slides
    away (standard AI-motion easing) so the console rises to narrate. The AI's own surfaces stay above

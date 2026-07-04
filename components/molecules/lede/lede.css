@@ -1,0 +1,17 @@
+/* molecules/lede — the opening paragraph of a page or section: larger, muted, measured.
+   CSS-only (CONVENTIONS §4): nothing data-binds it — compose by hand under a masthead.
+   Emphasis inside a lede reads as underline, not italic (monochrome, DESIGN-SYSTEM §2). */
+.lede {
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  max-width: 56ch;
+  line-height: var(--leading-relaxed);
+}
+.lede em { font-style: normal; text-decoration: underline; }
+
+/* size is an attribute, not a second class: the small lede is a quiet aside — body-small,
+   a touch wider measure */
+.lede[data-size="sm"] { font-size: var(--text-sm); max-width: 60ch; }
+
+/* ---- AI / in-transit: a lede is text — the global grade mechanism (data-grade →
+   --type-font, styles/grain.css) already carries the grain; nothing bespoke needed. */

@@ -176,7 +176,10 @@ export async function listMillRoutes(collections: MillCollection[]): Promise<str
   const out: string[] = [];
   for (const c of collections) {
     if (c.index ?? true) out.push(c.prefix);
-    for (const slug of await c.source.list()) out.push(`${c.prefix}/${slug}`);
+    // only slugs the router will actually serve (SLUG-safe) — a nonconforming filename must
+    // not reach a sitemap/export list it would 404 from
+    for (const slug of await c.source.list())
+      if (SLUG.test(slug)) out.push(`${c.prefix}/${slug}`);
   }
   return out.sort();
 }

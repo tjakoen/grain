@@ -1,0 +1,28 @@
+/* molecules/card — a bordered content tile + its companion grid. CSS-only (CONVENTIONS §4):
+   composed by hand — a <div> for a plain fact, an <a> for a navigable tile. Monochrome:
+   a hairline box, no fill, no shadow (DESIGN-SYSTEM §2). Variants are attributes. */
+.card {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+.card[data-pad="sm"] { padding: var(--space-4); }
+
+.card__title { font-size: var(--text-base); margin: 0 0 var(--space-2); }
+.card__body  { color: var(--color-muted); font-size: var(--text-sm);
+  line-height: var(--leading-normal); margin: 0; }
+
+/* a navigable card: the whole tile is the link — quiet at rest, paper lifts on hover */
+a.card { display: block; text-decoration: none; color: var(--color-fg);
+  transition: background-color 0.15s; }
+a.card:hover { background: var(--paper-2); }
+a.card[aria-disabled="true"] { pointer-events: none; opacity: 0.6; }
+
+/* the companion grid: auto-fit tiles, min width tunable per use (--card-min) */
+.card-grid { display: grid; gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-min, 15rem), 1fr)); }
+
+/* ---- AI / in-transit: the non-text grain — a card the AI is composing wears the dashed
+   "terminal" edge (live pending, or any grain ancestor). Same vocabulary as badge + field. */
+.card[data-commit="pending"],
+[data-grade="grain"] .card { border-style: dashed; border-color: var(--ink); }

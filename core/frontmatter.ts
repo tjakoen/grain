@@ -1,6 +1,8 @@
 // mill/core/frontmatter.ts — split a `---` YAML-ish frontmatter block off the body.
 // Deliberately a tiny subset (no library, zero runtime deps — the batch bar): scalars,
-// inline lists `[a, b]`, and dash lists under a key. Enough for title/type/date/tags/desc.
+// inline lists `[a, b]`, dash lists under a key, and folded/literal block scalars
+// (`key: >` / `key: |` — the shape real notes use for `summary:`). Enough for
+// title/type/date/tags/summary/desc.
 import type { Frontmatter } from "./types.ts";
 
 export interface ParsedFrontmatter { data: Frontmatter; body: string; }
@@ -26,9 +28,11 @@ const unquote = (s: string) => s.replace(/^(["'])(.*)\1$/, "$2");
 function parseYamlish(lines: string[]): Frontmatter {
   const data: Frontmatter = {};
   let currentKey: string | null = null;
+  let i = 0;
 
-  for (const line of lines) {
-    if (line.trim() === "") continue;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.trim() === "") { i++; continue; }
 
     // a dash list item belongs to the most recent key
     const item = line.match(/^\s*-\s+(.*)$/);
@@ -36,15 +40,29 @@ function parseYamlish(lines: string[]): Frontmatter {
       const arr = Array.isArray(data[currentKey]) ? (data[currentKey] as string[]) : [];
       arr.push(unquote(item[1].trim()));
       data[currentKey] = arr;
-      continue;
+      i++; continue;
     }
 
     const kv = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
-    if (!kv) continue;
+    if (!kv) { i++; continue; }
     const key = kv[1];
     const rawVal = kv[2].trim();
     currentKey = key;
+    i++;
     if (rawVal === "") continue;                       // value may follow as dash items
+
+    // block scalar: `key: >` folds continuation lines with spaces, `key: |` keeps newlines.
+    // Continuation = every following line that is indented (or blank), until a flush-left line.
+    if (rawVal === ">" || rawVal === "|") {
+      const buf: string[] = [];
+      while (i < lines.length && (lines[i].trim() === "" || /^\s/.test(lines[i]))) {
+        buf.push(lines[i].trim());
+        i++;
+      }
+      while (buf.length && buf[buf.length - 1] === "") buf.pop();   // drop trailing blanks
+      data[key] = buf.join(rawVal === ">" ? " " : "\n").trim();
+      continue;
+    }
 
     if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
       data[key] = rawVal.slice(1, -1).split(",").map(s => unquote(s.trim())).filter(s => s !== "");

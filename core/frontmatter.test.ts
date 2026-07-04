@@ -42,3 +42,14 @@ test("carriage returns are tolerated", () => {
   expect(data.title).toBe("CRLF");
   expect(body).toBe("body");
 });
+
+test("folded block scalar (`key: >`) joins indented lines with spaces", () => {
+  const { data } = parseFrontmatter("---\nsummary: >\n  line one\n  line two\ntitle: After\n---\nbody");
+  expect(data.summary).toBe("line one line two");
+  expect(data.title).toBe("After");
+});
+
+test("literal block scalar (`key: |`) keeps newlines", () => {
+  const { data } = parseFrontmatter("---\nnotes: |\n  a\n  b\n---\nbody");
+  expect(data.notes).toBe("a\nb");
+});

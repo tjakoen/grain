@@ -19,6 +19,7 @@ export type MillNode =
   | { type: "blockquote"; children: InlineNode[] }
   | { type: "image"; src: string; alt: string }
   | { type: "thematicBreak" }
+  | { type: "table"; header: InlineNode[][]; rows: InlineNode[][][] }
   | { type: "html"; value: string };
 
 // ---- Inline AST -------------------------------------------------------------

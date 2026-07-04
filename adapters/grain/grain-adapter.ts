@@ -51,6 +51,12 @@ const block: BlockHandlers = {
     return `<figure class="figure"><img src="${ctx.escape(ctx.resolveLink(n.src))}" alt="${ctx.escape(n.alt)}">${cap}</figure>`;
   },
   thematicBreak: () => `<hr class="rule">`,
+  table: (n, ctx) => {
+    const cells = (row: typeof n.header, tag: "th" | "td") =>
+      row.map(c => `<${tag}>${ctx.renderInline(c)}</${tag}>`).join("");
+    const body = n.rows.map(r => `<tr>${cells(r, "td")}</tr>`).join("");
+    return `<div class="table-scroll"><table class="table"><thead><tr>${cells(n.header, "th")}</tr></thead><tbody>${body}</tbody></table></div>`;
+  },
   html: (n) => n.value,   // escape hatch: raw component tags → BATCH composes them
 };
 
@@ -68,15 +74,17 @@ const inline: InlineHandlers = {
 // MILL ships a sensible default; the consumer supplies its `type → layout` registry (the
 // "engine implemented by the consumer" model). Default = an editorial note masthead.
 const defaultLayout: LayoutFn = ({ title, frontmatter, body }) => {
-  const date = typeof frontmatter.date === "string" && frontmatter.date
-    ? `<p class="eyebrow">${escapeHtml(frontmatter.date)}</p>` : "";
+  const str = (k: string): string => typeof frontmatter[k] === "string" ? (frontmatter[k] as string) : "";
+  const meta = [str("date"), str("readingTime")].filter(Boolean).map(escapeHtml).join(" · ");
+  const eyebrow = meta ? `<p class="eyebrow">${meta}</p>` : "";
   const heading = title ? `<h1 class="masthead">${escapeHtml(title)}</h1>` : "";
+  const lede = str("subtitle") ? `<p class="note__lede">${escapeHtml(str("subtitle"))}</p>` : "";
   const tags = asArray(frontmatter.tags);
   const badges = tags.length
     ? `<div class="note__tags">${tags.map(t => `<span class="badge" data-status="active">${escapeHtml(t)}</span>`).join(" ")}</div>`
     : "";
-  const head = (date || heading || badges)
-    ? `<header class="note__head">${date}${heading}${badges}<hr class="rule"></header>` : "";
+  const head = (eyebrow || heading || lede || badges)
+    ? `<header class="note__head">${eyebrow}${heading}${lede}${badges}<hr class="rule"></header>` : "";
   // data-grade="smooth" = a positive human-grade assertion (the guardrail; only the AI grains).
   return `<article class="note" data-grade="smooth">${head}${body}</article>`;
 };

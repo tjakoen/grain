@@ -2,9 +2,11 @@
 
 Onboarding for anyone (AI or human) working in `mill/`: MILL ("Markdown In, Living Layouts"), the
 stack's content rendering engine (a content plugin for GRAIN). Read the plan first, it is the
-source of truth. **Built so far (pieces 1–2, 2026-07-03):** the framework-agnostic core engine
-(`core/`) + the reference BATCH+GRAIN adapter (`adapters/grain/`), all unit-tested. Live-route
-mounting and consumer wiring (`/notes`) are still deferred (pieces 3–4).
+source of truth. **Built so far (pieces 1–4, 2026-07-03/04):** the framework-agnostic core engine
+(`core/`), the reference BATCH+GRAIN adapter (`adapters/grain/`), the live content route
+(`serve.ts` — `createMillRoutes(deps)`, a transport-generic pathname handler), and the portfolio
+wiring (`../portfolio/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested. Next:
+piece 4b (AI-facing outputs: meta/JSON-LD, `llms.txt`, `knowledge.json`, `data-surface`).
 
 > This file follows `../portfolio/standards/CLAUDE.starter.md`. Personal standards live in
 > `../portfolio/standards/`.
@@ -37,4 +39,7 @@ build it.
   in the `.md`) still passes through for BATCH to compose.
 - **Grade guardrail.** MILL output is human-authored → clean ink (`data-grade="smooth"`, never grain,
   never `data-commit`). `renderGrainDocument` enforces it (`core/grade.ts`). Only the AI grains.
+- **Layer docs are package-resolved, never path-reached.** `/grain/docs` + `/batch/docs` read their
+  `.md` through `packageDocsSource` (`import.meta.resolve('@tjakoen/grain/docs/…')`) — never a
+  `../grain/docs` relative path. Same code in the monorepo (workspaces) and after the split (git dep).
 - **Build against the plan and keep it canonical.** `PLAN.md` tracks what's built vs. deferred.

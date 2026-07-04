@@ -1,12 +1,13 @@
 # MILL — plan
 
-> Status: **planned, not built (decision + design only, 2026-07-02; positioning revised
-> 2026-07-03).** MILL — **"Markdown In, Living Layouts"** — is the platform's **content rendering
-> engine**: feed it Markdown + images and it renders pages out of components. It is its **own
-> top-level project** (a sibling of `batch/`, `grain/`, `project/`, `portfolio/`) and is designed
-> as a **reusable, open-source** tool. The **portfolio** is its first consumer. This file is the
-> **canonical MILL plan**; `portfolio/PLAN.md` holds the *consumer* view and points here. The
-> cross-layer sequencing (MILL is Track C) lives in [`../ROADMAP.md`](../ROADMAP.md).
+> Status: **pieces 1–4 built (core 2026-07-03; live route + portfolio wiring 2026-07-04); piece
+> 4b (AI-facing outputs) is next.** MILL — **"Markdown In, Living Layouts"** — is the platform's
+> **content rendering engine**: feed it Markdown + images and it renders pages out of components.
+> It is its **own top-level project** (a sibling of `batch/`, `grain/`, `project/`, `portfolio/`)
+> and is designed as a **reusable, open-source** tool. The **portfolio** is its first consumer
+> (`/notes`, `/grain/docs`, `/batch/docs` render live through MILL). This file is the **canonical
+> MILL plan**; `portfolio/PLAN.md` holds the *consumer* view and points here. The cross-layer
+> sequencing (MILL is Track C) lives in [`../ROADMAP.md`](../ROADMAP.md).
 
 ## Positioning (decision, 2026-07-03)
 
@@ -31,11 +32,11 @@ output), so a site is *maintained by editing content, not HTML*.
 MILL **enhances** a site's content; it does **not** build the site. A consumer's bespoke surfaces
 stay its own work — the portfolio's hero AI, calendar, etc. are custom BATCH + GRAIN, not MILL.
 
-## What MILL gives you (capabilities — PLANNED)
+## What MILL gives you (capabilities)
 
-The capabilities, **tiered** — headliners first, then the useful-but-quieter ones. **Marked PLANNED:**
-pieces 1–2 (the framework-agnostic core + the reference adapter) are built; pieces 3–4 (live route,
-consumer wiring, AI-facing outputs) are not. Nothing here is buried. **This list is the single source**
+The capabilities, **tiered** — headliners first, then the useful-but-quieter ones. Pieces 1–4 (the
+framework-agnostic core, the reference adapter, the live content route, the portfolio wiring) are
+built; piece 4b (the AI-facing outputs) is not yet. Nothing here is buried. **This list is the single source**
 (any README/landing teaser projects from it); add or drop a capability → update this list (the
 `../CLAUDE.md` alignment table Track C row → `AUDIT.md` check 11).
 
@@ -43,7 +44,7 @@ consumer wiring, AI-facing outputs) are not. Nothing here is buried. **This list
 
 - **Markdown in → GRAIN pages out.** Feed it a folder of `.md` + images and it renders pages by
   **mapping Markdown to components** (not inventing a renderer) — a site is *maintained by editing
-  content, not HTML*. (§"The mapping model".) *(core built; live route = piece 3.)*
+  content, not HTML*. (§"The mapping model".) *(built — live at `/notes` + the layer docs.)*
 - **AI-answerable by construction.** The same source that renders a human page also emits semantic
   HTML + per-page meta, schema.org JSON-LD, `llms.txt`, `knowledge.json` (RAG chunks), and
   `data-surface` addresses on content — so *AI-operable ≈ AI-answerable* falls out of authoring, not
@@ -145,9 +146,9 @@ retrieval port and models live with the consumer).
 
 - **`batch/export` now exists** (ROADMAP Track B.1, Tier 1 shipped 2026-07-04) — the hosting
   adapter's freeze path can build on it (`bun run export` → `dist/`). Live render works without it too.
-- **GRAIN is missing content components** a markdown renderer needs out of the box: **code block
-  (mono), figure/clipped-photo, callout/blockquote**. Build these in grain before or with piece 3
-  — a technical note is unrenderable without them.
+- ✅ **GRAIN content components** a markdown renderer needs out of the box are built: **code block
+  (mono), figure/clipped-photo, callout/blockquote** (with piece 2), and **table, note (the default
+  article layout), content-index (the collection listing)** (with piece 3).
 - **mermaid→SVG** (FIGURES.md requires server-side conversion; the converter is a heavy
   dependency) — explicitly **deferred**, not implied. Until then, figures ship as pre-rendered
   SVG per the FIGURES.md scaffold.
@@ -184,10 +185,31 @@ retrieval port and models live with the consumer).
    - **GRAIN content-component prereqs built** in `grain/components/**`: `atoms/code-block` (+ inline
      code; added the `--font-mono` token), `molecules/figure` (+ `clipped` variant),
      `molecules/callout`. CSS-only (composed by MILL, no data-binding), auto-appear in `/catalog`.
-3. **BATCH+GRAIN adapter** — emit GRAIN tags; mount a live content route; plug into `batch/export`
-   (projection, not re-render — memory: static-export-decision).
-4. **Consumer wiring (in `portfolio/`)** — the `type → layout` registry + block overrides; render
-   `/notes` (+ `/notes/:slug`), `/grain/docs`, `/batch/docs`; feed the RAG-corpus prep.
+3. ✅ **Live content route** (done 2026-07-04) — `mill/serve.ts`: `createMillRoutes(deps)` returns a
+   transport-generic pathname handler (`(pathname) → Response | null`), mounted in a few delimited
+   lines at the composition root. Per request: read `.md` → `renderGrainDocument` (grade-guarded) →
+   consumer chrome (full page) → injected `compose` (BATCH's `renderPage`) so chrome component tags
+   AND escape-hatch `<b-…>` tags compose at request time — live render; `bun run export` freezes this
+   output as-is (projection, not re-render — memory: static-export-decision). Content sources are a
+   port (`ContentSource`): `dirSource` (a folder) + `packageDocsSource` (a docs folder inside an
+   installed package, via `import.meta.resolve`). Decisions this piece resolved:
+   - **Core subset extended for real content:** GitHub-style pipe **tables** (new `table` node —
+     total-map drift protection made every adapter update a compile error, as designed) and
+     frontmatter **folded/literal block scalars** (`key: >` / `key: |` — the shape every real note's
+     `summary:` uses). GRAIN grew the matching CSS-only content components: `molecules/table`
+     (+ `.table-scroll`), `organisms/note` (the default layout's `.note/.note__head/.note__lede/
+     .note__tags` — reusable, so it lives in GRAIN, not the portfolio), `molecules/content-index`
+     (the index listing).
+   - **Monorepo workspaces wired** (root `package.json` `workspaces`) so `@tjakoen/grain` /
+     `@tjakoen/batch` resolve from `node_modules` in the monorepo era too — the package-resolution
+     decision below runs the SAME code both eras.
+4. ✅ **Consumer wiring (in `portfolio/`)** (done 2026-07-04) — `portfolio/content.ts`: three
+   collections (`/notes` from `portfolio/notes/*.md`; `/grain/docs` + `/batch/docs` from the
+   installed layer packages), the BREAD-shell chrome (`<portfolio-frame />`, composed at request
+   time), and per-collection `resolveLink` overrides (sibling `x.md` → `/notes/x`; docs cross-links
+   `../../grain/docs/X.md` → `/grain/docs/x`). Integration-tested against the REAL content (every
+   note + both docs collections render clean-grade). The `type → layout` registry stays empty for
+   now — the default editorial-note layout fits all current content; RAG-corpus prep = piece 4b.
    - **Layer-docs source = package-resolved, never a hardcoded sibling path or a copy.** The
      `/grain/docs` + `/batch/docs` collections read their `.md` from the *installed layer package*
      via `import.meta.resolve('@tjakoen/grain/docs')` / `@tjakoen/batch/docs` (both layers now ship a
@@ -212,11 +234,16 @@ retrieval port and models live with the consumer).
 - ✅ **Where layouts live** (resolved 2026-07-03) — MILL ships a **default** layout (editorial
   note masthead); the consumer supplies its `type → layout` registry via `GrainAdapterOptions`
   (the "engine implemented by the consumer" model). MILL stays framework-generic.
-- **Slug / link resolution** — default is `note:slug` → `/notes/slug`, overridable per consumer via
-  `GrainAdapterOptions.resolveLink`. **Collision rules still open** (deferred to piece 4 wiring).
+- ✅ **Slug / link resolution** (resolved 2026-07-04) — default stays `note:slug` → `/notes/slug`;
+  the consumer overrides per collection via `GrainAdapterOptions.resolveLink`
+  (`portfolio/content.ts`: sibling-`.md` and cross-layer docs rewrites). Slug = filename minus
+  `.md`, lowercased (`GRAIN.md` → `grain`); a case-colliding pair is last-one-wins (documented in
+  `dirSource`). Links to `.md` files with no rendered page pass through untouched — the export's
+  dead-link warning keeps those honest.
 
 ## Relationship to the platform
 
 - **`portfolio/PLAN.md`** is the *consumer* plan — it uses MILL for content and references this doc.
 - **`static-export-decision`** holds: MILL renders live, export freezes — not a build-time re-render.
-- Nothing built yet; this is decision + design only. See memory: `portfolio-cms-separate-project`.
+- Pieces 1–4 are built and live; piece 4b (AI-facing outputs) and the mermaid→SVG converter remain.
+  See memory: `portfolio-cms-separate-project`.

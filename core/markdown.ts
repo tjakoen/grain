@@ -1,7 +1,8 @@
 // mill/core/markdown.ts — a tiny hand-rolled Markdown parser (blocks + inline) → MillNode[].
 // Zero runtime deps by design (batch's bar; catalog.ts already hand-rolls a line parser). It
 // is a documented SUBSET, not CommonMark: headings, paragraphs, ordered/unordered lists,
-// fenced code, blockquotes, standalone images, thematic breaks, and a raw-HTML/component
+// fenced code, blockquotes, standalone images, thematic breaks, GitHub-style pipe tables
+// (header + `|---|` separator; no cell alignment, no escaped `\|`), and a raw-HTML/component
 // passthrough (the escape hatch). Inline: **strong**, *em*, `code`, [link](url), ![img](url).
 import type { MillNode, InlineNode } from "./types.ts";
 
@@ -13,10 +14,18 @@ const LIST_ITEM  = /^\s*([-*+]|\d+[.)])\s+(.*)$/;        // -, *, +, or 1. / 1)
 const BLOCKQUOTE = /^ {0,3}> ?(.*)$/;
 const HTML_LINE  = /^ {0,3}</;                           // a line that opens a tag → passthrough
 const IMAGE_ONLY = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;       // a paragraph that is only an image
+const TABLE_ROW  = /^ {0,3}\|(.*)$/;                     // a pipe-led line (GitHub-style table row)
+const TABLE_SEP  = /^ {0,3}\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;  // |---|:---:|…
 
 const startsBlock = (line: string) =>
   HR.test(line) || HEADING.test(line) || FENCE.test(line) ||
-  BLOCKQUOTE.test(line) || LIST_ITEM.test(line) || HTML_LINE.test(line);
+  BLOCKQUOTE.test(line) || LIST_ITEM.test(line) || HTML_LINE.test(line) || TABLE_ROW.test(line);
+
+// split one `| a | b |` row into trimmed cell strings (subset: no escaped `\|` support)
+const splitRow = (line: string): string[] => {
+  const inner = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return inner.split("|").map(c => c.trim());
+};
 
 export function parseMarkdown(md: string): MillNode[] {
   const lines = md.replace(/\r\n?/g, "\n").split("\n");
@@ -70,6 +79,19 @@ export function parseMarkdown(md: string): MillNode[] {
       continue;
     }
 
+    // table — a pipe-led header row + a `|---|` separator, then pipe-led body rows
+    if (TABLE_ROW.test(line) && i + 1 < lines.length && TABLE_SEP.test(lines[i + 1])) {
+      const header = splitRow(line).map(parseInline);
+      i += 2;                                           // consume header + separator
+      const rows: InlineNode[][][] = [];
+      while (i < lines.length && TABLE_ROW.test(lines[i]) && !TABLE_SEP.test(lines[i])) {
+        rows.push(splitRow(lines[i]).map(parseInline));
+        i++;
+      }
+      nodes.push({ type: "table", header, rows });
+      continue;
+    }
+
     // raw HTML / component passthrough (the escape hatch) — until a blank line
     if (HTML_LINE.test(line)) {
       const buf: string[] = [];
@@ -78,8 +100,11 @@ export function parseMarkdown(md: string): MillNode[] {
       continue;
     }
 
-    // paragraph — soft-wrapped lines joined with a space, until a blank line or a new block
-    const buf: string[] = [];
+    // paragraph — soft-wrapped lines joined with a space, until a blank line or a new block.
+    // First line is consumed unconditionally: a stray table row (pipe-led, no separator)
+    // falls through to here, and skipping it would stall the loop.
+    const buf: string[] = [lines[i]];
+    i++;
     while (i < lines.length && lines[i].trim() !== "" && !startsBlock(lines[i])) { buf.push(lines[i]); i++; }
     const text = buf.join(" ").trim();
     const img = text.match(IMAGE_ONLY);

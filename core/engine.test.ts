@@ -13,6 +13,7 @@ const block: BlockHandlers = {
   blockquote: (n, ctx) => `[quote:${ctx.renderInline(n.children)}]`,
   image: (n) => `[img:${n.src}]`,
   thematicBreak: () => `[hr]`,
+  table: (n, ctx) => `[table:${[n.header, ...n.rows].map(r => r.map(c => ctx.renderInline(c)).join("|")).join(";")}]`,
   html: (n) => `[html:${n.value}]`,
 };
 const inline: InlineHandlers = {

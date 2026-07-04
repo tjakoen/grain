@@ -83,3 +83,10 @@ test("consumer type → layout registry is honoured", () => {
   expect(html).toContain(`<section class="talk">`);
   expect(html).toContain(`<h1>A Talk</h1>`);
 });
+
+test("table renders as .table inside a .table-scroll wrapper (th/td split)", () => {
+  const { html } = renderGrainDocument("| a | b |\n|---|---|\n| c | d |");
+  expect(html).toContain(`<div class="table-scroll"><table class="table">`);
+  expect(html).toContain("<thead><tr><th>a</th><th>b</th></tr></thead>");
+  expect(html).toContain("<tbody><tr><td>c</td><td>d</td></tr></tbody>");
+});

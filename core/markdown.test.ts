@@ -88,3 +88,24 @@ test("link children are parsed recursively", () => {
     expect(nodes[0].children.some(c => c.type === "strong")).toBe(true);
   }
 });
+
+test("table: header + separator + rows → a table node", () => {
+  const nodes = parseMarkdown("| You change… | …also update |\n|---|---|\n| a verb | `contract.ts` |\n| a surface | tests |");
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0].type).toBe("table");
+  if (nodes[0].type === "table") {
+    expect(nodes[0].header).toHaveLength(2);
+    expect(nodes[0].rows).toHaveLength(2);
+    expect(nodes[0].rows[0][1][0].type).toBe("codeSpan");
+  }
+});
+
+test("table: a pipe-led line with NO separator stays a paragraph (no stall)", () => {
+  const nodes = parseMarkdown("| just a stray pipe line\nmore prose");
+  expect(nodes.map(n => n.type)).toEqual(["paragraph"]);
+});
+
+test("table ends a paragraph (a new block starts)", () => {
+  const nodes = parseMarkdown("prose before\n| h |\n|---|\n| c |");
+  expect(nodes.map(n => n.type)).toEqual(["paragraph", "table"]);
+});

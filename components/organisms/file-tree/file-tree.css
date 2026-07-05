@@ -1,0 +1,68 @@
+/* organisms/file-tree — an EXPLORER file tree (the editor-workspace metaphor): folders as native
+   <details>/<summary> (zero-JS collapse, COLLAPSED by default — author without `open`), files as
+   real <a> links. Mono type, hairline indent guides, a chevron that rotates on open — VS Code's
+   explorer re-spoken in GRAIN. A layout class composed of native elements, not a data-bound tag;
+   what the paths MEAN (which file produces which page) is the consumer's contract — this only
+   draws the tree. Lives naturally in the app-shell rail (side-rail[data-variant="explorer"]
+   drops the icon gutter for it), but works in any column. */
+.file-tree {
+  display: flex; flex-direction: column;
+  min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.01em;
+  scrollbar-width: thin;
+}
+
+/* ---- a folder: <details class="file-tree__dir"><summary>name/</summary><div class="file-tree__children">… ---- */
+.file-tree__dir > summary {
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: 0.28rem var(--space-2);
+  color: var(--color-muted); cursor: pointer; user-select: none;
+  list-style: none; white-space: nowrap;
+}
+.file-tree__dir > summary::-webkit-details-marker { display: none; }
+.file-tree__dir > summary:hover { color: var(--color-fg); }
+/* the chevron: one glyph, rotated by state — no per-state art */
+.file-tree__dir > summary::before {
+  content: "▸"; flex: 0 0 auto; width: 0.9em;
+  color: var(--ink-faint); font-size: 0.9em;
+  transition: transform 0.15s ease;
+}
+.file-tree__dir[open] > summary::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .file-tree__dir > summary::before { transition: none; } }
+
+/* ---- children indent under a hairline guide (the VS Code indent line) ---- */
+.file-tree__children {
+  display: flex; flex-direction: column;
+  margin-left: calc(var(--space-2) + 0.45em);
+  border-left: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
+}
+
+/* ---- a file: a real link (hypermedia — the tree navigates with zero JS) ---- */
+.file-tree__file {
+  display: block; padding: 0.28rem var(--space-2);
+  color: var(--color-muted); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.file-tree__file:hover { color: var(--color-fg);
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+/* the OPEN file: ink + a quiet accent edge (mirrors the rail's current-item bar) */
+.file-tree__file[aria-current="page"] {
+  color: var(--color-fg); position: relative;
+  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+}
+.file-tree__file[aria-current="page"]::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -1px;
+  width: 2px; background: var(--color-accent);
+}
+
+/* a collection folder may make its NAME a link (the folder's index page): the summary's <a>
+   inherits the folder register; navigating is the link's, toggling stays the summary's. */
+.file-tree__dir > summary > a { color: inherit; text-decoration: none; }
+.file-tree__dir > summary > a:hover { color: var(--color-fg); }
+
+/* ---- inside a collapsed shell rail the labels are gone — a tree without labels is noise ---- */
+[data-rail-collapsed="true"] .file-tree { display: none; }
+
+/* ---- explorer variant of the rail: the icon gutter is the NAV rail's look; a tree brings its
+   own indent guides, so the host drops the gutter line ---- */
+.side-rail[data-variant="explorer"]::before { display: none; }

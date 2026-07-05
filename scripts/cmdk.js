@@ -53,7 +53,8 @@
 
   function render() {
     const q = input.value.trim().toLowerCase();
-    items = corpus().filter((e) => !q || (e.title + " " + (e.subtitle || "")).toLowerCase().includes(q)).slice(0, 30);
+    // match on the URL too — Quick Open by path ("notes/ten", "grain/docs") like an editor's ⌘P
+    items = corpus().filter((e) => !q || (e.title + " " + (e.subtitle || "") + " " + (e.url || "")).toLowerCase().includes(q)).slice(0, 30);
     sel = 0;
     list.innerHTML = items.length
       ? items.map((e, i) => `<li class="cmdk__item${i === 0 ? " is-sel" : ""}" role="option" data-i="${i}">

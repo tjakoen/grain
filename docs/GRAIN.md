@@ -61,9 +61,21 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
   `app-window` (the editor-window dressing: backdrop, hairline frame, title bar with functional
   window dots + a ⌘K search field), `status-bar` (the honest status row), `side-rail` (+ collapsible
   groups), `sidebar-panel` (the assistant, with consumer-named modes), `console` (the AI's narration
-  surface), `tab-bar`/`topbar` — CSS-only patterns that re-skin by token and carry view-transition
-  names so the chrome persists across navigations. The dispatcher stamps `<body data-ai-online>` by
-  outcome, so a status bar's presence indicator is real, never assumed.
+  surface), `tab-bar`/`topbar`, `file-tree` (an explorer tree: native `<details>` folders shipped
+  collapsed, files as real links) — CSS-only patterns that re-skin by token and carry
+  view-transition names so the chrome persists across navigations. The dispatcher stamps
+  `<body data-ai-online>` by outcome, so a status bar's presence indicator is real, never assumed.
+- **Open-page tabs over plain hypermedia.** `scripts/tabs.js` turns the tab-bar into an editor's
+  open-pages strip — a localStorage *projection* of navigation (every tab a real `<a>`, zero-JS
+  falls back to the pinned tabs), with pinned-first, live ×-close, and labels resolved from a
+  `[data-tab-source]` nav (the file-tree pairing). An MPA that *feels* like an editor, no router.
+- **The interactive terminal — a third client of the one door.** `scripts/terminal.js` adds a
+  command line to the console (opt-in: `data-terminal="interactive"`): reads (`help`/`ls`/`go`/
+  `grep`/`theme`/`context`/`xray`) run locally against the ⌘K corpus; anything AI-shaped (`ask`,
+  `stop`) is raised as a real `Intent` through the public `window.grain.door` seam — same lifecycle
+  and ready-gate as a click or the AI, no parallel wire. Extensible per consumer via
+  `window.grain.terminal.register` (grain stays persona-neutral); history, Tab-completion,
+  `` Ctrl+` ``. The human's echoed command settles clean; machine output stays grain.
 - **The ⌘K palette + demo-box.** A command palette island (`scripts/cmdk.js`, fed by `/search.json`)
   and a reusable scripted-demo island (`scripts/demo-box.js`) for live, declarative walkthroughs.
 - **The manifest — a drift-proof machine map.** A per-screen, machine-readable projection of what's

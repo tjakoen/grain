@@ -74,7 +74,11 @@
   }
   .app-shell__aside { display: none; }
   .app-shell[data-rail-collapsed="true"] { --shell-rail: 15rem; }   /* collapse-width is desktop-only */
-  .app-shell__rail {
+  /* two classes ON PURPOSE: a composed rail (e.g. side-rail) may carry its own `position:
+     relative` (the icon gutter), and the CSS bundle sorts side-rail AFTER app-shell — at equal
+     specificity the drawer's `fixed` silently lost and the rail fell back into the grid flow.
+     The extra ancestor class keeps the drawer winning regardless of bundle order. */
+  .app-shell .app-shell__rail {
     position: fixed; inset: 0 auto 0 0; z-index: 40;
     width: min(78vw, 18rem);
     transform: translateX(-100%); transition: transform 0.3s ease;

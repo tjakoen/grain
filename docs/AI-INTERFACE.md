@@ -229,6 +229,14 @@ htmx still handles the **client-initiated** half normally (initial loads,
 navigation). SSE + the dispatcher are purely additive and live **entirely in the app
 layer** — `framework/` stays app-agnostic, so the stack remains extractable.
 
+**The door as a public seam (`window.grain.door`).** The dispatcher exposes its one wire out as a
+browser seam: `door.submit(action, target, payload?, trigger?)` raises a real `Intent` through the
+SAME `submit()` a human click uses — inheriting the pending-trigger lifecycle (§5) and the `ready`
+gate for free — plus `door.screen` and the honest `door.online()` (outcome-stamped, never assumed).
+This is how an island becomes a **third client of the one door** (the interactive terminal's
+`ask`/`stop` are the first users) without a parallel wire or a privileged path. Same idiom as
+`window.grain.theme` / `window.grain.terminal` / `window.grain.tabs` / `window.grain.xray`.
+
 ### The full loop (MVP §"The Interaction Flow", mechanised)
 
 ```

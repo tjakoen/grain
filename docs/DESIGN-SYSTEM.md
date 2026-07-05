@@ -90,15 +90,18 @@ Theming is **two orthogonal attribute axes on `<html>`**, both pure token re-ski
 - **`data-theme`** — the *flavor*. The consumer declares its ordered list on
   `<html data-themes="sourdough baguette brioche">`; the **first entry is the default** (rendered by
   the bare `:root`, so it carries no attribute). GRAIN hardcodes no theme names — add/rename/reorder
-  a flavor purely in the markup + a `[data-theme="…"]` token block.
+  a flavor purely in the markup + a `[data-theme="…"]` token block. Each accented flavor is a
+  **reference file** under `styles/themes/` (`baguette.css`, `brioche.css`), `@imported` from
+  `variables.css`; copy the annotated **`styles/themes/_template.css`** to add one.
 
 The controls are declarative (`scripts/theme.js`: `data-toggle-scheme`, `data-cycle-theme`,
 `data-set-theme`/`data-set-scheme` on any element) and persist to `localStorage`;
 `theme-boot.js` (render-blocking, injected by the composition root) pre-sets the saved attributes
 before first paint so navigation never flashes the default (the FOUC guard). The server's boot
-drift-guard warns on any referenced flavor that has no token block — a typo can't silently no-op.
-Ships today as **Sourdough** (default, hueless), **Baguette** (clean, soft blue accent), and
-**Brioche** (warm, honey-gold accent).
+drift-guard scans `variables.css` + `styles/themes/*.css` and warns on any referenced flavor that
+has no token block — a typo can't silently no-op.
+Ships today as **Sourdough** (default, hueless, in `variables.css`), **Baguette** (clean, soft blue
+accent), and **Brioche** (warm, honey-gold accent) — the latter two as `themes/` reference files.
 
 ---
 

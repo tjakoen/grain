@@ -47,7 +47,7 @@ The AI reads the index for its move set and the snapshot for where it's standing
 (§3), so the AI is expected to pre-check the manifest, not probe blindly. (A more forgiving *"the
 surface has physics"* model — an unafforded action no-ops and reports what *is* available — is a
 noted direction, **not** current behavior.) The *why* behind the modality lives in
-[`PHILOSOPHY.md`](../../portfolio/PHILOSOPHY.md).
+[`PHILOSOPHY.md`](../../tjakoen.github.io/PHILOSOPHY.md).
 
 ---
 
@@ -536,9 +536,9 @@ without dragging in the full task domain yet.
 | Reasoner boundary + stub | `grain/ai/reasoner.ts` | grain |
 | The one door (single writer) | `grain/ai/interaction-layer.ts` | grain |
 | Manifest (harvested, can't drift) | `grain/ai/manifest.ts` + `grain/ai/accepts.ts` | grain |
-| Routes (`/intent`, `/stream`, `/ai/manifest`, `/ui/loop`) | `project/routes/ai-routes.ts` | project (wiring) |
+| Routes (`/intent`, `/stream`, `/ai/manifest`, `/ui/loop`) | `tjakoen.github.io/routes/ai-routes.ts` | project (wiring) |
 | Dispatcher island | `grain/scripts/ai-dispatch.js` | grain |
-| Demo page + card | `project/pages/loop.html`, `project/components/molecules/loop-card/` | project |
+| Demo page + card | `tjakoen.github.io/pages/loop.html`, `project/components/molecules/loop-card/` | project |
 
 The manifest is now **harvested** (§4 realised): item targets read `data-accepts` /
 `data-kind` straight off `loop-card`; region targets are inverted from the action

@@ -8,7 +8,7 @@ and operable by both a human and an AI through one shared vocabulary, with the A
 presence shown as a visible signal (*grain = AI*). It runs on a **substrate** (BATCH is
 the reference one) but imports nothing from it.
 
-- **The beliefs behind it:** [`../portfolio/PHILOSOPHY.md`](../portfolio/PHILOSOPHY.md)
+- **The beliefs behind it:** [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md)
 - **Overview / why:** [`docs/GRAIN.md`](docs/GRAIN.md)
 - **The full contract** (intent envelope, render ops, manifest, the AI-acts protocol,
   the two write paths): [`docs/AI-INTERFACE.md`](docs/AI-INTERFACE.md)
@@ -172,7 +172,7 @@ GRAIN is meant to be **consumed, not forked.** Two independent extension points 
 compose: **one token override re-skins your components and GRAIN's together.** The decider for
 *where* something lives is one question: **"would another product on GRAIN want this?"** Yes →
 it's reusable design, contribute it to `grain/`. No → it's yours, keep it in your app. This repo
-is the worked example: `project/` and `portfolio/` are two consumers doing exactly the below.
+is the worked example: `project/` and `tjakoen.github.io/` are two consumers doing exactly the below.
 
 ### A · A theme (re-skin) — override token slots, never components
 
@@ -205,7 +205,7 @@ every theme, and verify it still reads in dark.
    (`data-field` / `data-bind-*` / `each` / `<slot-tag>`).
 2. Register the dir at your **composition root** so the host composes `<mywidget>` and bundles
    its CSS: add it to the renderer's component roots + the style bundle + the catalog
-   (this repo: `componentRoots` / `styleRoots` in `project/config.ts`; a standalone consumer
+   (this repo: `componentRoots` / `styleRoots` in `tjakoen.github.io/config.ts`; a standalone consumer
    passes its dir to `createRenderer` / the style bundle / `createCatalog`). It then appears
    in `/catalog` automatically.
 

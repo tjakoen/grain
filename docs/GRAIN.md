@@ -39,8 +39,10 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
   (`DESIGN-SYSTEM.md` §3.)
 - **Self-documenting — the live catalog.** Every component carries its own `.md` and **auto-appears in
   a live component catalog** (`/catalog`) — the design system browses itself, no hand-maintained
-  index. (Harvested from the component tree; the catalog *mechanism* lives in BATCH, the content is
-  GRAIN's — one source, many uses: `AI-INTERFACE.md` §4.)
+  index. Mechanism AND content are GRAIN's now (`grain/catalog`): the per-component Human/AI grade
+  toggle IS grain's grade-as-signal vocabulary, so the catalog belongs here, not the substrate. It
+  reads the component tree directly and imports nothing from batch. (One source, many uses:
+  `AI-INTERFACE.md` §4.)
 
 **Also — useful features, deliberately listed (not headline, never hidden):**
 
@@ -204,7 +206,7 @@ in place and will each become **their own repo** (GRAIN a package on BATCH) once
 product proves them; the boundary is kept clean so that split is a copy, not a rewrite.
 
 ```
-batch/     substrate — render, http (incl. stream.ts SSE), assets, catalog, platform.
+batch/     substrate — render, http (incl. stream.ts SSE), assets, platform.
            Imports nothing from grain/project. Ships its own render-test fixtures.
 grain/     the design system — ai/ (contract, interaction-layer, reasoner boundary,
            manifest, accepts), components/atoms/b-*, scripts/ (ai-dispatch, cmdk),

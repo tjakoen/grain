@@ -20,13 +20,16 @@
 .app-shell:not([data-console-open]):not([data-acting="true"]) .console__chev { transform: rotate(-90deg); }
 /* the feed is HIDDEN by default (the bar alone is the slim docked strip); it opens in place when
    the panel is expanded (data-console-open) or the AI takes over (data-acting) — the grid row grows. */
-.console__feed { display: none; flex-direction: column; gap: var(--space-2); flex: 0 0 auto;
-  height: 11rem; overflow: auto; scroll-behavior: smooth;      /* one size, its own GENTLE scroll */
-  border-top: 1px solid var(--color-line);
-  padding: var(--space-2) var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm); }
 /* the feed opens ONLY on explicit expand — during a run the terminal stays collapsed to its bar,
-   while the chat shows a small live preview of the output (with "open in terminal" to expand). */
-.app-shell[data-console-open] .console__feed { display: flex; }
+   while the chat shows a small live preview of the output (with "open in terminal" to expand).
+   Collapsed = max-height 0 (animated open/closed, not a snap); the padding + top border fold too. */
+.console__feed { display: flex; flex-direction: column; gap: var(--space-2); flex: 0 0 auto;
+  max-height: 0; overflow: hidden; scroll-behavior: smooth;
+  border-top: 0 solid var(--color-line);
+  padding: 0 var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm);
+  transition: max-height 0.26s ease, padding 0.26s ease; }
+.app-shell[data-console-open] .console__feed { max-height: 11rem; overflow: auto;
+  border-top-width: 1px; padding: var(--space-2) var(--space-4); }
 .console__line { display: flex; align-items: baseline; gap: var(--space-2); }
 .console__desc { color: var(--color-fg); }
 .console__line[data-variant="cmd"] .console__prompt { color: var(--color-accent); }   /* the echoed human command */
@@ -58,11 +61,14 @@
   background: color-mix(in srgb, var(--ink) 4%, transparent); }
 .chat-thinking__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); }
 .chat-thinking__who { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
-.chat-thinking__toggle { cursor: pointer; font: inherit; font-size: var(--text-xs); color: var(--color-fg);
-  background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm); padding: 1px var(--space-2); }
+/* compact icon button (saves space in the run-time thinking box) */
+.chat-thinking__toggle { cursor: pointer; font: inherit; color: var(--color-fg);
+  display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; padding: 0;
+  background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
 .chat-thinking__toggle:hover { background: var(--paper-2); }
-.chat-thinking__preview { font-family: var(--font-grain); font-size: var(--text-xs); color: var(--color-muted);
-  white-space: pre-line; max-height: 4.4em; overflow: hidden; line-height: 1.45; }
+/* holds CLONED narration lines (each action in its own box, mirrored from the terminal) */
+.chat-thinking__preview { display: flex; flex-direction: column; gap: var(--space-1);
+  max-height: 6em; overflow: hidden; font-size: var(--text-xs); }
 .chat-thinking__preview:empty { display: none; }
 
 /* the console toggle: switch chat ⇄ terminal while the AI works (label via ::before, so it stays

@@ -7,7 +7,8 @@
 
 /* the panel (assistant form): header · scrolling log · composer */
 .assistant { display: flex; flex-direction: column; height: 100%; }
-.assistant__head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4);
+.assistant__head { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-4);
+  min-height: var(--editor-header-h, 2.9rem); box-sizing: border-box;   /* aligns with the topbar/tab row (one line) */
   border-bottom: 1px solid var(--color-line); font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
 /* OPTIONAL MODES: a panel may carry several PANES (chat / a catalog / …) switched by small tabs
    in the head. Markup: `.assistant[data-mode="…"]` whose head holds `.assistant__modes` (buttons

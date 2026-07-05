@@ -89,9 +89,27 @@
     if (mobile.matches) shell.toggleAttribute("data-aside-open");
   });
 
-  // The narration feed lives in the docked terminal and STAYS there — the terminal shows the AI's
-  // thinking, the chat holds the conversation, and both are visible at once (owner, 2026-07-05).
-  // (No more reparenting the feed into a chat "thinking" box.)
+  // The narration feed lives in the docked terminal and STAYS there. During a run the terminal is
+  // collapsed to its bar; the chat's "thinking" box shows a small LIVE PREVIEW of the last few
+  // output lines (mirrored, not moved) with "open in terminal" to expand the full log.
+  // NB: a `replace` RenderOp swaps the surface NODE (outerHTML), so observe a STABLE ancestor
+  // (the console region) and re-query the feed each time — never bind to the surface node itself.
+  const consoleRegion = shell.querySelector(".app-shell__console");
+  const preview = shell.querySelector("[data-terminal-preview]");
+  if (consoleRegion && preview) {
+    const lineText = (n) => {                     // join a line's parts (badge · desc) with spacing
+      const parts = n.children.length ? [...n.children] : [n];
+      return parts.map((p) => p.textContent.replace(/\s+/g, " ").trim()).filter(Boolean).join("  ");
+    };
+    const mirror = () => {
+      const feed = consoleRegion.querySelector('[data-surface="console"]');
+      if (!feed) return;
+      const lines = [...feed.children].slice(-3).map(lineText).filter(Boolean);
+      preview.textContent = lines.join("\n");
+    };
+    new MutationObserver(mirror).observe(consoleRegion, { childList: true, subtree: true, characterData: true });
+    mirror();
+  }
 
   // the mobile scrim dismisses the drawer; so does following a nav link
   shell.querySelector(".app-shell__scrim")?.addEventListener("click", () => setOpen(false));

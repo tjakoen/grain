@@ -24,12 +24,14 @@
   height: 11rem; overflow: auto; scroll-behavior: smooth;      /* one size, its own GENTLE scroll */
   border-top: 1px solid var(--color-line);
   padding: var(--space-2) var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm); }
-.app-shell[data-console-open] .console__feed,
-.app-shell[data-acting="true"] .console__feed { display: flex; }
+/* the feed opens ONLY on explicit expand — during a run the terminal stays collapsed to its bar,
+   while the chat shows a small live preview of the output (with "open in terminal" to expand). */
+.app-shell[data-console-open] .console__feed { display: flex; }
 .console__line { display: flex; align-items: baseline; gap: var(--space-2); }
 .console__desc { color: var(--color-fg); }
 
-/* the SAME narration, boxed inside the chat when you open it mid-run (shell.js moves the feed here) */
+/* the chat's mid-run "thinking" box: a compact indicator + a small LIVE PREVIEW of the terminal
+   output (the last few lines, mirrored by shell.js), with a button to expand the full terminal. */
 .chat-thinking { display: none; flex-direction: column; margin: 0 var(--space-4) var(--space-3);
   border: 1px dashed var(--ink-faint); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
   background: color-mix(in srgb, var(--ink) 4%, transparent); }
@@ -38,6 +40,9 @@
 .chat-thinking__toggle { cursor: pointer; font: inherit; font-size: var(--text-xs); color: var(--color-fg);
   background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm); padding: 1px var(--space-2); }
 .chat-thinking__toggle:hover { background: var(--paper-2); }
+.chat-thinking__preview { font-family: var(--font-grain); font-size: var(--text-xs); color: var(--color-muted);
+  white-space: pre-line; max-height: 4.4em; overflow: hidden; line-height: 1.45; }
+.chat-thinking__preview:empty { display: none; }
 
 /* the console toggle: switch chat ⇄ terminal while the AI works (label via ::before, so it stays
    correct even when the state is reset externally). Only shown while acting. */

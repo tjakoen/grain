@@ -5,11 +5,11 @@ stack's content rendering engine (a content plugin for GRAIN). Read the plan fir
 source of truth. **Built so far (pieces 1–4, 2026-07-03/04):** the framework-agnostic core engine
 (`core/`), the reference BATCH+GRAIN adapter (`adapters/grain/`), the live content route
 (`serve.ts` — `createMillRoutes(deps)`, a transport-generic pathname handler), and the portfolio
-wiring (`../portfolio/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested. Next:
+wiring (`../tjakoen.github.io/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested. Next:
 piece 4b (AI-facing outputs: meta/JSON-LD, `llms.txt`, `knowledge.json`, `data-surface`).
 
-> This file follows `../portfolio/standards/CLAUDE.starter.md`. Personal standards live in
-> `../portfolio/standards/`.
+> This file follows `../tjakoen.github.io/standards/CLAUDE.starter.md`. Personal standards live in
+> `../tjakoen.github.io/standards/`.
 
 ## What this is
 
@@ -23,7 +23,7 @@ build it.
 
 1. [`PLAN.md`](PLAN.md): the canonical MILL plan (design, seams, mapping model, build pieces). This
    is the source of truth; read it first.
-2. [`../portfolio/PHILOSOPHY.md`](../portfolio/PHILOSOPHY.md): the *why* beneath the whole stack.
+2. [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md): the *why* beneath the whole stack.
 3. Whole-repo doc map: [`../DOCS.md`](../DOCS.md).
 
 ## Non-negotiables

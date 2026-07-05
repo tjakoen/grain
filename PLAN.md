@@ -3,10 +3,10 @@
 > Status: **pieces 1–4 built (core 2026-07-03; live route + portfolio wiring 2026-07-04); piece
 > 4b (AI-facing outputs) is next.** MILL — **"Markdown In, Living Layouts"** — is the platform's
 > **content rendering engine**: feed it Markdown + images and it renders pages out of components.
-> It is its **own top-level project** (a sibling of `batch/`, `grain/`, `project/`, `portfolio/`)
+> It is its **own top-level project** (a sibling of `batch/`, `grain/`, `project/`, `tjakoen.github.io/`)
 > and is designed as a **reusable, open-source** tool. The **portfolio** is its first consumer
 > (`/notes`, `/grain/docs`, `/batch/docs` render live through MILL). This file is the **canonical
-> MILL plan**; `portfolio/PLAN.md` holds the *consumer* view and points here. The cross-layer
+> MILL plan**; `tjakoen.github.io/PLAN.md` holds the *consumer* view and points here. The cross-layer
 > sequencing (MILL is Track C) lives in [`../ROADMAP.md`](../ROADMAP.md).
 
 ## Positioning (decision, 2026-07-03)
@@ -75,7 +75,7 @@ built; piece 4b (the AI-facing outputs) is not yet. Nothing here is buried. **Th
   (substrate), never the reverse** — so it is an **extension of neither**, a layer above both. (It
   can't live inside `batch`, which must not import `grain`; it isn't part of `grain`, being a level
   up from design-system primitives.) See the layering diagram in `CLAUDE.md`.
-- **Consumed, not depended-on-inward:** `project/` and `portfolio/` are independent consumers of the
+- **Consumed, not depended-on-inward:** `project/` and `tjakoen.github.io/` are independent consumers of the
   stack; the portfolio additionally uses MILL for its content.
 - **Purity / extraction:** like `batch/export`, MILL is built reusable-shaped and kept framework-clean
   so it can move to its own repo once proven. It imports only GRAIN + BATCH public seams; nothing
@@ -210,8 +210,8 @@ retrieval port and models live with the consumer).
    - **Monorepo workspaces wired** (root `package.json` `workspaces`) so `@tjakoen/grain` /
      `@tjakoen/batch` resolve from `node_modules` in the monorepo era too — the package-resolution
      decision below runs the SAME code both eras.
-4. ✅ **Consumer wiring (in `portfolio/`)** (done 2026-07-04) — `portfolio/content.ts`: three
-   collections (`/notes` from `portfolio/notes/*.md`; `/grain/docs` + `/batch/docs` from the
+4. ✅ **Consumer wiring (in `tjakoen.github.io/`)** (done 2026-07-04) — `tjakoen.github.io/content.ts`: three
+   collections (`/notes` from `tjakoen.github.io/notes/*.md`; `/grain/docs` + `/batch/docs` from the
    installed layer packages), the BREAD-shell chrome (`<portfolio-frame />`, composed at request
    time), and per-collection `resolveLink` overrides (sibling `x.md` → `/notes/x`; docs cross-links
    `../../grain/docs/X.md` → `/grain/docs/x`). Integration-tested against the REAL content (every
@@ -243,14 +243,14 @@ retrieval port and models live with the consumer).
   (the "engine implemented by the consumer" model). MILL stays framework-generic.
 - ✅ **Slug / link resolution** (resolved 2026-07-04) — default stays `note:slug` → `/notes/slug`;
   the consumer overrides per collection via `GrainAdapterOptions.resolveLink`
-  (`portfolio/content.ts`: sibling-`.md` and cross-layer docs rewrites). Slug = filename minus
+  (`tjakoen.github.io/content.ts`: sibling-`.md` and cross-layer docs rewrites). Slug = filename minus
   `.md`, lowercased (`GRAIN.md` → `grain`); a case-colliding pair is last-one-wins (documented in
   `dirSource`). Links to `.md` files with no rendered page pass through untouched — the export's
   dead-link warning keeps those honest.
 
 ## Relationship to the platform
 
-- **`portfolio/PLAN.md`** is the *consumer* plan — it uses MILL for content and references this doc.
+- **`tjakoen.github.io/PLAN.md`** is the *consumer* plan — it uses MILL for content and references this doc.
 - **`static-export-decision`** holds: MILL renders live, export freezes — not a build-time re-render.
 - Pieces 1–4 are built and live; piece 4b (AI-facing outputs) and the mermaid→SVG converter remain.
   See memory: `portfolio-cms-separate-project`.

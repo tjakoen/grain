@@ -64,8 +64,9 @@
 .window-bar__nav button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
 .window-bar__nav .icon { width: 0.72rem; height: 0.72rem; }
 
-/* optional control cluster next to the dots (theme/scheme/pane toggles — status, not content) */
-.window-bar__ctl { display: flex; align-items: center; gap: var(--space-3); }
+/* the control cluster — theme/scheme/view toggles. Sits on the RIGHT (the left is only the OS
+   circle buttons); the flex:1 search between them keeps it pinned to the trailing edge. */
+.window-bar__ctl { display: flex; align-items: center; gap: var(--space-3); flex: none; }
 .window-bar__ctl button { all: unset; cursor: pointer; font: inherit; color: inherit; }
 .window-bar__ctl button:hover { color: var(--color-fg); }
 .window-bar__ctl button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
@@ -88,9 +89,6 @@
 }
 .window-bar__search:hover { border-color: var(--color-muted); }
 .window-bar__search:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
-
-/* symmetry spacer at the far end — mirror the leading cluster so the center stays centered */
-.window-bar__end { flex: none; }
 
 /* ---- mobile: the window collapses — no backdrop padding, no frame, no title bar
    (the shell's drawer chrome carries the brand there); the status bar stays. ---- */

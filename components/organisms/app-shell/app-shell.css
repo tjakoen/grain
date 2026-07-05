@@ -25,13 +25,17 @@
   background: var(--color-bg);
   color: var(--color-fg);
   overflow: hidden;
+  /* panels glide in/out: the rail/aside columns animate their width (grid tracks interpolate) */
+  transition: grid-template-columns 0.26s ease;
 }
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
 
-/* VS Code-style pane visibility (shell.js: data-shell="aside-toggle" / "console-hide") */
+/* VS Code-style pane visibility (shell.js: data-shell="aside-toggle"). The aside animates to width
+   0 (no display:none, so the glide is smooth); its border/scroll fold away at zero. */
 .app-shell[data-aside-hidden="true"] { --shell-aside: 0rem; }
-.app-shell[data-aside-hidden="true"] .app-shell__aside { display: none; }
+.app-shell[data-aside-hidden="true"] .app-shell__aside { border-left: 0; overflow: hidden; }
 .app-shell[data-console-hidden="true"] .app-shell__console { display: none; }
+@media (prefers-reduced-motion: reduce) { .app-shell { transition: none; } }
 
 /* ---- the regions (grid slots) ---- */
 .app-shell__window  { grid-area: window;  min-width: 0; }
@@ -41,6 +45,7 @@
 .app-shell__rail    { grid-area: rail;    min-height: 0;
                       border-right: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent); }
 .app-shell__topbar  { grid-area: topbar;  min-width: 0; display: flex; align-items: stretch;
+                      min-height: var(--editor-header-h, 2.9rem);   /* aligns with the panel head (one line) */
                       border-bottom: 1px solid var(--color-line); background: var(--color-surface); }
 /* __main owns the page scroll inside the shell — it must OPT INTO the smooth-scroll contract
    (global.css sets it on html, but scrollIntoView scrolls the nearest scrollable ancestor,

@@ -56,8 +56,10 @@
       input.focus();
     });
 
-  // the terminal's expand control (the "desk is acting" indicator) reveals/hides the narration feed
-  shell.querySelector('[data-shell="console-toggle"]')?.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
+  // expand/collapse the terminal feed — the console bar's own control AND the title-bar terminal
+  // button both toggle it (multiple triggers, so bind them all)
+  for (const t of shell.querySelectorAll('[data-shell="console-toggle"]'))
+    t.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
 
   // "open in terminal" (from the chat's thinking box): un-hide + expand the docked terminal so the
   // full narration is visible (the chat only shows a compact thinking indicator during a run).
@@ -97,15 +99,13 @@
   const consoleRegion = shell.querySelector(".app-shell__console");
   const preview = shell.querySelector("[data-terminal-preview]");
   if (consoleRegion && preview) {
-    const lineText = (n) => {                     // join a line's parts (badge · desc) with spacing
-      const parts = n.children.length ? [...n.children] : [n];
-      return parts.map((p) => p.textContent.replace(/\s+/g, " ").trim()).filter(Boolean).join("  ");
-    };
+    // Mirror the last few narration lines into the chat, CLONING the real line nodes so each action
+    // keeps its own little box (the action-badge markup) — a compact live view of the terminal.
     const mirror = () => {
       const feed = consoleRegion.querySelector('[data-surface="console"]');
       if (!feed) return;
-      const lines = [...feed.children].slice(-3).map(lineText).filter(Boolean);
-      preview.textContent = lines.join("\n");
+      const last = [...feed.children].slice(-3).map((n) => n.cloneNode(true));
+      preview.replaceChildren(...last);
     };
     new MutationObserver(mirror).observe(consoleRegion, { childList: true, subtree: true, characterData: true });
     mirror();

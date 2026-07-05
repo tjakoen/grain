@@ -32,5 +32,5 @@ never a build-time re-render (keeps [export-as-projection](../batch/docs/ARCHITE
 ## Read next
 
 - **[mill/PLAN.md](PLAN.md)** — the canonical plan (design, seams, mapping model, build pieces).
-- **[../portfolio/PHILOSOPHY.md](../portfolio/PHILOSOPHY.md)** — why content is Markdown and pages are a projection of it.
+- **[../tjakoen.github.io/PHILOSOPHY.md](../tjakoen.github.io/PHILOSOPHY.md)** — why content is Markdown and pages are a projection of it.
 - **[../CLAUDE.md](../CLAUDE.md)** — how MILL fits the four concerns.

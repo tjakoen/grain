@@ -13,7 +13,7 @@ is the consumer's knowledge; this component only draws it.
 ```html
 <nav class="file-tree" aria-label="Explorer">
   <details class="file-tree__dir">
-    <summary>portfolio/</summary>
+    <summary>tjakoen.github.io/</summary>
     <div class="file-tree__children">
       <details class="file-tree__dir">
         <summary><a href="/notes">notes/</a></summary>   <!-- a collection folder may link its index -->

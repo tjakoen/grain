@@ -4,7 +4,7 @@ Onboarding + operating rules for any AI (or human) working in **`grain/`**, the 
 design system. Read this first, then the docs it points to. Keep it accurate — if you change how
 grain works, update this file.
 
-> Personal standards (voice, badges, AI-use posture) live in `../portfolio/standards/`
+> Personal standards (voice, badges, AI-use posture) live in `../tjakoen.github.io/standards/`
 > (`VOICE.md`, `README-STANDARD.md`) and this file is seeded from `CLAUDE.starter.md`.
 
 ## What this is
@@ -18,7 +18,7 @@ the grade-as-signal mechanism) — usable with no AI at all — and the **option
 
 ## Start here (reading order)
 
-1. [`../portfolio/PHILOSOPHY.md`](../portfolio/PHILOSOPHY.md) — the *why* beneath the whole stack.
+1. [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md) — the *why* beneath the whole stack.
 2. [`../batch/docs/CONVENTIONS.md`](../batch/docs/CONVENTIONS.md) — the **build standard** (layering,
    components, tokens, the action vocabulary, the 3-tier testing bar). The rulebook.
 3. [`docs/GRAIN.md`](docs/GRAIN.md) — the design system + AI layer overview.
@@ -37,7 +37,7 @@ cross-layer execution plan and this file stays canonical for grain's rules.
 
 - **Layering.** grain imports **nothing** from `batch/` except the `OpChannel` port (`ai/contract.ts`).
   **Nothing product- or page-specific belongs in grain** — test: *"would another product on GRAIN
-  want this?"* No → it lives in `project/` or `portfolio/`, not here.
+  want this?"* No → it lives in `project/` or `tjakoen.github.io/`, not here.
 - **Tokens only.** No hardcoded colors, ever; components read semantic `var(--token)`s. Re-skin by
   overriding token slots (README §4), never by editing components.
 - **One root class per component**, variants as **attributes** (`.btn[data-variant="soft"]`), not
@@ -131,5 +131,5 @@ Code + the right test tier(s) (unit / conformance e2e) + `tsc` and `bun test` gr
 
 - Commit/push only when asked; branch off `main` if you must. No AI attribution trailers on
   commits (the "built with Claude" receipt is the README badge + footer, not commit metadata).
-- Voice for any prose in the owner's name: `../portfolio/standards/VOICE.md` (no backticks in prose).
-- README badges/footer: `../portfolio/standards/README-STANDARD.md`.
+- Voice for any prose in the owner's name: `../tjakoen.github.io/standards/VOICE.md` (no backticks in prose).
+- README badges/footer: `../tjakoen.github.io/standards/README-STANDARD.md`.

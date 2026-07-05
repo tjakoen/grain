@@ -264,7 +264,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         if (stopped()) return handBack;
 
         // 5) triage today's task CARDS — spotlight each (it goes grain), flip its b-badge,
-        //    settle clean. Drives loop-card + item-card + badge, all AI-driven.
+        //    settle clean. Drives the loop-card + the demo card + badge, all AI-driven.
         const badge = (surface: string, status: string, label: string) =>
           `<span class="badge" data-status="${status}" data-surface="${surface}">${label}</span>`;
         // archive the finished task — a REAL write through the scoped tool (not a cosmetic flip):

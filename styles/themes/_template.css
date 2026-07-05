@@ -1,0 +1,48 @@
+/* grain/styles/themes/_template.css — how to add a GRAIN flavor (a "bread variety").
+   ────────────────────────────────────────────────────────────────────────────────────────────
+   A flavor is a PURE TOKEN OVERRIDE on the `data-theme` axis — nothing else. You never touch a
+   component; every component restyles because it only ever reads the Layer-2 semantic aliases
+   (see variables.css). Sourdough is the hueless :root default; a flavor overrides some tokens.
+
+   TO ADD ONE (say "rye"):
+     1. Copy this file to `rye.css`, replace `your-flavor` with `rye`, set the token values.
+     2. `@import "themes/rye.css";` in variables.css (imports must precede the @font-face block).
+     3. Declare it where it can be chosen: a page/control's `data-themes="sourdough rye …"` list
+        (theme.js reads that; the FIRST entry is the :root default and needs no block).
+     Boot's drift guard (server.ts checkThemingDrift) scans variables.css + this themes/ dir, so a
+     referenced flavor with no block warns at startup — no silent typos.
+
+   DOCTRINE (DESIGN-SYSTEM §2): ONE signature hue per flavor — override the four --color-accent
+   slots only; success/danger stay monochrome. Ship BOTH a light block and a composed dark block.
+   The flavor selectors (0,2,0 / 0,3,0) out-specify :root and the base dark block, so cascade
+   ORDER is irrelevant — importing at the top of variables.css is safe.
+   ──────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* ---- light ---- */
+:root[data-theme="your-flavor"] {
+  --paper: #FFFFFF; --paper-2: #F2F2F0; --panel: #FFFFFF;
+  --ink: #1A1A1A; --ink-muted: #6B6B70; --ink-faint: #A6A6AB;
+  --hairline: #1A1A1A; --line-soft: rgba(26, 26, 26, 0.11);
+  --color-accent: #2F6FE0; --color-accent-hover: #2559C0;      /* the ONE signature hue */
+  --color-accent-contrast: #FFFFFF; --color-accent-soft: #E7EEFB;
+}
+/* ---- dark: the @media block follows the OS unless the user forced light ---- */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="your-flavor"]:not([data-color-scheme="light"]) {
+    --paper: #17181A; --paper-2: #202126; --panel: #202126;
+    --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
+    --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
+    --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
+    --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
+    --ai-veil: color-mix(in srgb, #000 50%, transparent);
+  }
+}
+/* ---- dark: forced (user toggled dark explicitly) — same values as the @media block ---- */
+:root[data-theme="your-flavor"][data-color-scheme="dark"] {
+  --paper: #17181A; --paper-2: #202126; --panel: #202126;
+  --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
+  --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
+  --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
+  --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
+  --ai-veil: color-mix(in srgb, #000 50%, transparent);
+}

@@ -1,0 +1,30 @@
+/* grain/styles/themes/baguette.css — a GRAIN flavor (see _template.css for the pattern).
+   Baguette — clean / Notion: crisp near-white light, near-black dark, hairline greys, with a
+   soft-blue accent. A pure token override on the `data-theme="baguette"` axis; success/danger
+   stay monochrome (the one-hue doctrine — DESIGN-SYSTEM §2). Loaded via @import from
+   variables.css; the flavor selectors out-specify :root, so cascade order is irrelevant. */
+:root[data-theme="baguette"] {
+  --paper: #FAFAF8; --paper-2: #F2F2F0; --panel: #FFFFFF;
+  --ink: #232326; --ink-muted: #6B6B70; --ink-faint: #A6A6AB;
+  --hairline: #232326; --line-soft: rgba(35, 35, 38, 0.11);
+  --color-accent: #2F6FE0; --color-accent-hover: #2559C0;
+  --color-accent-contrast: #FFFFFF; --color-accent-soft: #E7EEFB;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="baguette"]:not([data-color-scheme="light"]) {
+    --paper: #17181A; --paper-2: #202126; --panel: #202126;
+    --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
+    --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
+    --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
+    --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
+    --ai-veil: color-mix(in srgb, #000 50%, transparent);
+  }
+}
+:root[data-theme="baguette"][data-color-scheme="dark"] {
+  --paper: #17181A; --paper-2: #202126; --panel: #202126;
+  --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
+  --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
+  --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
+  --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
+  --ai-veil: color-mix(in srgb, #000 50%, transparent);
+}

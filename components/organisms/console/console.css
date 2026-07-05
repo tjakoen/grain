@@ -29,6 +29,27 @@
 .app-shell[data-console-open] .console__feed { display: flex; }
 .console__line { display: flex; align-items: baseline; gap: var(--space-2); }
 .console__desc { color: var(--color-fg); }
+.console__line[data-variant="cmd"] .console__prompt { color: var(--color-accent); }   /* the echoed human command */
+.console__line[data-state="error"] .console__desc { color: var(--color-danger, var(--color-accent)); }
+.console__line a { color: var(--color-accent); text-decoration: none; }
+.console__line a:hover { text-decoration: underline; }
+.console__pre { margin: 0; white-space: pre-wrap; word-break: break-word;
+  font-family: var(--font-grain); font-size: var(--text-xs); color: var(--color-fg); line-height: 1.5; }
+
+/* the INTERACTIVE command line (grain/scripts/terminal.js injects it into a
+   `.console__box[data-terminal="interactive"]`). Shown only when the terminal is open — it rides
+   the same open/close as the feed. The prompt is grain (machine), the typed text is clean (human,
+   via .field-like grade); tokens only. */
+.console__input { display: none; align-items: baseline; gap: var(--space-2); flex: 0 0 auto;
+  border-top: 1px solid var(--color-line); padding: var(--space-2) var(--space-4);
+  font-family: var(--font-grain); font-size: var(--text-sm); }
+.app-shell[data-console-open] .console__box[data-terminal="interactive"] .console__input { display: flex; }
+.console__prompt { color: var(--color-muted); flex: 0 0 auto; }
+.console__cmd { flex: 1; min-width: 0; background: transparent; border: 0; padding: 0; margin: 0;
+  color: var(--color-fg); font-family: var(--font-smooth); font-size: var(--text-sm); }
+.console__cmd::placeholder { color: var(--ink-faint); }
+.console__cmd:focus { outline: none; }
+.console__input:focus-within .console__prompt { color: var(--color-accent); }
 
 /* the chat's mid-run "thinking" box: a compact indicator + a small LIVE PREVIEW of the terminal
    output (the last few lines, mirrored by shell.js), with a button to expand the full terminal. */

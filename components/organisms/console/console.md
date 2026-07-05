@@ -27,4 +27,31 @@ under `main`) and is opened by `data-acting` / `data-console-open` (set by
 </section>
 ```
 
+## Interactive mode (opt-in) — the terminal takes a command line
+
+Add `data-terminal="interactive"` to the `.console__box` and load `grain/scripts/terminal.js`
+(`<script type="module">`). The island **injects the input row itself** (`.console__input` with a
+`.console__prompt` + `.console__cmd`) — no markup to compose. The row shows whenever the console is
+open (`data-console-open`) and rides the same open/close as the feed. A console *without* the
+attribute (e.g. the product's `/loop` narration feed) stays display-only, untouched.
+
+The terminal becomes a **third client of the one door**: a human types a command, and anything
+AI-shaped (`ask`, `tour`, `stop`) is raised as a real Intent through `window.grain.door.submit` —
+the same door a click or the AI uses (so it inherits the pending-trigger lifecycle + the ready-gate;
+never a private `fetch`). Reads (`help`, `go`, `ls`, `grep`, `theme`, `context`, `xray`) run locally.
+
+**Grade doctrine in the feed:** the feed defaults to grain (machine voice), so command *output*
+stays grain; the human's **echoed command** carries `data-grade="smooth"` and settles clean. History
+is `↑/↓` (localStorage), `Tab` completes commands + page slugs, `` Ctrl+` `` opens + focuses it.
+
+**Extend it:** `window.grain.terminal.register({ name, args, help, run(ctx) })`. GRAIN ships the
+generic builtins (`help`/`clear`/`exit`/`go`/`ls`/`grep`/`theme`/`ask`/`stop`/`context`/`xray`);
+a consumer registers its own persona/tour commands in its own script (grain stays persona-neutral).
+The `ctx` gives `{ argv, arg, raw, print, printHtml, printPre, printErr, clear, door, corpus }`.
+
+```html
+<div class="console__box" data-terminal="interactive"> … </div>
+<script type="module" src="/scripts/terminal.js"></script>
+```
+
 See `sidebar-panel` (its counterpart) and `app-shell` (the grid + takeover state).

@@ -342,4 +342,20 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     submit(action, target, { text: inp.value }, inp);
     inp.value = "";
   });
+
+  // ---- the door, as a public seam (window.grain.door) --------------------------
+  // A THIRD client of the one door, alongside human clicks (above) and the AI: any island can
+  // raise an Intent through the SAME submit() — so it inherits the pending-trigger lifecycle and
+  // the sse-ready gate for free, no parallel wire. The terminal is the first user (its `ask`/
+  // `tour`/`stop` commands call this). Same idiom as window.grain.theme. (AI-INTERFACE §3.)
+  window.grain = window.grain || {};
+  window.grain.door = {
+    /** Raise an Intent: (action, targetSurface, payload?, triggerEl?). The trigger, if given,
+     *  wears data-commit="pending" until the action's output commits (control lifecycle). */
+    submit: (action, target, payload = {}, trigger = null) => submit(action, target, payload, trigger),
+    /** The current screen name (<body data-screen>), for callers building their own intents. */
+    screen,
+    /** Did the reply channel actually come up? (honest, set by outcome — never assumed.) */
+    online: () => document.body.dataset.aiOnline === "true",
+  };
 })();

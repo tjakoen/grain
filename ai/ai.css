@@ -80,6 +80,28 @@
   .is-click::before { animation: none; display: none; }
 }
 
+/* ---- X-RAY: see the page as the AI sees it (grain/scripts/xray.js) --------------------
+   A dev-mode overlay: outline every operable surface and label it with kind + accepted
+   verbs. Purely presentational — xray.js sets `data-xray` on <html> and stamps each
+   [data-surface] with a `data-xray-label`; this draws them. Tokens only, so it re-skins
+   with the theme. It's the visual twin of the terminal's `context` command. */
+html[data-xray] [data-surface] {
+  outline: 1px dashed var(--color-accent, var(--ink));
+  outline-offset: 2px;
+  position: relative;   /* anchor the label; dev-mode only (may shift abs-positioned children) */
+}
+html[data-xray] [data-surface]::after {
+  content: attr(data-xray-label);
+  position: absolute; top: 0; right: 0; z-index: var(--z-ai-surface, 9002);
+  font-family: var(--font-grain); font-size: var(--text-xs); line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-accent, var(--ink));
+  background: var(--color-bg, var(--paper));
+  border: 1px solid var(--color-line, var(--ink));
+  border-radius: var(--radius-sm);
+  pointer-events: none; white-space: nowrap;
+}
+
 /* ---- honest presence (the AI-online indicator) ---------------------------------------
    The dispatcher stamps <body data-ai-online="true|false"> by OUTCOME (server `ready`
    handshake received / client door actually loaded — ai-dispatch.js). A consumer's presence

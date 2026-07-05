@@ -290,6 +290,17 @@ component template surfaces at startup, not just a bad `data-accepts` declaratio
 }
 ```
 
+**The same projection, read off the live DOM (`ai/manifest-dom.ts`).** The server builds the
+manifest from component state at rest; the browser can build the *identical* shape by walking every
+`[data-surface]` on the rendered page and deriving each one's kind (explicit `data-kind`, else the
+address prefix) and accepts (its `data-accepts` ∩ the registry, else the registry inversion for a
+known kind). Same honesty guarantee, now for a **static host with no `/ai/manifest` route** — and it
+is the exact answer to "what can the AI do on *this* page, right now". This client projection powers
+two dev-mode surfaces: a terminal `context` command (prints the JSON) and **x-ray** mode
+(`scripts/xray.js` — outlines and labels each surface with its kind + verbs). The module is
+client-safe (it imports only the pure contract + manifest builder and reaches the DOM through a
+minimal structural interface, not the global DOM lib).
+
 ---
 
 ## 5. Grade = commit state — where this doc meets the design system

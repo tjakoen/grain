@@ -69,7 +69,15 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
 - **The manifest — a drift-proof machine map.** A per-screen, machine-readable projection of what's
   addressable (`targets`) and invokable (`actions`) *right now*, **harvested** from components (never
   hand-typed) so it can't drift from the UI. This is how an AI "sees" a page. (`ai/manifest.ts`,
-  `AI-INTERFACE.md` §4.)
+  `AI-INTERFACE.md` §4.) The same projection can be read **off the live DOM in the browser**
+  (`ai/manifest-dom.ts`) — so it's available on a static host with no manifest route, and it's the
+  honest, on-screen answer to "what can the AI do *here, now*".
+- **X-ray — see the page as the AI sees it.** A dev-mode overlay (`scripts/xray.js`) that outlines
+  every operable `[data-surface]` and labels it with its kind + the verbs the registry allows on it —
+  the manifest, drawn onto the page. Standalone (no terminal needed), with four independent ways in:
+  the `window.grain.xray` devtools API, a `?xray` URL param (a shareable "see it as the AI does"
+  link), any `[data-xray-toggle]` control, and `Ctrl+Shift+X`. Pure token CSS, so it re-skins with
+  the theme; it's the visual twin of a terminal `context` command.
 - **Auditable by design.** Every interaction — human or AI — is one `source`-tagged `Intent` through
   one server-side door, so a complete human+AI **interaction log** is a server-side drop-in. GRAIN
   provides the chokepoint + provenance; **the consuming app owns the log sink** (see PROJECT-PLAN

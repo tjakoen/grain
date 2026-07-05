@@ -6,6 +6,14 @@
    e-ink / Swiss-editorial. The whole re-skin is done HERE — every existing
    component restyles because it only ever read the Layer-2 aliases. */
 
+/* FLAVORS (the `data-theme` axis) live as reference files under themes/ — each a pure token
+   override; see themes/_template.css to add one. Imported here (imports must precede all other
+   rules, so before @font-face) so the ONE stylesheet every page + the catalog already loads
+   carries them. The flavor selectors out-specify :root, so import order doesn't affect cascade.
+   Sourdough is the hueless :root default below and needs no file. */
+@import "themes/baguette.css";
+@import "themes/brioche.css";
+
 /* ---- Redaction grades, self-hosted (docs/DESIGN-SYSTEM.md §3) ----------------
    Each grade is its OWN family, so switching grade = swapping family (a class
    change), which is how "grade as signal" works. */
@@ -193,63 +201,10 @@
 
 /* ============================================================================================
    FLAVORS (`data-theme`) — bread varieties, each a pure token override (light + composed dark).
-   Sourdough is the :root default (hueless). An accented flavor overrides the four --color-accent
-   slots with its ONE signature hue; success/danger stay monochrome (doctrine above). The
-   flavor+dark selector (0,3,0) outranks the plain dark block (0,2,0), so it wins in dark mode.
-   `theme.js` switches any value; add a variety by copying a block. See grain/README §4/§6.
+   Sourdough is the :root default above (hueless). The accented flavors now live as reference
+   files under themes/ (Baguette, Brioche) — @imported at the top of this file. An accented flavor
+   overrides the four --color-accent slots with its ONE signature hue; success/danger stay
+   monochrome (doctrine above). The flavor+dark selector (0,3,0) outranks the plain dark block
+   (0,2,0), so it wins in dark mode. `theme.js` switches any value; add a variety by copying
+   themes/_template.css. See grain/README §4/§6 + DESIGN-SYSTEM §2.
    ============================================================================================ */
-
-/* ---- Baguette — clean / Notion: crisp near-white light, near-black dark, hairline greys, with a
-   soft-blue accent. ---- */
-:root[data-theme="baguette"] {
-  --paper: #FAFAF8; --paper-2: #F2F2F0; --panel: #FFFFFF;
-  --ink: #232326; --ink-muted: #6B6B70; --ink-faint: #A6A6AB;
-  --hairline: #232326; --line-soft: rgba(35, 35, 38, 0.11);
-  --color-accent: #2F6FE0; --color-accent-hover: #2559C0;
-  --color-accent-contrast: #FFFFFF; --color-accent-soft: #E7EEFB;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="baguette"]:not([data-color-scheme="light"]) {
-    --paper: #17181A; --paper-2: #202126; --panel: #202126;
-    --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
-    --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
-    --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
-    --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
-    --ai-veil: color-mix(in srgb, #000 50%, transparent);
-  }
-}
-:root[data-theme="baguette"][data-color-scheme="dark"] {
-  --paper: #17181A; --paper-2: #202126; --panel: #202126;
-  --ink: #ECECEE; --ink-muted: #96969C; --ink-faint: #64646A;
-  --hairline: #ECECEE; --line-soft: rgba(236, 236, 238, 0.15);
-  --color-accent: #6FA0FF; --color-accent-hover: #8FB6FF;
-  --color-accent-contrast: #16181A; --color-accent-soft: rgba(111, 160, 255, 0.16);
-  --ai-veil: color-mix(in srgb, #000 50%, transparent);
-}
-
-/* ---- Brioche — warm cream + honey-gold accent (the one colorful theme). ---- */
-:root[data-theme="brioche"] {
-  --paper: #F5EEDD; --paper-2: #FBF5E7; --panel: #FFFDF6;
-  --ink: #2C2416; --ink-muted: #7C6F55; --ink-faint: #B9AC8E;
-  --hairline: #2C2416; --line-soft: rgba(44, 36, 22, 0.14);
-  --color-accent: #B77F1E; --color-accent-hover: #9A6A16;
-  --color-accent-contrast: #FFFFFF; --color-accent-soft: #F3E7CC;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="brioche"]:not([data-color-scheme="light"]) {
-    --paper: #1D180F; --paper-2: #262016; --panel: #262016;
-    --ink: #EFE6D2; --ink-muted: #9C907A; --ink-faint: #6A6152;
-    --hairline: #EFE6D2; --line-soft: rgba(239, 230, 210, 0.16);
-    --color-accent: #E3B457; --color-accent-hover: #EEC777;
-    --color-accent-contrast: #1D180F; --color-accent-soft: rgba(227, 180, 87, 0.16);
-    --ai-veil: color-mix(in srgb, #000 50%, transparent);
-  }
-}
-:root[data-theme="brioche"][data-color-scheme="dark"] {
-  --paper: #1D180F; --paper-2: #262016; --panel: #262016;
-  --ink: #EFE6D2; --ink-muted: #9C907A; --ink-faint: #6A6152;
-  --hairline: #EFE6D2; --line-soft: rgba(239, 230, 210, 0.16);
-  --color-accent: #E3B457; --color-accent-hover: #EEC777;
-  --color-accent-contrast: #1D180F; --color-accent-soft: rgba(227, 180, 87, 0.16);
-  --ai-veil: color-mix(in srgb, #000 50%, transparent);
-}

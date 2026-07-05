@@ -1,0 +1,30 @@
+/* grain/styles/themes/brioche.css — a GRAIN flavor (see _template.css for the pattern).
+   Brioche — warm cream + honey-gold accent (the one colorful theme). A pure token override on
+   the `data-theme="brioche"` axis; success/danger stay monochrome (the one-hue doctrine —
+   DESIGN-SYSTEM §2). Loaded via @import from variables.css; the flavor selectors out-specify
+   :root, so cascade order is irrelevant. */
+:root[data-theme="brioche"] {
+  --paper: #F5EEDD; --paper-2: #FBF5E7; --panel: #FFFDF6;
+  --ink: #2C2416; --ink-muted: #7C6F55; --ink-faint: #B9AC8E;
+  --hairline: #2C2416; --line-soft: rgba(44, 36, 22, 0.14);
+  --color-accent: #B77F1E; --color-accent-hover: #9A6A16;
+  --color-accent-contrast: #FFFFFF; --color-accent-soft: #F3E7CC;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="brioche"]:not([data-color-scheme="light"]) {
+    --paper: #1D180F; --paper-2: #262016; --panel: #262016;
+    --ink: #EFE6D2; --ink-muted: #9C907A; --ink-faint: #6A6152;
+    --hairline: #EFE6D2; --line-soft: rgba(239, 230, 210, 0.16);
+    --color-accent: #E3B457; --color-accent-hover: #EEC777;
+    --color-accent-contrast: #1D180F; --color-accent-soft: rgba(227, 180, 87, 0.16);
+    --ai-veil: color-mix(in srgb, #000 50%, transparent);
+  }
+}
+:root[data-theme="brioche"][data-color-scheme="dark"] {
+  --paper: #1D180F; --paper-2: #262016; --panel: #262016;
+  --ink: #EFE6D2; --ink-muted: #9C907A; --ink-faint: #6A6152;
+  --hairline: #EFE6D2; --line-soft: rgba(239, 230, 210, 0.16);
+  --color-accent: #E3B457; --color-accent-hover: #EEC777;
+  --color-accent-contrast: #1D180F; --color-accent-soft: rgba(227, 180, 87, 0.16);
+  --ai-veil: color-mix(in srgb, #000 50%, transparent);
+}

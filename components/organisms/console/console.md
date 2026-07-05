@@ -1,11 +1,14 @@
 # console
 
-The AI's narration **terminal** — hidden at rest, it rises from the bottom as a centered bordered box
-when the AI takes over a screen, narrating its steps as `action-badge` lines. The `sidebar-panel`
-(chat) slides away while it's up; a toggle switches chat ⇄ terminal mid-run. CSS-only (no `.html`).
+The AI's narration **terminal** — a **docked bottom panel** (VS Code style), not a floating box. At
+rest it's a slim clickable bar (`Terminal ▸`); clicking `console-toggle` — or the AI taking over
+(`data-acting`) — opens the feed **in place** (the shell's `console` grid row grows, so the main pane
+shrinks and scrolls). It narrates the AI's steps as `action-badge` lines. The terminal shows the AI's
+**thinking**; the `sidebar-panel` (chat) is for **communication** — the two coexist, so the chat no
+longer collapses during a run. CSS-only (no `.html`).
 
-**Parent context (required):** lives inside the shell's `.app-shell__console` region and is raised by
-the shell's `data-acting` / `data-console-open` / `data-chat-open` attributes (set by
+**Parent context (required):** lives inside the shell's `.app-shell__console` region (which docks
+under `main`) and is opened by `data-acting` / `data-console-open` (set by
 `grain/scripts/ai-dispatch.js` on a `spotlight` op, driven by `shell.js`). The AI narrates by pushing
 `append` ops at the `console` surface. Persona-neutral.
 

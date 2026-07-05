@@ -31,16 +31,12 @@
   background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
 .assistant__composer .field__input::placeholder { color: var(--ink-faint); }
 
-/* TAKEOVER: the shell raises `data-acting` (grain/scripts/ai-dispatch.js) → the panel GENTLY slides
-   away (standard AI-motion easing) so the console rises to narrate. The AI's own surfaces stay above
-   the spotlight veil (grain/ai/ai.css .ai-backdrop, z 9000). Switching to chat mid-run
-   (`data-chat-open`) brings the panel back and collapses the console. */
-.app-shell__aside { transition: transform var(--ai-focus-move, 0.45s) ease, opacity var(--ai-focus-move, 0.45s) ease; }
-.app-shell[data-acting="true"] { --shell-aside: 0px; }
-.app-shell[data-acting="true"] .app-shell__aside { transform: translateX(100%); opacity: 0;   /* slide, don't squish */
-  position: relative; z-index: var(--z-ai-surface, 9002); }   /* only the AI surfaces stay above the veil */
-.app-shell[data-acting="true"][data-chat-open] { --shell-aside: 20rem; }
-.app-shell[data-acting="true"][data-chat-open] .app-shell__aside { transform: none; opacity: 1; }
+/* TAKEOVER: the shell raises `data-acting` (grain/scripts/ai-dispatch.js). The terminal (console)
+   narrates the AI's THINKING; the chat is for COMMUNICATION — the two are separate concerns and
+   both stay visible during a run (owner, 2026-07-05: the chat no longer collapses when the AI
+   works). The panel just lifts above the spotlight veil so it stays usable mid-run — a click in
+   here is not an interrupt (ai-dispatch ignores aside/console clicks). */
+.app-shell[data-acting="true"] .app-shell__aside { position: relative; z-index: var(--z-ai-surface, 9002); }
 
 /* mobile (<768px): the panel becomes a bottom SHEET. The shell drops the aside column, so re-show it
    fixed to the bottom, collapsed to its header as a grab bar; tap the header to raise the full panel. */

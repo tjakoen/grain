@@ -12,10 +12,10 @@
 
    The app-shell grid owns the ROWS (app-shell.css: "window" / "status"); this file owns the
    LOOK: hairline frame, print-style solid offset shadow (no blur). The title bar hosts, left
-   to right: the WINDOW DOTS (functional: close / clear-cache / back — each its own quiet
-   accent token, revealed on hover), an optional control cluster (`__ctl`), a centered title
-   OR search field (`__title` / `__search`), and a symmetry spacer (`__end`).
-   Tokens only; re-themes for free. */
+   to right: the WINDOW NAV (functional icon buttons: back / refresh / forward — glyphs always
+   visible, hover goes to our fg color, never OS traffic-lights), an optional control cluster
+   (`__ctl`), a centered title OR search field (`__title` / `__search`), and a symmetry spacer
+   (`__end`). Tokens only; re-themes for free. */
 
 /* the backdrop: the page behind the window, a shade darker than the paper */
 .app-window-backdrop {
@@ -46,30 +46,18 @@
   color: var(--color-muted);
 }
 
-/* the dot cluster — plain <i> for a decorative bar, or functional <button>s (close /
-   clear-cache / back). At rest they read as quiet ink dots; hovering the cluster reveals
-   each dot's accent + glyph (the macOS pattern, spoken in tokens). */
-.window-bar__dots { display: flex; gap: 0.4rem; }
-.window-bar__dots i,
-.window-bar__dots button {
-  all: unset; box-sizing: border-box; cursor: default;
+/* the window nav — functional icon buttons (back / refresh / forward). Glyphs are ALWAYS
+   visible (quiet muted ink at rest); hover/focus goes to our fg color — no OS traffic-lights. */
+.window-bar__nav { display: flex; align-items: center; gap: 0.15rem; }
+.window-bar__nav button {
+  all: unset; box-sizing: border-box; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
-  width: 0.8rem; height: 0.8rem; border-radius: 50%;
-  border: 1px solid var(--color-muted);
-  font-size: 0.55rem; line-height: 1; color: transparent;
+  width: 1.5rem; height: 1.5rem; border-radius: var(--radius-sm);
+  color: var(--color-muted); line-height: 1;
 }
-.window-bar__dots i:first-child { background: var(--color-muted); }   /* decorative: one filled, two hollow */
-.window-bar__dots button { cursor: pointer; }
-.window-bar__dots button[data-window-close] { --dot: var(--color-dot-close); }
-.window-bar__dots button[data-window-clear] { --dot: var(--color-dot-clear); }
-.window-bar__dots button[data-window-back]  { --dot: var(--color-dot-back); }
-.window-bar__dots:hover button,
-.window-bar__dots:focus-within button {
-  background: var(--dot, var(--color-muted));
-  border-color: var(--dot, var(--color-muted));
-  color: var(--ink);
-}
-.window-bar__dots button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+.window-bar__nav button:hover { color: var(--color-fg); background: var(--color-bg); }
+.window-bar__nav button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 1px; }
+.window-bar__nav .icon { width: 1rem; height: 1rem; }
 
 /* optional control cluster next to the dots (theme/scheme/pane toggles — status, not content) */
 .window-bar__ctl { display: flex; align-items: center; gap: var(--space-3); }

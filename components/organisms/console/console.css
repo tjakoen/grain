@@ -1,15 +1,12 @@
-/* organisms/console — the AI's narration TERMINAL. Hidden at rest; when the shell raises
-   `data-acting` it RISES from the bottom as a centered, fully-bordered box and narrates the AI's
-   steps as `action-badge` lines (one size, its own gentle scroll). A toggle switches chat ⇄ terminal
-   mid-run. Persona-neutral. CSS-only pattern: compose `.console__box` inside `.app-shell__console`;
-   see console.md. (Loads after app-shell.css in the sorted bundle, so the floating override wins.) */
+/* organisms/console — the AI's narration TERMINAL, a DOCKED bottom panel (VS Code style): it
+   lives in the shell's `console` grid row under main, not floating. At rest it's a slim clickable
+   bar ("Terminal ▸"); clicking it — or the AI taking over (`data-acting`) — expands the feed in
+   place (the grid row grows). It narrates the AI's steps as `action-badge` lines. A toggle
+   switches chat ⇄ terminal mid-run. Persona-neutral. CSS-only pattern: compose `.console__box`
+   inside `.app-shell__console`; see console.md. (Loads after app-shell.css in the sorted bundle.) */
 
-.app-shell__console { position: fixed; z-index: var(--z-ai-surface, 9002); left: 50%; bottom: var(--space-4);
-  width: min(46rem, calc(100vw - 2 * var(--page-pad))); display: flex; justify-content: center;
-  transform: translate(-50%, 220%); opacity: 0; pointer-events: none;   /* parked below, off */
-  transition: transform var(--ai-focus-move, 0.45s) ease, opacity 0.3s ease; }
-.console__box { display: flex; flex-direction: column; width: 100%; overflow: hidden;
-  border: 1px solid var(--ink); border-radius: var(--radius-md); background: var(--color-bg); }   /* the bordered box */
+.app-shell__console { display: flex; flex-direction: column; min-height: 0; background: var(--color-bg); }
+.console__box { display: flex; flex-direction: column; width: 100%; min-height: 0; overflow: hidden; background: var(--color-bg); }
 .console__bar { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto;
   padding: var(--space-2) var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm); color: var(--color-muted); }
 /* the expand control: a transparent, keyboard-operable button that looks like the bar text */
@@ -18,14 +15,17 @@
 .console__expand:focus-visible, .console__toggle:focus-visible, .chat-thinking__toggle:focus-visible {
   outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .console__label { color: var(--color-fg); }
-.console__acting { color: var(--color-fg); }
+.console__acting { display: none; color: var(--color-fg); }   /* shown only while acting */
 .console__chev { color: var(--ink-faint); transition: transform 0.2s ease; }   /* ▾ open · ▸ collapsed */
-.app-shell:not([data-console-open]) .console__chev { transform: rotate(-90deg); }
-.console__feed { display: flex; flex-direction: column; gap: var(--space-2); flex: 0 0 auto;
-  height: 9rem; overflow: auto; scroll-behavior: smooth;      /* one size, its own GENTLE scroll */
+.app-shell:not([data-console-open]):not([data-acting="true"]) .console__chev { transform: rotate(-90deg); }
+/* the feed is HIDDEN by default (the bar alone is the slim docked strip); it opens in place when
+   the panel is expanded (data-console-open) or the AI takes over (data-acting) — the grid row grows. */
+.console__feed { display: none; flex-direction: column; gap: var(--space-2); flex: 0 0 auto;
+  height: 11rem; overflow: auto; scroll-behavior: smooth;      /* one size, its own GENTLE scroll */
+  border-top: 1px solid var(--color-line);
   padding: var(--space-2) var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm); }
-/* collapsed by default while acting: the bar is the indicator, the feed shows only when clicked */
-.app-shell[data-acting="true"]:not([data-console-open]) .console__box .console__feed { display: none; }
+.app-shell[data-console-open] .console__feed,
+.app-shell[data-acting="true"] .console__feed { display: flex; }
 .console__line { display: flex; align-items: baseline; gap: var(--space-2); }
 .console__desc { color: var(--color-fg); }
 
@@ -47,18 +47,16 @@
 .console__toggle::before { content: "⤢ open chat"; }
 .app-shell[data-chat-open] .console__toggle::before { content: "⤡ terminal"; }
 .console__toggle:hover { background: var(--paper-2); }
-.app-shell[data-acting="true"] .console__toggle { display: inline-flex; }
+/* obsolete since the chat and terminal coexist (owner, 2026-07-05): no chat⇄terminal switch. */
 
-/* TAKEOVER: on `data-acting` the console slides UP into view; the bottom bar becomes the "acting"
-   indicator (so grain's top label is hidden). Chat open → slide the terminal back down. */
-.app-shell[data-acting="true"] .app-shell__console { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+/* TAKEOVER: on `data-acting` the docked terminal's bar becomes the "acting" indicator (grain's
+   top label is hidden) and the feed opens in place. The chat stays put alongside it — thinking
+   goes to the terminal, communication to the chat (owner, 2026-07-05). */
 .app-shell[data-acting="true"] .console__acting { display: inline; }
 .app-shell[data-acting="true"] ~ .ai-acting-label { display: none; }
-.app-shell[data-acting="true"][data-chat-open] .app-shell__console { transform: translate(-50%, 220%); opacity: 0; pointer-events: none; }
-.app-shell[data-acting="true"][data-chat-open] .chat-thinking { display: flex; }   /* narration, boxed inside the chat */
 
 @media (prefers-reduced-motion: no-preference) {
   .app-shell[data-acting="true"] .console__bar .icon { animation: console-blink 1s steps(1) infinite; }
 }
-@media (prefers-reduced-motion: reduce) { .app-shell__console, .console__feed, .console__chev { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .console__feed, .console__chev { transition: none; } }
 @keyframes console-blink { 50% { opacity: 0.25; } }

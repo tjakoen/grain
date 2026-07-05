@@ -126,14 +126,6 @@
   --color-danger-contrast: var(--paper);
   --color-danger-soft: var(--paper-2);
 
-  /* window-dot accents (app-window title bar: close / clear-cache / back). The ONE sanctioned
-     exception to the closed one-hue palette: these are OS-chrome semantics (traffic lights),
-     not content states — kept desaturated to the e-ink register and only revealed on hover
-     (at rest the dots read as plain ink). Owner decision, 2026-07-05. */
-  --color-dot-close: #B0574E;   /* muted brick — close */
-  --color-dot-clear: #B49A4A;   /* muted ochre — clear cache */
-  --color-dot-back:  #6B8F63;   /* muted moss — back */
-
   /* status badge */
   --color-ok-bg: transparent;
   --color-ok-fg: var(--ink);

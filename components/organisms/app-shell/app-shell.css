@@ -8,7 +8,9 @@
 
 /* Two optional full-width rows bracket the workspace: "window" (the app-window title bar)
    and "status" (the status-bar). Auto rows collapse to zero when a page places nothing in
-   them, so shells without the editor-window dressing are untouched. */
+   them, so shells without the editor-window dressing are untouched. The ASIDE (assistant)
+   spans the full right column from the topbar row down — it sits beside the tab bar, not
+   under it (no dead space). The CONSOLE (terminal) docks under main only, as a bottom panel. */
 .app-shell {
   display: grid;
   height: 100dvh;
@@ -16,9 +18,9 @@
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   grid-template-areas:
     "window window  window"
-    "rail   topbar  topbar"
+    "rail   topbar  aside"
     "rail   main    aside"
-    "rail   console console"
+    "rail   console aside"
     "status status  status";
   background: var(--color-bg);
   color: var(--color-fg);

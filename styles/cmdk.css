@@ -1,17 +1,20 @@
 /* grain/styles/cmdk.css — styles for the global command palette (cmdk.js).
    Uses only design tokens — no hardcoded colors or sizes. */
 
+/* Positioned as an editor command palette: it DROPS from the top center, under the title
+   bar's search field (not a mid-screen modal), matching the search field's width. */
 .cmdk {
-  max-width: 560px; width: calc(100% - 2rem); margin: 12vh auto auto; padding: 0;
+  max-width: 34rem; width: calc(100% - 2rem); margin: 3rem auto auto; padding: 0;
   border: 1px solid var(--ink); border-radius: var(--radius-md); overflow: hidden;
   background: var(--paper); color: var(--ink);
   font-family: var(--font-smooth);
-  opacity: 0; transition: opacity .18s ease;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 22%, transparent);
+  opacity: 0; transform: translateY(-0.5rem); transition: opacity .16s ease, transform .16s ease;
 }
-.cmdk[open] { opacity: 1; }
-@starting-style { .cmdk[open] { opacity: 0; } }
-.cmdk::backdrop { background: color-mix(in srgb, var(--ink) 35%, transparent); }
-@media (prefers-reduced-motion: reduce) { .cmdk { transition: none; } }
+.cmdk[open] { opacity: 1; transform: translateY(0); }
+@starting-style { .cmdk[open] { opacity: 0; transform: translateY(-0.5rem); } }
+.cmdk::backdrop { background: color-mix(in srgb, var(--ink) 18%, transparent); }
+@media (prefers-reduced-motion: reduce) { .cmdk { transition: none; transform: none; } }
 
 .cmdk__input {
   width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--ink);

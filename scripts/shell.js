@@ -30,11 +30,6 @@
     });
   }
 
-  // switch chat ⇄ terminal while the desk acts (CSS reacts to data-chat-open). Two triggers:
-  // ⤢ in the console (terminal form) and ↘ in the chat's thinking box (chat form).
-  for (const t of shell.querySelectorAll('[data-shell="chat-toggle"]'))
-    t.addEventListener("click", () => shell.toggleAttribute("data-chat-open"));
-
   // VS Code-style pane visibility: hide/show the aside (the assistant column) and the whole
   // console strip. Attribute-driven so app-shell.css owns the layout change; state persists.
   const PANE_KEYS = { "aside-toggle": ["data-aside-hidden", "grain.shell.aside-hidden"],
@@ -89,20 +84,9 @@
     if (mobile.matches) shell.toggleAttribute("data-aside-open");
   });
 
-  // Keep the narration feed where you're looking: in the terminal box, or — mid-run, chat open —
-  // in the chat's own "thinking" box. ONE trace element (data-surface="console"), reparented; the
-  // desk's appends land wherever it currently lives (like the wireframe).
-  const feedHome = shell.querySelector(".console__box");
-  const thinkingBox = shell.querySelector(".chat-thinking");
-  const placeFeed = () => {
-    const feed = shell.querySelector(".console__feed");
-    if (!feed) return;
-    const inChat = shell.getAttribute("data-acting") === "true" && shell.hasAttribute("data-chat-open");
-    const dest = inChat ? thinkingBox : feedHome;
-    if (dest && feed.parentElement !== dest) dest.appendChild(feed);
-  };
-  new MutationObserver(placeFeed).observe(shell, { attributes: true, attributeFilter: ["data-acting", "data-chat-open"] });
-  placeFeed();
+  // The narration feed lives in the docked terminal and STAYS there — the terminal shows the AI's
+  // thinking, the chat holds the conversation, and both are visible at once (owner, 2026-07-05).
+  // (No more reparenting the feed into a chat "thinking" box.)
 
   // the mobile scrim dismisses the drawer; so does following a nav link
   shell.querySelector(".app-shell__scrim")?.addEventListener("click", () => setOpen(false));
@@ -118,13 +102,20 @@
   // SUBPAGES (/notes claims /notes/slug) — exact match wins, then the longest prefix; "/" only
   // ever matches exactly.
   const here = location.pathname.replace(/\/+$/, "") || "/";
-  for (const group of [".side-rail .nav-item", ".tab-bar .tab"]) {
+  const byUrl = (sel) => {                    // longest-prefix URL match within one nav group
     let best = null, bestLen = -1;
-    for (const a of shell.querySelectorAll(group)) {
+    for (const a of shell.querySelectorAll(sel)) {
       const href = (a.getAttribute("href") || "").replace(/\/+$/, "") || "/";
       if (href === here) { best = a; bestLen = Infinity; break; }
       if (href !== "/" && here.startsWith(href + "/") && href.length > bestLen) { best = a; bestLen = href.length; }
     }
     best?.setAttribute("aria-current", "page");
-  }
+  };
+  // RAIL = the main menu: mark the item for the page's SECTION (data-section on .app-shell),
+  // so /batch, /grain/docs, … all light "BREAD Stack". Falls back to URL match if unsectioned.
+  const section = shell.getAttribute("data-section");
+  const railItem = section && shell.querySelector(`.side-rail .nav-item[data-section="${section}"]`);
+  if (railItem) railItem.setAttribute("aria-current", "page"); else byUrl(".side-rail .nav-item");
+  // TABS = the section's submenus: mark by URL (a tab claims its own subpages too).
+  byUrl(".app-shell__tabs .tab");
 })();

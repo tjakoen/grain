@@ -59,6 +59,11 @@
   // the terminal's expand control (the "desk is acting" indicator) reveals/hides the narration feed
   shell.querySelector('[data-shell="console-toggle"]')?.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
 
+  // "open in terminal" (from the chat's thinking box): un-hide + expand the docked terminal so the
+  // full narration is visible (the chat only shows a compact thinking indicator during a run).
+  for (const b of shell.querySelectorAll('[data-shell="open-terminal"]'))
+    b.addEventListener("click", () => { shell.removeAttribute("data-console-hidden"); shell.setAttribute("data-console-open", ""); });
+
   // OPTIONAL PANEL MODES (sidebar-panel): mode tabs ([data-shell-mode]) switch the assistant
   // between its panes — data-mode on .assistant, hidden on the inactive panes, aria-selected on
   // the tabs. Value-agnostic (the consumer names the modes); a panel with no panes has no tabs,

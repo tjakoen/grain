@@ -69,9 +69,16 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (spotlit && spotlit !== el) clearActing(spotlit);   // moving on → release the previous surface
     if (el) {
       spotlight.move(el, { click });             // the lamp glides onto it (pulse only on a real click)
-      const r = el.getBoundingClientRect();      // scroll ONLY if needed — a needless scroll cuts the lamp's glide short
-      if (r.top < 0 || r.bottom > innerHeight)
-        el.scrollIntoView({ block: "center" }); // smoothness owned by CSS scroll-behavior (honors reduced-motion)
+      // Keep the lit surface fully in view WITHIN the scroll region — below the top bar and above
+      // the docked terminal (both are separate grid rows, so scrolling main can't hide behind them).
+      // Align to the TOP so a surface taller than the viewport is readable top-down, not centre-cropped.
+      // Scroll only when it isn't already fully visible (a needless scroll cuts the lamp's glide short).
+      const main = el.closest(".app-shell__main");
+      const region = main ? main.getBoundingClientRect() : { top: 0, bottom: innerHeight, height: innerHeight };
+      const r = el.getBoundingClientRect();
+      const tallerThanView = r.height > region.height - 8;
+      if (r.top < region.top + 4 || r.bottom > region.bottom - 4 || tallerThanView)
+        el.scrollIntoView({ block: "start" });   // smoothness owned by CSS scroll-behavior (honors reduced-motion)
       // each KIND of surface reads AI-mode its own way:
       const tag = el.tagName, out = el.getAttribute("data-target");
       if (tag === "INPUT" || tag === "TEXTAREA") {

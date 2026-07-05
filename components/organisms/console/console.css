@@ -54,6 +54,10 @@
    goes to the terminal, communication to the chat (owner, 2026-07-05). */
 .app-shell[data-acting="true"] .console__acting { display: inline; }
 .app-shell[data-acting="true"] ~ .ai-acting-label { display: none; }
+/* the docked terminal stays ABOVE the spotlight veil so its narration is never dimmed/overlaid */
+.app-shell[data-acting="true"] .app-shell__console { position: relative; z-index: var(--z-ai-surface, 9002); }
+/* the chat shows a compact "thinking" indicator during a run (its full narration is the terminal) */
+.app-shell[data-acting="true"] .chat-thinking { display: flex; }
 
 @media (prefers-reduced-motion: no-preference) {
   .app-shell[data-acting="true"] .console__bar .icon { animation: console-blink 1s steps(1) infinite; }

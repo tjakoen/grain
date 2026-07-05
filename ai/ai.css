@@ -39,7 +39,9 @@
 .ai-backdrop.is-on { pointer-events: auto; }
 /* .ai-spotlit stays as the SEMANTIC marker for the surface under the lamp (tests, per-kind
    data-attr logic in the dispatcher) — it carries no visual of its own in the lamp model. */
-.ai-spotlit { position: relative; }
+/* scroll-margin gives the lit surface breathing room from the scroll region's top/bottom edges
+   when the dispatcher scrolls it into view (block:"start") — so it never butts the top bar. */
+.ai-spotlit { position: relative; scroll-margin-top: var(--space-4); scroll-margin-bottom: var(--space-4); }
 /* the "AI clicked here" pulse. Self-sufficient: .is-click alone renders it (position:relative
    anchors its own ::before), so pulsing never silently no-ops for want of a sibling .ai-spotlit.
    (.ai-spotlit already establishes a positioned context, so spotlit elements are unaffected.) */

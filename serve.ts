@@ -13,7 +13,7 @@
 // MILL may import batch/grain (it is the layer above), but `compose` stays an injected
 // port so this module needs no file-layout knowledge of the host and tests run without it.
 //
-// HOW TO MOUNT (the composition root, project/server.ts — keep it to a few lines):
+// HOW TO MOUNT (the composition root, portfolio/server.ts — keep it to a few lines):
 //   const serveContent = createPortfolioContentRoutes(renderPage, GLOBAL_ASSETS);  // portfolio/content.ts
 //   // …inside fetch(), before servePortfolio:
 //   const fromContent = await serveContent(pathname);

@@ -37,6 +37,11 @@ body::before {
 
 /* ---- Layout: one left-aligned column, generous air (DESIGN-SYSTEM §4/§7) ---- */
 .container { max-width: var(--content-max); margin: var(--space-8) auto; padding: 0 var(--page-pad); }
+/* .board is the SAME reading-column treatment as .container, for content composed inside the
+   app-shell's __main pane (portfolio pages + MILL-rendered docs/notes — content.ts, mill/serve.ts).
+   Kept as a separate name (not a .container alias) since it lives inside a shell pane, not a bare
+   page body — but must carry the identical padding, or MILL content renders flush to the edge. */
+.board { max-width: var(--content-max); margin: var(--space-8) auto; padding: 0 var(--page-pad); }
 h1, h2, h3 { font-weight: var(--font-weight-regular); letter-spacing: -0.01em; text-wrap: balance; }
 p { margin: 0 0 var(--space-4); text-wrap: pretty; }   /* no orphans/ragged breaks — no JS */
 

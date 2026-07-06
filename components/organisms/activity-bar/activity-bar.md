@@ -11,9 +11,10 @@ section's item `aria-current="true"` (or `"page"`) for the accent left-edge.
 
 ## Parent context (state it here — lesson 3)
 
-- Mounts as the **first child of `.app-shell__rail`**, sibling of a nested `.side-rail`. The rail
-  opts into a flex row automatically: `.app-shell__rail:has(> .activity-bar)` (app-shell.css). A
-  rail without an activity-bar is unaffected — the `:has()` rule simply never matches.
+- Mounts as the **first child of `.app-shell__rail`** (or of `.rail-body`, if the rail also carries
+  a `.rail-head`), sibling of a nested `.side-rail`. The container opts into a flex row
+  automatically: `:has(> .activity-bar)` (app-shell.css). A rail without an activity-bar is
+  unaffected — the `:has()` rule simply never matches.
 - **Collapse:** `[data-rail-collapsed="true"]` hides the `.side-rail` (the tree) and leaves only the
   icon strip — the VS Code "collapsed to icons" look. Falls out of the existing collapse attribute;
   no new JS.

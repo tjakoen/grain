@@ -147,12 +147,13 @@
     }
     best?.setAttribute("aria-current", "page");
   };
-  // ACTIVITY BAR = the app links: mark the item for the page's SECTION (data-section on .app-shell),
-  // so /calendar, /mail, … light their icon. Falls back to URL match if unsectioned. (The file-tree's
-  // current-file marking is site.js's job — it walks the tree + unfolds ancestors.)
+  // the RAIL's app links: mark the item for the page's SECTION (data-section on .app-shell), so
+  // /calendar, /mail, … light their entry (they live in the side-rail's footer, not the narrow
+  // activity-bar). Falls back to URL match if unsectioned. (The file-tree's current-file marking
+  // is site.js's job — it walks the tree + unfolds ancestors.)
   const section = shell.getAttribute("data-section");
-  const railItem = section && shell.querySelector(`.activity-bar [data-section="${section}"]`);
-  if (railItem) railItem.setAttribute("aria-current", "page"); else byUrl(".activity-bar a");
+  const railItem = section && shell.querySelector(`.app-shell__rail [data-section="${section}"]`);
+  if (railItem) railItem.setAttribute("aria-current", "page"); else byUrl(".app-shell__rail a[data-section]");
   // TABS = the section's submenus: mark by URL (a tab claims its own subpages too).
   byUrl(".app-shell__tabs .tab");
 })();

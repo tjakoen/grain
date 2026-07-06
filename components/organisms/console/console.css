@@ -30,7 +30,10 @@
   transition: max-height 0.26s ease, padding 0.26s ease; }
 .app-shell[data-console-open] .console__feed { max-height: 11rem; overflow: auto;
   border-top-width: 1px; padding: var(--space-2) var(--space-4); }
-.console__line { display: flex; align-items: baseline; gap: var(--space-2); }
+/* each line is its own contained box (mirrors chat-message) — narration reads as discrete
+   entries, not a run-on stream */
+.console__line { display: flex; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
 .console__desc { color: var(--color-fg); }
 .console__line[data-variant="cmd"] .console__prompt { color: var(--color-accent); }   /* the echoed human command */
 .console__line[data-state="error"] .console__desc { color: var(--color-danger, var(--color-accent)); }

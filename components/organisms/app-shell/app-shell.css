@@ -30,14 +30,28 @@
 }
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
 
+/* ---- OPT-IN: a `.rail-head` (full-width, brand/title row) stacks the rail vertically — the
+   head sits at the SAME height as the topbar row beside it, and everything below it (the icon
+   column + tree) starts on its own line underneath. A rail without one is untouched (flex-column
+   with a single child behaves like the old block layout). ---- */
+.app-shell__rail:has(> .rail-head) { display: flex; flex-direction: column; }
+.app-shell__rail > .rail-body { min-height: 0; }
+.app-shell__rail:has(> .rail-head) > .rail-body { flex: 1 1 auto; }
+
 /* ---- OPT-IN: a rail hosting an `activity-bar` (VS Code icon column) becomes a flex row — the
-   strip beside the tree. A rail WITHOUT one is untouched (this `:has()` never matches). This rule
-   lives HERE, alongside the mobile-drawer rules below, so bundle order can never let the drawer's
-   `position: fixed` lose to it (the same trap that once broke the drawer — see the mobile block).
-   Collapsed rail = the icon strip only (the tree hides, the activity bar stays). ---- */
-.app-shell__rail:has(> .activity-bar) { display: flex; flex-direction: row; align-items: stretch; }
-.app-shell__rail:has(> .activity-bar) > .side-rail { flex: 1 1 auto; min-width: 0; }
-.app-shell[data-rail-collapsed="true"] .app-shell__rail:has(> .activity-bar) > .side-rail { display: none; }
+   strip beside the tree. Composes with `.rail-head` above (activity-bar sits in `.rail-body` then)
+   or stands alone as a direct child of `__rail`. A rail with NEITHER is untouched (these `:has()`
+   rules never match). This rule lives HERE, alongside the mobile-drawer rules below, so bundle
+   order can never let the drawer's `position: fixed` lose to it (the same trap that once broke the
+   drawer — see the mobile block). Collapsed rail = the icon strip only (the tree hides, the
+   activity bar stays). ---- */
+.app-shell__rail:has(> .activity-bar), .app-shell__rail > .rail-body:has(> .activity-bar) {
+  display: flex; flex-direction: row; align-items: stretch;
+}
+.app-shell__rail:has(> .activity-bar) > .side-rail,
+.app-shell__rail > .rail-body:has(> .activity-bar) > .side-rail { flex: 1 1 auto; min-width: 0; }
+.app-shell[data-rail-collapsed="true"] .app-shell__rail:has(> .activity-bar) > .side-rail,
+.app-shell[data-rail-collapsed="true"] .app-shell__rail > .rail-body:has(> .activity-bar) > .side-rail { display: none; }
 
 /* VS Code-style pane visibility (shell.js: data-shell="aside-toggle"). The aside animates to width
    0 (no display:none, so the glide is smooth); its border/scroll fold away at zero. */

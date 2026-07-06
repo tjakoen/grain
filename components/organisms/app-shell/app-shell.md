@@ -16,10 +16,15 @@ places nothing in them renders exactly as before; fill them to dress the shell a
 window (see `app-window` + `status-bar`).
 
 **Activity bar (opt-in).** Put an `activity-bar` (the VS Code icon column) as the FIRST child of
-`__rail`, with a nested `.side-rail` beside it: `.app-shell__rail:has(> .activity-bar)` becomes a
-flex row (rule lives in this sheet, alongside the mobile-drawer rules, so bundle order can't break
-the drawer). A rail without one is untouched. Collapsing the rail then leaves the icon strip only.
-See `activity-bar.md`.
+`__rail` (or of `.rail-body`, see below), with a nested `.side-rail` beside it: the container
+becomes a flex row (rule lives in this sheet, alongside the mobile-drawer rules, so bundle order
+can't break the drawer). A rail without one is untouched. Collapsing the rail then leaves the icon
+strip only. See `activity-bar.md`.
+
+**Rail head (opt-in).** Put a full-width `.rail-head` (a brand/title row) as the FIRST child of
+`__rail`, followed by a `.rail-body` wrapping everything else (the activity-bar + side-rail row,
+or a bare side-rail): the rail stacks vertically, the head sitting flush with the topbar row beside
+it, everything else starting on its own line underneath. Skip both and the rail is untouched.
 
 ## Structure (capped height for the catalog; real one is `100dvh`)
 

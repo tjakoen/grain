@@ -110,18 +110,18 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     for (const t of [...pendingTriggers.keys()]) clearTrigger(t);   // backstop: turn over → nothing stays "working"
   }
 
-  // ---- interrupt: pause, ask, and (if confirmed) ask the DESK to stop --------------
+  // ---- interrupt: pause, ask, and (if confirmed) ask the AI to stop --------------
   // We never abort the AI's write from the client — the user expresses "stop" and the
   // single writer halts itself gracefully (AI-INTERFACE §5c / PROJECT-PLAN §9).
   function interrupt() {
-    if (!isActing()) return;                            // ask; the desk keeps working behind the modal
+    if (!isActing()) return;                            // ask; the AI keeps working behind the modal
     showConfirm();
   }
   function ensureConfirm() {
     if (confirmEl) return;
     // a native modal <dialog>: focus-trap, Escape-to-close, ::backdrop, and top-layer
     // come free — no manual overlay/keydown plumbing. Escape = "let it finish" (the
-    // desk keeps working behind it), which is the safe default.
+    // AI keeps working behind it), which is the safe default.
     confirmEl = document.createElement("dialog");
     confirmEl.className = "ai-confirm";
     confirmEl.innerHTML =
@@ -143,7 +143,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   function showConfirm() { ensureConfirm(); if (!confirmEl.open) confirmEl.showModal(); }
   function hideConfirm() { if (confirmEl && confirmEl.open) confirmEl.close(); }
   function resume() { hideConfirm(); }                   // "let it finish" — it never actually stopped
-  function requestStop() {                               // ask the desk to stop (mediated, graceful)
+  function requestStop() {                               // ask the AI to stop (mediated, graceful)
     hideConfirm();
     sendIntent({ source: "user", session, screen, surface: "screen", action: "desk.stop", payload: {} })
       .catch(() => spotlightOff());                       // if we can't even ask, release locally
@@ -244,10 +244,10 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
       el.setAttribute("data-commit", "pending");
       body = el.querySelector(".stream-body");
       // OVERWRITE (op.back) re-enters an already-written surface → keep its text so the
-      // desk can backspace it. A fresh write (text, no back) starts empty (wipes any placeholder).
+      // the AI can backspace it. A fresh write (text, no back) starts empty (wipes any placeholder).
       if (typeof op.back === "number") body.textContent = prev;
     }
-    if (typeof op.back === "number" && op.back > 0)                 // the desk revising: delete trailing chars
+    if (typeof op.back === "number" && op.back > 0)                 // the AI revising: delete trailing chars
       body.textContent = [...body.textContent].slice(0, -op.back).join("");
     else if (typeof op.text === "string") body.textContent += op.text;   // text only — no injection
     if (op.done) {
@@ -376,7 +376,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // click a button/link with a verb
   document.addEventListener("click", (ev) => {
     if (ev.target.closest(".ai-confirm")) return;        // the confirm popup handles its own clicks
-    // the assistant (chat) + the console are the desk's OWN surfaces — interacting there
+    // the assistant (chat) + the console are the AI's OWN surfaces — interacting there
     // (chatting, preparing your next message, switching chat⇄terminal) is NOT an interrupt.
     if (ev.target.closest(".app-shell__aside, .app-shell__console")) return;
     if (isActing()) { ev.preventDefault(); interrupt(); return; }   // clicking the WORKING page = ask it to stop
@@ -394,7 +394,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (src && "value" in src) src.value = "";
   });
 
-  // Escape while the desk is acting → interrupt (ask to stop), don't force-kill
+  // Escape while the AI is acting → interrupt (ask to stop), don't force-kill
   document.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape" && isActing()) { ev.preventDefault(); interrupt(); }
   });

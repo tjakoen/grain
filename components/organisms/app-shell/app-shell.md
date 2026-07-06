@@ -8,7 +8,8 @@ It hosts arbitrary content, so it's a layout you apply with region classes (not 
 data-bound tag): put `class="app-shell"` on the frame and drop content into
 `app-shell__rail` / `__topbar` / `__main` / `__aside` / `__console`. `data-rail-collapsed`
 narrows the rail to icons; on mobile the rail becomes a drawer (`data-rail-open`) over a
-`app-shell__scrim`. See the live composition at `/dashboard`.
+`app-shell__scrim`. See the live composition on any page of the reference app (it's the EDITOR
+chrome — `tjakoen.github.io`'s `portfolio-frame`).
 
 Two **optional full-width rows** bracket the workspace: `__window` (top — the `app-window`
 title bar) and `__status` (bottom — the `status-bar`). They're auto rows, so a shell that

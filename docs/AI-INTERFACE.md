@@ -581,9 +581,9 @@ without dragging in the full task domain yet.
 | Reasoner boundary + stub | `grain/ai/reasoner.ts` | grain |
 | The one door (single writer) | `grain/ai/interaction-layer.ts` | grain |
 | Manifest (harvested, can't drift) | `grain/ai/manifest.ts` + `grain/ai/accepts.ts` | grain |
-| Routes (`/intent`, `/stream`, `/ai/manifest`, `/ui/loop`) | `tjakoen.github.io/routes/ai-routes.ts` | project (wiring) |
+| Routes (`/intent`, `/stream`, `/ai/manifest`, `/ui/loop`) | `tjakoen.github.io/routes/ai-routes.ts` | app (wiring) |
 | Dispatcher island | `grain/scripts/ai-dispatch.js` | grain |
-| Demo page + card | `tjakoen.github.io/pages/loop.html`, `project/components/molecules/loop-card/` | project |
+| Demo page + card | `tjakoen.github.io/pages/loop.html`, `tjakoen.github.io/components/molecules/loop-card/` | app |
 
 The manifest is now **harvested** (§4 realised): item targets read `data-accepts` /
 `data-kind` straight off `loop-card`; region targets are inverted from the action

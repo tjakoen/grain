@@ -161,7 +161,7 @@
   --ai-focus-ease: ease-in-out;
 
   /* AI takeover STACKING — one source of truth so the AI module (grain/ai/ai.css) and any
-     consumer chrome (e.g. the product's app-frame console/chat) agree without duplicating
+     consumer chrome (e.g. the app's portfolio-frame console/chat) agree without duplicating
      magic z-index numbers. veil < spotlit surface < the AI surfaces that stay above the veil. */
   --z-ai-veil: 9000;      /* the dimming backdrop */
   --z-ai-spot: 9001;      /* the spotlit surface, lifted out of the dim */

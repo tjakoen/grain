@@ -3,8 +3,8 @@
    assistant), and a bottom console. It HOSTS arbitrary page content, so it's a layout
    the page applies via region classes (the render engine can't project children into a
    component), not a data-bound tag. Re-skins via tokens like everything else. Coexists
-   with the single-column editorial `.container`; the product composes it via app-frame
-   (project/components/organisms/app-frame) on /dashboard and /loop. */
+   with the single-column editorial `.container`; the reference app composes it via portfolio-frame
+   (tjakoen.github.io/components/organisms/portfolio-frame) on every page, incl. /loop. */
 
 /* Two optional full-width rows bracket the workspace: "window" (the app-window title bar)
    and "status" (the status-bar). Auto rows collapse to zero when a page places nothing in

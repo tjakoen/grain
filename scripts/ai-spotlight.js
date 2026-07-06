@@ -57,7 +57,7 @@ export function createSpotlight({ onInterrupt } = {}) {
       labelEl.hidden = !text;
       if (!lit) {
         // no surface yet: the lamp wakes as a closed iris and the first move blooms it open.
-        // A page may declare WHERE the light lives ([data-lamp-origin] — e.g. a drawn desk
+        // A page may declare WHERE the light lives ([data-lamp-origin] — e.g. a drawn
         // lamp's head): the iris then opens from that spot, so the object and the light read
         // as one thing. Default: viewport center.
         const origin = document.querySelector("[data-lamp-origin]");

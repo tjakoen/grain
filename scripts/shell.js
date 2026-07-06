@@ -133,7 +133,7 @@
   mobile.addEventListener?.("change", () => { setOpen(false); shell.removeAttribute("data-aside-open"); });
 
   // mark the CURRENT route in the rail + tabs — aria-current is accessible AND already styled
-  // (nav-item/tab CSS targets [aria-current="page"]). The shared app-frame is identical on every
+  // (nav-item/tab CSS targets [aria-current="page"]). The shared shell frame is identical on every
   // page; this is what tells you where you are, from the URL. A tab/nav-item also claims its
   // SUBPAGES (/notes claims /notes/slug) — exact match wins, then the longest prefix; "/" only
   // ever matches exactly.

@@ -24,9 +24,10 @@ and how to wire it.
   (the AI's presence is visible) · self-documenting (a live `/catalog`).
 - **Also:** the manifest (a drift-proof machine map the AI reads) · auditable by design (every
   interaction is a source-tagged Intent → an interaction log is a server-side drop-in) · the design
-  system works with no AI · re-skin by token override · machine-readable (SEO/AEO) · **built on the
-  modern web platform** (native View Transitions, `<dialog>`, `<details>`, `:has()`, `color-mix()` —
-  not framework JS).
+  system works with no AI · a **client-side door** (the same vocabulary runs on static hosts, no
+  server) · re-skin by token override · machine-readable (SEO/AEO) · **built on the modern web
+  platform** (native View Transitions, `<dialog>`, `<details>`, `:has()`, `color-mix()` — not
+  framework JS).
 
 ---
 

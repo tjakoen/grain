@@ -117,7 +117,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         const text = String(intent.payload.text ?? "").trim();
         const bubble = (role: string, grade: string, inner: string) =>
           `<div class="chat-message" data-role="${role}"${grade ? ` data-grade="${grade}"` : ""}>` +
-          `<span class="chat-message__who">${role === "you" ? "You" : "Desk"}</span>${inner}</div>`;
+          `<span class="chat-message__who">${role === "you" ? "You" : "AI"}</span>${inner}</div>`;
         // append to the chat-log the intent TARGETED (the shell's "chat-log", or a page's own
         // "chat-log:<id>" — same kind), so multiple chat surfaces on a page don't collide.
         const log = intent.surface;

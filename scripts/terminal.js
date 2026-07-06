@@ -82,7 +82,7 @@
     const name = argv.shift();
     const cmd = registry.get(name);
     if (!cmd) {
-      io.printErr(`command not found: ${name}. Type ‘help’ to see what the desk understands.`);
+      io.printErr(`command not found: ${name}. Type ‘help’ to see what the AI understands.`);
       return;
     }
     const ctx = {
@@ -184,7 +184,7 @@
     return pages.find((p) => p.url === "/" + q || p.url === q || (p.title || "").toLowerCase() === q)
         || pages.find((p) => p.url.toLowerCase().includes(q) || (p.title || "").toLowerCase().includes(q));
   }
-  register({ name: "help", args: "", help: "list what the desk understands", run(ctx) {
+  register({ name: "help", args: "", help: "list what the AI understands", run(ctx) {
     for (const c of ctx.commands()) ctx.printHtml(`<b>${esc(c.name)}</b>${c.args ? " " + esc(c.args) : ""} — ${esc(c.help)}`);
   }});
   register({ name: "clear", args: "", help: "clear the terminal", run(ctx) { ctx.clear(); }});
@@ -215,17 +215,17 @@
     try { t.setTheme(ctx.arg); ctx.print(`theme → ${ctx.arg}`); }
     catch { ctx.printErr(`unknown flavor ‘${ctx.arg}’.`); }
   }});
-  register({ name: "ask", args: "<question>", help: "ask the desk (it answers in the chat)", run(ctx) {
+  register({ name: "ask", args: "<question>", help: "ask the AI (it answers in the chat)", run(ctx) {
     if (!ctx.arg) return ctx.printErr("ask what?");
     if (!ctx.door) return ctx.printErr("the door isn't loaded on this page.");
     if (!document.querySelector('[data-surface="chat-log"]')) return ctx.printErr("no chat on this page to answer in.");
-    if (!ctx.door.online()) return ctx.printErr("the desk is offline — can't ask right now.");
+    if (!ctx.door.online()) return ctx.printErr("the AI is offline — can't ask right now.");
     ctx.door.submit("chat.send", "chat-log", { text: ctx.arg });
     ctx.print("→ answering in the chat.");
   }});
-  register({ name: "stop", args: "", help: "ask the desk to stop (mediated)", run(ctx) {
+  register({ name: "stop", args: "", help: "ask the AI to stop (mediated)", run(ctx) {
     if (!ctx.door) return ctx.printErr("the door isn't loaded on this page.");
-    if (document.querySelector(".app-shell[data-acting=\"true\"]")) { ctx.door.submit("desk.stop", "screen", {}); ctx.print("asked the desk to stop."); }
+    if (document.querySelector(".app-shell[data-acting=\"true\"]")) { ctx.door.submit("desk.stop", "screen", {}); ctx.print("asked the AI to stop."); }
     else ctx.print("nothing is running.");
   }});
   register({ name: "context", args: "", help: "print this page as the AI sees it (the manifest)", async run(ctx) {

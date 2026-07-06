@@ -191,9 +191,10 @@ mechanism, so the AI layer works identically in either.
   the "work-y" VS Code-style archetype. Because the render engine can't project children into
   a component, the shell and its parts (`side-rail`, `tab-bar`, `nav-item`, `tab`) are
   **layout class-contracts** (a `.css` + a `.md` example, no `.html` tag) that a page applies
-  to plain elements — not data-bound tags. The product wraps them once in a domain organism,
-  **`app-frame`** (`project/components/organisms/app-frame`), that carries the rail, tabs,
-  assistant, and console as the shared chrome on every page; `/dashboard` and `/loop` compose it.
+  to plain elements — not data-bound tags. The app wraps them once in a domain organism,
+  **`portfolio-frame`** (`tjakoen.github.io/components/organisms/portfolio-frame`), that carries the
+  rail, tabs, assistant, and console as the shared chrome on every page; the whole site (incl.
+  `/loop`) composes it.
 
 **The AI lives in the shell.** The right **aside** holds the assistant conversation
 (`chat.send` → your bubble + the AI's streamed reply, `chat-message`); when the AI *takes
@@ -206,27 +207,29 @@ chat⇄console swap; it knows nothing about the AI door.
 
 ## Repo layout (monorepo, separated now)
 
-The three concerns are already separate top-level directories — no Bun workspaces,
+The concerns are already separate top-level directories — no Bun workspaces,
 plain relative imports, one `package.json` + `tsconfig` at the root. They're polished
-in place and will each become **their own repo** (GRAIN a package on BATCH) once the
-product proves them; the boundary is kept clean so that split is a copy, not a rewrite.
+in place and will each become **their own repo** (GRAIN a package on BATCH) once proven;
+the boundary is kept clean so that split is a copy, not a rewrite.
 
 ```
 batch/     substrate — render, http (incl. stream.ts SSE), assets, platform.
-           Imports nothing from grain/project. Ships its own render-test fixtures.
+           Imports nothing upward. Ships its own render-test fixtures.
 grain/     the design system — ai/ (contract, interaction-layer, reasoner boundary,
            manifest, accepts), components/atoms/b-*, scripts/ (ai-dispatch, cmdk),
            styles/ (variables = tokens, global = base/skin, grain = grade mechanism),
            fonts/ (the Redaction grades). Ships its DEFAULT THEME — GRAIN looks like
            GRAIN on its own. A consumer overrides token slots to re-skin.
-project/   the app — domain/data/services/routes/view, DOMAIN components (item/loop/…),
-           pages, vendor, server.ts (the composition root — the one place batch + grain
-           + project meet). Uses GRAIN's look; would add an override sheet only to diverge.
+mill/      the Markdown→GRAIN CMS — a reusable layer above grain+batch (batch → grain → mill).
+tjakoen.github.io/  THE app + composition root — domain components (item/loop/…), routes,
+           pages, vendor, server.ts (the one place the layers meet). Uses MILL for content,
+           GRAIN's look; would add an override sheet only to diverge.
+project/   the AI-assistant product — PAUSED (2026-07-05), a docs-only archive.
 ```
 
 A key consequence the split forced (and a real reusability test): BATCH's
 `render`/`catalog`/`style-bundle` and GRAIN's `accepts` accept **multiple component
-roots**, so components compose across `grain/components` + `project/components`.
+roots**, so components compose across `grain/components` + `tjakoen.github.io/components`.
 
 The detailed contract is **[AI-INTERFACE.md](./AI-INTERFACE.md)**; the visual identity
 and grade mechanics are **[DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md)**; the hands-on usage

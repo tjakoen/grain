@@ -33,7 +33,7 @@
 /* GROWN terminal (console.css's `console__grow` toggle): the console takes over the WHOLE
    screen (the full main+console space between the topbar and status bar) instead of sizing to
    its capped 11rem feed — main collapses to 0, not a peek. */
-.app-shell[data-console-expanded="true"] { --shell-main: 0px; --shell-console: minmax(0, 1fr); }
+.app-shell[data-console-expanded] { --shell-main: 0px; --shell-console: minmax(0, 1fr); }
 
 /* ---- OPT-IN: a `.rail-head` (full-width, brand/title row) stacks the rail vertically — the
    head sits at the SAME height as the topbar row beside it, and everything below it (the icon

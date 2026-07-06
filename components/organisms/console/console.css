@@ -33,8 +33,8 @@
   border-top-width: 1px; padding: var(--space-2) var(--space-4); }
 /* GROWN: the feed fills its grid row instead of the fixed 11rem band — the row itself grows via
    --shell-console in app-shell.css, so this just lets the feed stretch to fill it. */
-.app-shell[data-console-expanded="true"] .console__box { flex: 1 1 auto; min-height: 0; }
-.app-shell[data-console-expanded="true"] .console__feed { flex: 1 1 auto; max-height: none; }
+.app-shell[data-console-expanded] .console__box { flex: 1 1 auto; min-height: 0; }
+.app-shell[data-console-expanded] .console__feed { flex: 1 1 auto; max-height: none; }
 /* v3.1 tried boxing each line individually (mirrors chat-message) — reverted (owner, 2026-07-06):
    it read as harder to scan, not easier, and doubled up with the chat-thinking box's own border
    around the whole run's preview. A flowing stream, one row per line, is the readable form; the
@@ -89,7 +89,7 @@
   font: inherit; font-size: var(--text-xs); color: var(--color-fg); background: transparent;
   border: 1px solid var(--color-line); border-radius: var(--radius-sm); padding: 2px var(--space-2); }
 .console__grow::before { content: "⤢ expand"; }
-.app-shell[data-console-expanded="true"] .console__grow::before { content: "⤡ collapse"; }
+.app-shell[data-console-expanded] .console__grow::before { content: "⤡ collapse"; }
 .console__grow:hover { background: var(--paper-2); }
 
 /* TAKEOVER: on `data-acting` the docked terminal's bar becomes the "acting" indicator (grain's

@@ -1,0 +1,31 @@
+/* organisms/activity-bar — the VS Code ACTIVITY BAR: a slim vertical icon column at the far edge
+   of the app-shell rail. Icon-only entries (an explorer toggle, app links); the consumer supplies
+   the links + glyphs (persona-neutral, tokens only). Mounts as the FIRST child of
+   `.app-shell__rail`, sibling of a nested `.side-rail` — it does NOT add a grid column (see the
+   rejected alternative in activity-bar.md); it rides the rail's existing track + mobile drawer. */
+.activity-bar {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
+  width: 3.25rem;                     /* matches the collapsed-rail track */
+  padding: var(--space-2) 0;
+  border-right: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent);
+}
+.activity-bar__item {
+  display: flex; align-items: center; justify-content: center;
+  width: 2.25rem; height: 2.25rem; border-radius: var(--radius-sm);
+  position: relative;
+  color: var(--color-muted); background: transparent; border: 0; cursor: pointer;
+  text-decoration: none;
+}
+.activity-bar__item:hover { color: var(--color-fg); }
+/* the CURRENT item: ink + a 2px accent left edge (mirrors the file-tree's open-file bar) */
+.activity-bar__item[aria-current="true"], .activity-bar__item[aria-current="page"] { color: var(--color-fg); }
+.activity-bar__item[aria-current="true"]::before, .activity-bar__item[aria-current="page"]::before {
+  content: ""; position: absolute; top: 0.35rem; bottom: 0.35rem; left: -2px;
+  width: 2px; background: var(--color-accent);
+}
+.activity-bar__spacer { flex: 1 1 auto; }
+
+/* NB: the app-shell OPT-IN rule (`.app-shell__rail:has(> .activity-bar)` becomes a flex row) lives
+   in app-shell.css — the SAME sheet as the mobile-drawer rules, so bundle order can't let the
+   drawer's `position: fixed` lose to this. See activity-bar.md + app-shell.css. */

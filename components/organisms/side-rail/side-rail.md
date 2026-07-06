@@ -3,7 +3,12 @@
 The vertical navigation rail inside the app-shell: brand → nav-items → spacer → footer
 items. A layout class composed with `b-icon` and `nav-item`. When the shell carries
 `data-rail-collapsed="true"` the labels drop and glyphs center (icons-only). On mobile the
-shell turns the whole rail into a drawer. See the live composition at `/dashboard`.
+shell turns the whole rail into a drawer.
+
+The brand mark (`.side-rail__brand > b-icon`) carries `var(--color-accent)` — hueless under the
+default theme, a hue under an accent theme (the accent reaches the brand + the presence star;
+DESIGN-SYSTEM §2). Pairs with the `activity-bar` organism when the shell wants a VS Code-style
+icon column (see `activity-bar.md`).
 
 ## Example
 

@@ -15,6 +15,12 @@ title bar) and `__status` (bottom — the `status-bar`). They're auto rows, so a
 places nothing in them renders exactly as before; fill them to dress the shell as an editor
 window (see `app-window` + `status-bar`).
 
+**Activity bar (opt-in).** Put an `activity-bar` (the VS Code icon column) as the FIRST child of
+`__rail`, with a nested `.side-rail` beside it: `.app-shell__rail:has(> .activity-bar)` becomes a
+flex row (rule lives in this sheet, alongside the mobile-drawer rules, so bundle order can't break
+the drawer). A rail without one is untouched. Collapsing the rail then leaves the icon strip only.
+See `activity-bar.md`.
+
 ## Structure (capped height for the catalog; real one is `100dvh`)
 
 ```html

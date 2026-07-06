@@ -27,6 +27,15 @@ is the consumer's knowledge; this component only draws it.
 </nav>
 ```
 
+**Directories carry the meaning.** A folder's own page (its `index.html`) is an entry file, not
+where the meaning lives — the *directory name* above it does. Dim such a file with
+`data-variant="index"` so the eye reads the folder, and give it a `data-tab-label` so the open-tabs
+strip shows the section name ("GRAIN") not "index.html".
+
+```html
+<a class="file-tree__file" href="/grain" data-variant="index" data-tab-label="GRAIN">index.html</a>
+```
+
 Parent-context notes (lesson 3 — say it here, don't let it fail silently):
 - In the app-shell rail, put `data-variant="explorer"` on the `.side-rail` — the tree brings its
   own indent guides, so the variant drops the rail's icon-gutter hairline.

@@ -45,6 +45,9 @@
 }
 .file-tree__file:hover { color: var(--color-fg);
   background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+/* an index/entry file (a folder's own page, e.g. index.html) is DIMMED — the directory name
+   above it carries the meaning, so the filename recedes. Hover + current win by later position. */
+.file-tree__file[data-variant="index"] { color: var(--ink-faint); }
 /* the OPEN file: ink + a quiet accent edge (mirrors the rail's current-item bar) */
 .file-tree__file[aria-current="page"] {
   color: var(--color-fg); position: relative;

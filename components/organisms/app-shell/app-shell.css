@@ -30,6 +30,15 @@
 }
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
 
+/* ---- OPT-IN: a rail hosting an `activity-bar` (VS Code icon column) becomes a flex row — the
+   strip beside the tree. A rail WITHOUT one is untouched (this `:has()` never matches). This rule
+   lives HERE, alongside the mobile-drawer rules below, so bundle order can never let the drawer's
+   `position: fixed` lose to it (the same trap that once broke the drawer — see the mobile block).
+   Collapsed rail = the icon strip only (the tree hides, the activity bar stays). ---- */
+.app-shell__rail:has(> .activity-bar) { display: flex; flex-direction: row; align-items: stretch; }
+.app-shell__rail:has(> .activity-bar) > .side-rail { flex: 1 1 auto; min-width: 0; }
+.app-shell[data-rail-collapsed="true"] .app-shell__rail:has(> .activity-bar) > .side-rail { display: none; }
+
 /* VS Code-style pane visibility (shell.js: data-shell="aside-toggle"). The aside animates to width
    0 (no display:none, so the glide is smooth); its border/scroll fold away at zero. */
 .app-shell[data-aside-hidden="true"] { --shell-aside: 0rem; }

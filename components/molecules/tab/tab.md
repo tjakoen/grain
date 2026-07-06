@@ -18,3 +18,10 @@ only when views are genuinely closable.
 <a class="tab"><span class="tab__icon"><b-icon sym="/assets/sprite.svg#loop" size="sm"></b-icon></span>Tasks<span class="tab__close" aria-hidden="true"><b-icon sym="/assets/sprite.svg#close" size="sm"></b-icon></span></a>
 <a class="tab">Library · notes</a>
 ```
+
+### Pinned (never closes)
+A pinned tab ships a `.tab__pin` in place of the `.tab__close`: same box, always visible,
+`pointer-events: none` — the icon reads "this view stays open" (e.g. a home/Welcome tab).
+```html
+<a class="tab" data-pinned aria-current="page"><span class="tab__icon"><b-icon sym="/assets/sprite.svg#spark" size="sm"></b-icon></span>Welcome<span class="tab__pin" aria-hidden="true"><b-icon sym="/assets/sprite.svg#pin" size="sm"></b-icon></span></a>
+```

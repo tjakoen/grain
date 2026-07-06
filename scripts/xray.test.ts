@@ -32,3 +32,12 @@ test("toggles the data-xray attribute on the document root", () => {
   expect(js).toMatch(/setAttribute\("data-xray"/);
   expect(js).toMatch(/removeAttribute\("data-xray"\)/);
 });
+
+test("persists across navigation under grain.xray.on, guarded by try/catch (private mode)", () => {
+  expect(js).toMatch(/"grain\.xray\.on"/);              // the dotted house key
+  expect(js).toMatch(/localStorage\.setItem\(KEY/);     // writes it
+  expect(js).toMatch(/localStorage\.getItem\(KEY\)\s*===\s*"1"/);   // restores it on boot
+  // both storage touches sit inside try/catch (private mode never throws)
+  expect(js).toMatch(/try\s*\{[^}]*localStorage\.setItem\(KEY/s);
+  expect(js).toMatch(/try\s*\{[\s\S]*localStorage\.getItem\(KEY\)/);
+});

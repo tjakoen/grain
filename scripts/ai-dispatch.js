@@ -91,6 +91,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
         clearTrigger(out);                            // drop any stale holder of this target first
         el.setAttribute("data-commit", "pending");   // a control being USED → working until its output finishes…
         pendingTriggers.set(out, el);                // …held, then released by the output's committed op
+        armWatchdog();                                // bound its lifetime (dropped-op safety)
       } else if (target !== "screen") {
         el.setAttribute("data-commit", "pending");   // a text region the AI writes in → grain
       }
@@ -156,8 +157,36 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (trg) { trg.removeAttribute("data-commit"); pendingTriggers.delete(target); }
   }
 
+  // ---- pending-trigger WATCHDOG: every pending trigger has a BOUNDED lifetime -----------------
+  // The 20s spotlight timer only arms once spotlightOn runs — but if the `spotlight` op itself is
+  // DROPPED (SSE has no replay; AI-INTERFACE §3), the trigger goes pending in submit() and nothing
+  // ever releases it. This watchdog is independent of the spotlight path: it (re)arms whenever a
+  // trigger is pending and is REFRESHED on every received op (ops flowing = channel alive), so it
+  // never trips during a healthy multi-second run — only on genuine silence (dropped ops / a hung
+  // request). On fire: release every pending trigger, surface the failure on it (the existing flash
+  // affordance — data-state="error" + title, no new toast system), and go honestly offline.
+  const WATCHDOG_MS = 15000;
+  let watchdogTimer = null;
+  function armWatchdog() {                       // call after a trigger goes pending, and on each op
+    clearTimeout(watchdogTimer); watchdogTimer = null;
+    if (pendingTriggers.size) watchdogTimer = setTimeout(watchdogFire, WATCHDOG_MS);
+  }
+  function watchdogFire() {
+    for (const [target, trg] of [...pendingTriggers.entries()]) {
+      trg.removeAttribute("data-state"); void trg.offsetWidth;   // restart the flash
+      trg.setAttribute("data-state", "error");
+      trg.setAttribute("title", "The AI didn't respond — released.");
+      clearTrigger(target);
+    }
+    markOnline(false);                           // the channel is evidently down → honest presence
+    spotlightOff();                              // drop any veil + reset the shell
+  }
+
   // ---- apply one render op -----------------------------------------------------
-  function applyOp(op) {
+  // Every received op REFRESHES the watchdog (channel is alive) — done in the wrapper AFTER the op
+  // is applied, so an op that clears the last pending trigger correctly stands the watchdog down.
+  function applyOp(op) { applyOneOp(op); armWatchdog(); }
+  function applyOneOp(op) {
     const el = find(op.target);
     // a committed op (or a flash/rollback) ends the interaction → release its trigger
     if (op.commit === "committed" || op.op === "flash") clearTrigger(op.target);
@@ -266,7 +295,33 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     sseIsOpen = true; markSseReady();                    // loopback: nothing to wait for
   } else {
     const es = new EventSource(`/stream?session=${encodeURIComponent(session)}`);
-    es.addEventListener("ready", () => { sseIsOpen = true; markOnline(true); markSseReady(); }, { once: true });
+    let offlineTimer = null;
+    // NOT { once: true }: EventSource auto-reconnects after a drop, and the server re-emits `ready`
+    // from the fresh stream's start() — so a re-fired `ready` flips presence back ONLINE and cancels
+    // any pending offline. (Presence = transport health, set by outcome on every up/down transition.)
+    es.addEventListener("ready", () => { sseIsOpen = true; clearTimeout(offlineTimer); offlineTimer = null; markOnline(true); markSseReady(); });
+    // SSE `error`. Two SEPARATE concerns, deliberately handled differently:
+    //  (1) A LIVE run: SSE has no replay, so ops sent during the drop are lost and the run can't
+    //      recover — release it NOW so it never hangs (mirrors the pre-debounce safety). Releasing
+    //      the veil does NOT gate future clicks, so it's safe to do on any blip. Only when a run is
+    //      actually live (guarded) — otherwise a benign nav-teardown error would reset persisted
+    //      chrome (e.g. the terminal open-state).
+    //  (2) PRESENCE/gating: the browser AUTO-RECONNECTS, so a transient blip is NOT "the door is
+    //      down" — flipping offline instantly would spuriously gate a click made during the blip
+    //      (and `submit()` no-ops offline). DEBOUNCE it: go offline only if still down after the
+    //      reconnect grace; a re-fired `ready` cancels the timer. Presence stays "true" through a blip.
+    es.onerror = () => {
+      sseIsOpen = false;
+      if (isActing() || pendingTriggers.size) spotlightOff();   // (1) release a live run immediately
+      if (offlineTimer) return;                                 // (2) grace already ticking
+      offlineTimer = setTimeout(() => {
+        offlineTimer = null;
+        if (sseIsOpen) return;                     // reconnected in the meantime (`ready` re-fired)
+        console.warn("[ai-dispatch] /stream down past reconnect grace — going offline");
+        markOnline(false);
+        markSseReady();                            // unblock any waiter (degraded, like the 3s fallback)
+      }, 4000);
+    };
     // Degraded-mode fallback: never hang a click if the handshake never lands. This DOES re-open
     // the early-op-drop window (AI-INTERFACE §3 wants the channel live first) — deliberately, and
     // loudly: a submit that goes out un-acked means the stream is broken and ops may be lost.
@@ -280,27 +335,41 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     es.addEventListener("op", (e) => {
       try { applyOp(JSON.parse(e.data)); } catch (err) { console.error("[ai-dispatch] bad op", err); }
     });
-    sendIntent = (intent) => fetch("/intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(intent),
-    }).then((res) => {
-      // fetch resolves on 4xx/5xx: a door-level error pushes no ops, so the trigger's pending
-      // state would stick until the safety timeout — surface it to the caller's catch instead
-      if (!res.ok) throw new Error(`/intent ${res.status}`);
-      return res;
-    });
+    sendIntent = (intent) => {
+      // Bounded request: a hung POST /intent would pin the trigger forever (no ops come back). Abort
+      // after 10s → the fetch rejects → submit()'s .catch releases the trigger + marks offline.
+      const ctl = new AbortController();
+      const to = setTimeout(() => ctl.abort(), 10000);
+      return fetch("/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(intent),
+        signal: ctl.signal,
+      }).then((res) => {
+        // fetch resolves on 4xx/5xx: a door-level error pushes no ops, so the trigger's pending
+        // state would stick until the safety timeout — surface it to the caller's catch instead
+        if (!res.ok) throw new Error(`/intent ${res.status}`);
+        return res;
+      }).finally(() => clearTimeout(to));
+    };
   }
 
   // ---- send an intent through the one door -------------------------------------
   function submit(action, target, payload, trigger) {
+    // Belt-and-braces presence gate: if the door's reply channel is known-down, don't pretend —
+    // no-op (the CSS already disables [data-ai-run]/[data-ai-gate] controls; this covers the public
+    // window.grain.door seam + any control that isn't gated). "waking" (undefined) still goes.
+    if (document.body.dataset.aiOnline === "false") {
+      console.info("[ai-dispatch] door offline — submit ignored (presence gating)");
+      return;
+    }
     // Optimistic grain goes on the TRIGGER the user touched (a button "working") — NOT
     // the target. The target's grade is driven by the server's render ops (type → grain,
     // replace → committed). Pre-graining the target wrongly grained whole regions like
     // the screen and left them stuck, since nothing cleared it.
-    if (trigger) { clearTrigger(target); trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); }
+    if (trigger) { clearTrigger(target); trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); armWatchdog(); }
     const send = () => sendIntent({ source: "user", session, screen, surface: target, action, payload })
-      .catch(() => clearTrigger(target));                        // couldn't reach the door → undo
+      .catch(() => { clearTrigger(target); markOnline(false); });   // couldn't reach the door (timeout/network) → undo + honest offline
     sseIsOpen ? send() : sseReady.then(send);                    // wait for the stream so no early ops are lost
   }
 

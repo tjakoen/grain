@@ -111,3 +111,17 @@ html[data-xray] [data-surface]::after {
 body[data-ai-online] .presence__wait { display: none; }
 body[data-ai-online="true"]  .presence__on  { display: inline; }
 body[data-ai-online="false"] .presence__off { display: inline; }
+/* the presence STAR is its own element (so its color tracks transport health, apart from the
+   wording): muted while waking, the accent hue when online, faint when offline. */
+.presence__star { color: var(--color-muted); }
+body[data-ai-online="true"]  .presence__star { color: var(--color-accent); }
+body[data-ai-online="false"] .presence__star { color: var(--ink-faint); }
+
+/* ---- presence GATING: when the door's reply channel is down, AI controls are visibly
+   disabled (not silently dead). Consumers mark AI-only controls [data-ai-run] (a trigger that
+   drives the AI) or [data-ai-gate] (a composer/region gated on the AI). The dispatcher also
+   no-ops submit() when offline (belt-and-braces) — this is the honest visual half. */
+body[data-ai-online="false"] [data-ai-run],
+body[data-ai-online="false"] [data-ai-gate] {
+  pointer-events: none; opacity: 0.5; cursor: not-allowed;
+}

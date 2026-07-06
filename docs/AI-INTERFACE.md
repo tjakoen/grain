@@ -502,6 +502,51 @@ single-writer → render-op → surface path as everything else, addressed to on
 
 ---
 
+## 5f. Degradation — honest offline, bounded runs
+
+The AI's presence is a *signal* (grade = AI); the same honesty applies when the AI **can't act**.
+The rule: **presence = transport health; offline = controls visibly disabled + honest copy; every
+pending trigger has a bounded lifetime.** Nothing may pretend the AI is available when the door's
+reply channel is down, and no interaction may hang forever waiting on it. (This is the contract the
+real cloud model inherits at M★ — today the stub can't hang, but the seam must be honest now.)
+
+**Presence, by outcome (never assumed).** The dispatcher stamps `<body data-ai-online="true|false">`
+only when it *knows*: `true` on the server `ready` handshake (or the client door loading), `false`
+on an SSE `error`, a fetch failure/timeout, or a watchdog trip. A consumer's presence indicator
+reads off this — three states: waking (nothing reported yet), online, offline (`ai.css`). The
+presence **star** (`.presence__star`) tracks it in color (muted → accent → faint), separate from the
+wording so the signal survives a re-worded label.
+
+**Gating — offline disables, visibly.** `body[data-ai-online="false"]` disables AI controls
+declaratively: mark a trigger `[data-ai-run]` (it drives the AI) or a region `[data-ai-gate]` (a
+composer gated on the AI); `ai.css` sets `pointer-events: none; opacity` on them when offline. The
+dispatcher's `submit()` also no-ops while offline (belt-and-braces for the public
+`window.grain.door` seam). The consumer supplies the *why* copy (persona-worded), shown only when
+offline — the mechanism is grain's, the words are the app's.
+
+**Three hang paths, three backstops** (all in `ai-dispatch.js`):
+1. **Fetch timeout.** `POST /intent` is bounded by an `AbortController` (~10s); an abort rejects the
+   fetch → `submit()`'s `.catch` releases the trigger and marks offline.
+2. **SSE error.** EventSource **auto-reconnects**, so a transient blip (or a navigation teardown) is
+   *not* "the door is down" — flipping offline instantly would spuriously gate a click made during
+   the blip. So `es.onerror` **debounces**: it goes offline (and releases a live run) only if the
+   channel is still down after the reconnect grace (~4s); a re-fired `ready` (the listener is
+   **re-arming**, not `{ once: true }`) cancels it and flips presence back online. Presence stays
+   "true" through a blip. (The 3s ready-fallback below still covers a channel that never comes up.)
+3. **Pending-trigger watchdog.** A trigger enters `data-commit="pending"` in `submit()`/`spotlightOn`
+   — but the 20s spotlight safety only arms once `spotlightOn` runs, so a **dropped `spotlight` op**
+   (SSE has no replay, §3) would strand the trigger. An independent watchdog (~15s) covers it: it
+   (re)arms while any trigger is pending and is **refreshed on every received op** (ops flowing =
+   channel alive), so it never trips during a healthy multi-second run — only on genuine silence. On
+   fire it releases every pending trigger, surfaces the failure on it (the existing `flash`
+   affordance — `data-state="error"` + `title`, no new toast system), and goes offline.
+
+**Static export.** `/grain` on a static host uses the client loopback door
+(`data-ai-transport="client"`): `markOnline(true)` on import, `false` on failure — so gating
+correctly disables the controls on a *broken* export instead of throwing silently per click.
+
+---
+
 ## 6. Simulating the AI (and the build order)
 
 Per MVP §"Build Order" step 2, the stub is **plumbing, never faked judgment.** It

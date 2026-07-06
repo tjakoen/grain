@@ -23,3 +23,10 @@
   color: transparent; pointer-events: none;   /* hidden until the tab is hovered/active */
 }
 .tab:hover .tab__close, .tab[aria-current="page"] .tab__close, .tab[data-active="true"] .tab__close { color: var(--ink-faint); }
+/* the PINNED marker: same box as .tab__close but ALWAYS visible and never interactive — it
+   reads "this tab doesn't close" (a pinned tab ships a .tab__pin instead of a .tab__close). */
+.tab__pin {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.15rem; height: 1.15rem; border-radius: var(--radius-sm);
+  color: var(--ink-faint); pointer-events: none;
+}

@@ -24,6 +24,9 @@
   white-space: nowrap;
 }
 .side-rail__brand > b-icon, .side-rail__brand > .icon { justify-self: center; }
+/* the brand mark carries the theme's accent — hueless under Sourdough, a hue under Baguette/
+   Brioche (the accent reaches the brand + the presence star; DESIGN-SYSTEM §2). */
+.side-rail__brand > b-icon { color: var(--color-accent); }
 .side-rail__spacer { flex: 1 1 auto; }
 
 /* ---- grouped nav — a collapsible section for nested navigation (e.g. a BREAD group over

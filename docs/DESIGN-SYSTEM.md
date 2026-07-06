@@ -70,7 +70,8 @@ The palette stays closed, with **exactly one exception: a single accent hue.** G
 one brand knob.
 
 - **Full reach.** The accent reaches everywhere brand colour belongs: **links, focus rings,
-  `::selection`, and the primary button fill** (`--color-primary` chains to it). Set one token,
+  `::selection`, the primary button fill** (`--color-primary` chains to it), and the workspace's
+  identity marks — the **rail brand icon** and the **presence star** (online). Set one token,
   colour the whole surface.
 - **One hue, still closed.** There is **only ever one** accent. **Success and danger keep no hue of
   their own** — they're signalled by weight/treatment/opulence, never a red or green (the "no red

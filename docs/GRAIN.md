@@ -64,9 +64,13 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
   window dots + a ⌘K search field), `status-bar` (the honest status row), `side-rail` (+ collapsible
   groups), `sidebar-panel` (the assistant, with consumer-named modes), `console` (the AI's narration
   surface), `tab-bar`/`topbar`, `file-tree` (an explorer tree: native `<details>` folders shipped
-  collapsed, files as real links) — CSS-only patterns that re-skin by token and carry
+  collapsed, files as real links), `activity-bar` (the VS Code icon column — an in-rail strip that
+  rides the mobile drawer, opted in with one `:has()` rule so a shell without one is untouched) —
+  CSS-only patterns that re-skin by token and carry
   view-transition names so the chrome persists across navigations. The dispatcher stamps
-  `<body data-ai-online>` by outcome, so a status bar's presence indicator is real, never assumed.
+  `<body data-ai-online>` by outcome, so a status bar's presence indicator is real, never assumed —
+  and offline **gates** AI controls (`[data-ai-run]`/`[data-ai-gate]`), disabling them visibly
+  instead of pretending; every pending trigger has a bounded lifetime (AI-INTERFACE §5f).
 - **Open-page tabs over plain hypermedia.** `scripts/tabs.js` turns the tab-bar into an editor's
   open-pages strip — a localStorage *projection* of navigation (every tab a real `<a>`, zero-JS
   falls back to the pinned tabs), with pinned-first, live ×-close, and labels resolved from a
@@ -91,7 +95,9 @@ a capability, update this list (CLAUDE.md alignment table → `AUDIT.md` check 1
   the manifest, drawn onto the page. Standalone (no terminal needed), with four independent ways in:
   the `window.grain.xray` devtools API, a `?xray` URL param (a shareable "see it as the AI does"
   link), any `[data-xray-toggle]` control, and `Ctrl+Shift+X`. Pure token CSS, so it re-skins with
-  the theme; it's the visual twin of a terminal `context` command.
+  the theme; it's the visual twin of a terminal `context` command. Its on/off state **persists
+  across navigation** (`grain.xray.on`), so a shared `?xray` link stays on as you move through the
+  site.
 - **Auditable by design.** Every interaction — human or AI — is one `source`-tagged `Intent` through
   one server-side door, so a complete human+AI **interaction log** is a server-side drop-in. GRAIN
   provides the chokepoint + provenance; **the consuming app owns the log sink** (see PROJECT-PLAN

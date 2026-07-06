@@ -15,12 +15,19 @@
 // CLIENT-SAFE: the only import is the pure manifest-dom projection, lazy-loaded via /modules
 // (transpiled on request) using the same base resolution the dispatcher uses, so it works under a
 // subpath (GitHub Pages) and on a static export.
+//
+// PERSISTENCE: x-ray survives MPA navigation (localStorage key `grain.xray.on`). While enabled the
+// lazy manifest-dom.js import loads on EVERY page — acceptable: this is a dev island, only on when
+// you asked for it. A shared `?xray` link wins on boot AND persists, so the toggle sticks after you
+// land. (House per-island pattern — dotted key + try/catch for private mode; matches tabs.js.)
 (() => {
   "use strict";
   if (window.grain && window.grain.xray) return;   // idempotent: safe if loaded per-page AND globally
 
   const HTML = document.documentElement;
   const assetBase = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+  const KEY = "grain.xray.on";
+  const persist = (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* private mode */ } };
   let mod = null;
 
   async function projection() {
@@ -44,8 +51,8 @@
   }
 
   const isOn = () => HTML.hasAttribute("data-xray");
-  async function on() { if (isOn()) return; HTML.setAttribute("data-xray", ""); await stampLabels(); }
-  function off() { if (!isOn()) return; HTML.removeAttribute("data-xray"); clearLabels(); }
+  async function on() { if (isOn()) return; HTML.setAttribute("data-xray", ""); persist(true); await stampLabels(); }
+  function off() { if (!isOn()) return; HTML.removeAttribute("data-xray"); persist(false); clearLabels(); }
   function toggle() { return isOn() ? off() : on(); }
 
   // ── entry points ────────────────────────────────────────────────────────────────────────────
@@ -63,6 +70,10 @@
     if (e.ctrlKey && e.shiftKey && (e.key === "X" || e.key === "x")) { e.preventDefault(); toggle(); }
   });
 
-  // ?xray in the URL boots it on — a self-demoing, shareable link
-  try { if (new URLSearchParams(location.search).has("xray")) on(); } catch { /* no-op */ }
+  // boot: ?xray in the URL wins (a self-demoing, shareable link — and on() persists it so it
+  // sticks after you navigate); otherwise restore the stored preference (survives MPA nav).
+  try {
+    if (new URLSearchParams(location.search).has("xray")) on();
+    else if (localStorage.getItem(KEY) === "1") on();
+  } catch { /* no-op */ }
 })();

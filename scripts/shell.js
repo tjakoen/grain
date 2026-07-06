@@ -61,6 +61,18 @@
   for (const t of shell.querySelectorAll('[data-shell="console-toggle"]'))
     t.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
 
+  // PERSIST the terminal's open state across MPA navigation. data-console-open has THREE writers
+  // (the toggle above, Ctrl+` in terminal.js, the terminal's `exit` command) — rather than chase
+  // every call site, make shell.js the single persister: restore on boot, then ONE MutationObserver
+  // writes the key whenever the attribute changes, whoever changed it (incl. future writers; `exit`
+  // → persists closed). Kept SEPARATE from PANE_KEYS above: those are inverse-semantics *-hidden
+  // click-toggles; this is a presence attribute observed at the source. (Key `grain.shell.console-open`.)
+  const CONSOLE_KEY = "grain.shell.console-open";
+  try { if (localStorage.getItem(CONSOLE_KEY) === "1") shell.setAttribute("data-console-open", ""); } catch { /* ignore */ }
+  new MutationObserver(() => {
+    try { localStorage.setItem(CONSOLE_KEY, shell.hasAttribute("data-console-open") ? "1" : "0"); } catch { /* private mode */ }
+  }).observe(shell, { attributes: true, attributeFilter: ["data-console-open"] });
+
   // "open in terminal" (from the chat's thinking box): un-hide + expand the docked terminal so the
   // full narration is visible (the chat only shows a compact thinking indicator during a run).
   for (const b of shell.querySelectorAll('[data-shell="open-terminal"]'))
@@ -111,9 +123,10 @@
     mirror();
   }
 
-  // the mobile scrim dismisses the drawer; so does following a nav link
+  // the mobile scrim dismisses the drawer; so does following any nav link in the rail (the
+  // activity-bar app links AND the file-tree files — both live under .app-shell__rail now)
   shell.querySelector(".app-shell__scrim")?.addEventListener("click", () => setOpen(false));
-  for (const a of shell.querySelectorAll(".side-rail .nav-item"))
+  for (const a of shell.querySelectorAll(".app-shell__rail a"))
     a.addEventListener("click", () => { if (mobile.matches) setOpen(false); });
 
   // crossing the breakpoint clears any stuck drawer / sheet state
@@ -134,11 +147,12 @@
     }
     best?.setAttribute("aria-current", "page");
   };
-  // RAIL = the main menu: mark the item for the page's SECTION (data-section on .app-shell),
-  // so /batch, /grain/docs, … all light "BREAD Stack". Falls back to URL match if unsectioned.
+  // ACTIVITY BAR = the app links: mark the item for the page's SECTION (data-section on .app-shell),
+  // so /calendar, /mail, … light their icon. Falls back to URL match if unsectioned. (The file-tree's
+  // current-file marking is site.js's job — it walks the tree + unfolds ancestors.)
   const section = shell.getAttribute("data-section");
-  const railItem = section && shell.querySelector(`.side-rail .nav-item[data-section="${section}"]`);
-  if (railItem) railItem.setAttribute("aria-current", "page"); else byUrl(".side-rail .nav-item");
+  const railItem = section && shell.querySelector(`.activity-bar [data-section="${section}"]`);
+  if (railItem) railItem.setAttribute("aria-current", "page"); else byUrl(".activity-bar a");
   // TABS = the section's submenus: mark by URL (a tab claims its own subpages too).
   byUrl(".app-shell__tabs .tab");
 })();

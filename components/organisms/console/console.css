@@ -1,9 +1,10 @@
 /* organisms/console — the AI's narration TERMINAL, a DOCKED bottom panel (VS Code style): it
    lives in the shell's `console` grid row under main, not floating. At rest it's a slim clickable
-   bar ("Terminal ▸"); clicking it — or the AI taking over (`data-acting`) — expands the feed in
-   place (the grid row grows). It narrates the AI's steps as `action-badge` lines. A toggle
-   switches chat ⇄ terminal mid-run. Persona-neutral. CSS-only pattern: compose `.console__box`
-   inside `.app-shell__console`; see console.md. (Loads after app-shell.css in the sorted bundle.) */
+   bar ("Terminal ▸"); clicking it — or the AI taking over (`data-acting`) — opens the feed in
+   place (the grid row grows to a fixed band). A second control (`console__grow`) expands that
+   band further, to fill most of the shell's height. It narrates the AI's steps as `action-badge`
+   lines. Persona-neutral. CSS-only pattern: compose `.console__box` inside `.app-shell__console`;
+   see console.md. (Loads after app-shell.css in the sorted bundle.) */
 
 .app-shell__console { display: flex; flex-direction: column; min-height: 0; background: var(--color-bg); }
 .console__box { display: flex; flex-direction: column; width: 100%; min-height: 0; overflow: hidden; background: var(--color-bg); }
@@ -12,7 +13,7 @@
 /* the expand control: a transparent, keyboard-operable button that looks like the bar text */
 .console__expand { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 0;
   background: transparent; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.console__expand:focus-visible, .console__toggle:focus-visible, .chat-thinking__toggle:focus-visible {
+.console__expand:focus-visible, .console__grow:focus-visible, .chat-thinking__toggle:focus-visible {
   outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .console__label { color: var(--color-fg); }
 .console__acting { display: none; color: var(--color-fg); }   /* shown only while acting */
@@ -30,10 +31,16 @@
   transition: max-height 0.26s ease, padding 0.26s ease; }
 .app-shell[data-console-open] .console__feed { max-height: 11rem; overflow: auto;
   border-top-width: 1px; padding: var(--space-2) var(--space-4); }
-/* each line is its own contained box (mirrors chat-message) — narration reads as discrete
-   entries, not a run-on stream */
-.console__line { display: flex; align-items: baseline; gap: var(--space-2);
-  padding: var(--space-2) var(--space-3); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+/* GROWN: the feed fills its grid row instead of the fixed 11rem band — the row itself grows via
+   --shell-console in app-shell.css, so this just lets the feed stretch to fill it. */
+.app-shell[data-console-expanded="true"] .console__box { flex: 1 1 auto; min-height: 0; }
+.app-shell[data-console-expanded="true"] .console__feed { flex: 1 1 auto; max-height: none; }
+/* v3.1 tried boxing each line individually (mirrors chat-message) — reverted (owner, 2026-07-06):
+   it read as harder to scan, not easier, and doubled up with the chat-thinking box's own border
+   around the whole run's preview. A flowing stream, one row per line, is the readable form; the
+   OUTPUT-level grouping (one bordered box per run) already comes from the surrounding container
+   (.console__feed's border-top in the terminal, .chat-thinking's border in the chat preview). */
+.console__line { display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-1) 0; }
 .console__desc { color: var(--color-fg); }
 .console__line[data-variant="cmd"] .console__prompt { color: var(--color-accent); }   /* the echoed human command */
 .console__line[data-state="error"] .console__desc { color: var(--color-danger, var(--color-accent)); }
@@ -74,15 +81,16 @@
   max-height: 6em; overflow: hidden; font-size: var(--text-xs); }
 .chat-thinking__preview:empty { display: none; }
 
-/* the console toggle: switch chat ⇄ terminal while the AI works (label via ::before, so it stays
-   correct even when the state is reset externally). Only shown while acting. */
-.console__toggle { display: none; margin-left: auto; cursor: pointer; font: inherit; font-size: var(--text-xs);
-  color: var(--color-fg); background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm);
-  padding: 2px var(--space-2); }
-.console__toggle::before { content: "⤢ open chat"; }
-.app-shell[data-chat-open] .console__toggle::before { content: "⤡ terminal"; }
-.console__toggle:hover { background: var(--paper-2); }
-/* obsolete since the chat and terminal coexist (owner, 2026-07-05): no chat⇄terminal switch. */
+/* the GROW toggle: expand the docked terminal to fill most of the shell's vertical space (owner,
+   2026-07-06) instead of the fixed 11rem band — for reading a long run back. Label via ::before,
+   so it stays correct even when the state is reset externally. Repurposes the slot of the old
+   chat⇄terminal toggle, dead since the chat and terminal started coexisting (owner, 2026-07-05). */
+.console__grow { display: inline-flex; align-items: center; margin-left: auto; cursor: pointer;
+  font: inherit; font-size: var(--text-xs); color: var(--color-fg); background: transparent;
+  border: 1px solid var(--color-line); border-radius: var(--radius-sm); padding: 2px var(--space-2); }
+.console__grow::before { content: "⤢ expand"; }
+.app-shell[data-console-expanded="true"] .console__grow::before { content: "⤡ collapse"; }
+.console__grow:hover { background: var(--paper-2); }
 
 /* TAKEOVER: on `data-acting` the docked terminal's bar becomes the "acting" indicator (grain's
    top label is hidden) and the feed opens in place. The chat stays put alongside it — thinking

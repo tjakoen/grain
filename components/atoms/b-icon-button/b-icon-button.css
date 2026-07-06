@@ -15,6 +15,10 @@
 .icon-btn[data-size="sm"] { width: 2rem; height: 2rem; }
 .icon-btn[data-size="lg"] { width: 3.25rem; height: 3.25rem; }
 .icon-btn[data-variant="ghost"] { border-color: transparent; }   /* rail / toolbar use */
+/* the native `hidden` attribute and this rule's own `display` tie in specificity (both 0-1-0);
+   author order wins, so `.icon-btn`'s display silently beats the UA's `[hidden]{display:none}`
+   and a "hidden" button stays visible. Same trap, same fix as sidebar-panel's `.assistant__pane`. */
+.icon-btn[hidden] { display: none; }
 
 /* ---- pseudo-states. Hover = a quiet ink WASH (DESIGN-SYSTEM §5), never an invert —
    the ink-fill invert read as a loud block and made ghost buttons (invisible at rest)

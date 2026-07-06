@@ -15,7 +15,7 @@
   display: grid;
   height: 100dvh;
   grid-template-columns: var(--shell-rail, 15rem) minmax(0, 1fr) var(--shell-aside, 20rem);
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto var(--shell-main, minmax(0, 1fr)) var(--shell-console, auto) auto;
   grid-template-areas:
     "window window  window"
     "rail   topbar  aside"
@@ -25,10 +25,14 @@
   background: var(--color-bg);
   color: var(--color-fg);
   overflow: hidden;
-  /* panels glide in/out: the rail/aside columns animate their width (grid tracks interpolate) */
-  transition: grid-template-columns 0.26s ease;
+  /* panels glide in/out: the rail/aside columns animate their width (grid tracks interpolate);
+     main/console share the SAME transition when the console grows (see data-console-expanded). */
+  transition: grid-template-columns 0.26s ease, grid-template-rows 0.26s ease;
 }
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
+/* GROWN terminal (console.css's `console__grow` toggle): the console row takes most of the
+   height instead of sizing to its capped 11rem feed; main shrinks to a peek above it. */
+.app-shell[data-console-expanded="true"] { --shell-main: minmax(0, 0.4fr); --shell-console: minmax(0, 1.6fr); }
 
 /* ---- OPT-IN: a `.rail-head` (full-width, brand/title row) stacks the rail vertically — the
    head sits at the SAME height as the topbar row beside it, and everything below it (the icon

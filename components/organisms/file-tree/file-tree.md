@@ -43,4 +43,7 @@ Parent-context notes (lesson 3 — say it here, don't let it fail silently):
 - Mark the open file with `aria-current="page"` (an island or the server); folders don't get it.
 
 Pairs with `tab-bar`/`tab` + `scripts/tabs.js` (open-pages strip): give the tree
-`data-tab-source` and the strip labels its tabs from the tree's link texts.
+`data-tab-source` and the strip labels its tabs from the tree's link texts. The same script also
+injects a close affordance (`.file-tree__close`, hidden until hover) onto any tree entry that's
+currently an open (non-pinned) tab — closing it from the sidebar without switching to the page
+first. Purely a projection of tab state; the tree itself carries no close markup at rest.

@@ -70,6 +70,30 @@
       // pinned tabs get their current-mark here too (shell.js may have run before we rendered)
       for (const a of strip.querySelectorAll("a[data-pinned]"))
         if (norm(a.getAttribute("href") || "/") === here) a.setAttribute("aria-current", "page");
+
+      // the explorer (data-tab-source) gets a close × on any file that's an open tab too —
+      // closing from the sidebar without switching to the page first. Idempotent: adds/removes
+      // the span to match `list` on every render, never duplicates.
+      for (const a of source ? source.querySelectorAll("a[href]") : []) {
+        const path = norm(a.getAttribute("href"));
+        const existing = a.querySelector(":scope > .file-tree__close");
+        if (!list.includes(path)) { existing?.remove(); continue; }
+        if (existing) continue;
+        const close = document.createElement("span");
+        close.className = "file-tree__close";
+        close.setAttribute("role", "button");
+        close.setAttribute("tabindex", "0");
+        close.setAttribute("aria-label", `Close ${a.textContent.trim()}`);
+        close.style.pointerEvents = "auto";     // the molecule ships it presentational; wire it live
+        close.textContent = "×";
+        const onClose = (e) => { e.preventDefault(); e.stopPropagation(); closeTab(path); };
+        close.addEventListener("click", onClose);
+        close.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") onClose(e); });
+        a.appendChild(close);
+      }
+
+      // "close all": only meaningful once something closable is actually open
+      for (const b of allBtns) b.hidden = list.length === 0;
     };
 
     const closeTab = (path) => {
@@ -83,10 +107,21 @@
       location.assign(next);
     };
 
+    const closeAll = () => {
+      const wasHere = list.includes(here);
+      list = [];
+      save(list);
+      if (!wasHere) return render();
+      location.assign((strip.querySelector("a[data-pinned]") || {}).getAttribute?.("href") || "/");
+    };
+
+    const allBtns = document.querySelectorAll('[data-shell="tabs-close-all"]');
+    for (const b of allBtns) b.addEventListener("click", closeAll);
+
     render();
     window.grain = window.grain || {};
     // refresh: re-resolve labels (e.g. after an island fills the data-tab-source tree lazily)
-    window.grain.tabs = { open: () => [...list], close: closeTab, refresh: render };
+    window.grain.tabs = { open: () => [...list], close: closeTab, closeAll, refresh: render };
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

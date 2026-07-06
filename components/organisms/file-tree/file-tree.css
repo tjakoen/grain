@@ -63,6 +63,20 @@
 .file-tree__dir > summary > a { color: inherit; text-decoration: none; }
 .file-tree__dir > summary > a:hover { color: var(--color-fg); }
 
+/* ---- a file that's also an OPEN TAB gets a close affordance (tabs.js injects `.file-tree__close`
+   as a real child span, live-wired — mirrors `.tab__close`'s hidden-until-hover pattern). :has()
+   opts a single row into the flex/space-between layout; a plain file-tree__file is untouched. ---- */
+.file-tree__file:has(.file-tree__close) { display: flex; align-items: center; justify-content: space-between; }
+.file-tree__close {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 1.15rem; height: 1.15rem; border-radius: var(--radius-sm);
+  color: transparent; pointer-events: none;
+}
+.file-tree__file:hover .file-tree__close, .file-tree__file[aria-current="page"] .file-tree__close {
+  color: var(--ink-faint);
+}
+.file-tree__close:hover { color: var(--color-fg); background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+
 /* ---- inside a collapsed shell rail the labels are gone — a tree without labels is noise ---- */
 [data-rail-collapsed="true"] .file-tree { display: none; }
 

@@ -28,3 +28,13 @@ test("tabs are real anchors — hypermedia, not a router", () => {
 test("exposes the window.grain.tabs seam", () => {
   expect(js).toMatch(/window\.grain\.tabs\s*=\s*\{[\s\S]*\bclose\b/);
 });
+
+test("close-all is opt-in (data-shell=\"tabs-close-all\") and exposed on the seam", () => {
+  expect(js).toMatch(/\[data-shell="tabs-close-all"\]/);
+  expect(js).toMatch(/window\.grain\.tabs\s*=\s*\{[\s\S]*\bcloseAll\b/);
+});
+
+test("the sidebar (data-tab-source) gets a live close affordance for open tabs, not static markup", () => {
+  expect(js).toMatch(/file-tree__close/);
+  expect(js).not.toMatch(/<span class="file-tree__close"/);   // injected via createElement, not templated
+});

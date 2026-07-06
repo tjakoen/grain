@@ -61,6 +61,19 @@
   for (const t of shell.querySelectorAll('[data-shell="console-toggle"]'))
     t.addEventListener("click", () => shell.toggleAttribute("data-console-open"));
 
+  // GROW the terminal to fill most of the shell (owner, 2026-07-06): opens the console if it
+  // was collapsed (growing a hidden feed makes no sense), then toggles the expanded state.
+  for (const g of shell.querySelectorAll('[data-shell="console-grow-toggle"]'))
+    g.addEventListener("click", () => {
+      if (!shell.hasAttribute("data-console-open")) shell.setAttribute("data-console-open", "");
+      shell.toggleAttribute("data-console-expanded");
+    });
+  const GROW_KEY = "grain.shell.console-expanded";
+  try { if (localStorage.getItem(GROW_KEY) === "1") shell.setAttribute("data-console-expanded", ""); } catch { /* ignore */ }
+  new MutationObserver(() => {
+    try { localStorage.setItem(GROW_KEY, shell.hasAttribute("data-console-expanded") ? "1" : "0"); } catch { /* private mode */ }
+  }).observe(shell, { attributes: true, attributeFilter: ["data-console-expanded"] });
+
   // PERSIST the terminal's open state across MPA navigation. data-console-open has THREE writers
   // (the toggle above, Ctrl+` in terminal.js, the terminal's `exit` command) — rather than chase
   // every call site, make shell.js the single persister: restore on boot, then ONE MutationObserver

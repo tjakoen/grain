@@ -88,6 +88,13 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         tools.emit({ target: PUSH_SURFACES.console, op: "replace", provenance: "ai", commit: "committed",
           html: `<div class="console__feed" data-surface="console"></div>` });
 
+      // One chat bubble, one place — your message (clean, human) or the AI's (grain, provenance
+      // persists). Shared by chat.send AND the demo scenarios so the markup never diverges. `who`
+      // defaults from the role ("You"/"AI"); pass it to override (the /grain showcase signs "GRAIN").
+      const bubble = (role: string, grade: string, inner: string, who?: string) =>
+        `<div class="chat-message" data-role="${role}"${grade ? ` data-grade="${grade}"` : ""}>` +
+        `<span class="chat-message__who">${who ?? (role === "you" ? "You" : "AI")}</span>${inner}</div>`;
+
       // --- say.stream: button → the AI types a reflection. Spotlit: a human clicked, but
       //     the AI is the one writing, so show where it acts (grade = AI as actor, §5c). ---
       if (intent.action === "say.stream") {
@@ -115,9 +122,6 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       //     same ops — no chat-specific machinery. User text is escaped at the writer. ---
       if (intent.action === "chat.send") {
         const text = String(intent.payload.text ?? "").trim();
-        const bubble = (role: string, grade: string, inner: string) =>
-          `<div class="chat-message" data-role="${role}"${grade ? ` data-grade="${grade}"` : ""}>` +
-          `<span class="chat-message__who">${role === "you" ? "You" : "AI"}</span>${inner}</div>`;
         // append to the chat-log the intent TARGETED (the shell's "chat-log", or a page's own
         // "chat-log:<id>" — same kind), so multiple chat surfaces on a page don't collide.
         const log = intent.surface;
@@ -173,7 +177,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           narrate("writes", "replying in the thread");
           await moveTo("chat-log:grain");
           tools.emit({ target: "chat-log:grain", op: "append", provenance: "ai", commit: "pending",
-            html: `<div class="chat-message" data-role="ai" data-grade="grain"><span class="chat-message__who">GRAIN</span><span class="chat-message__body" data-surface="grain-reply"></span></div>` });
+            html: bubble("ai", "grain", `<span class="chat-message__body" data-surface="grain-reply"></span>`, "GRAIN") });
           await stream("grain-reply", "On it — three deep-work blocks, review at 2.");
           await beat(HOLD_MS);
           if (stopped()) return handBack;
@@ -203,7 +207,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         // --- /notes screen: "What have you been up to?" — the AI travels the newest notes
         //     (real content, addressed by MILL's data-surface="note:<slug>", mill/serve.ts
         //     itemSurfacePrefix), then writes a digest into the SIDEBAR CHAT (owner feedback,
-        //     NOTES-PAGE-PLAN.md 2026-07-07) — like anything else the desk says to you, not a
+        //     NOTES-PAGE-PLAN.md 2026-07-07) — like anything else the AI says to you, not a
         //     standalone card. A fresh grain bubble in the global "chat-log", same idiom as
         //     chat.send's AI reply. Stub-demo choreography, hardcoded to today's newest three
         //     (same bar as the /grain scenario above); the live model at M★ reads the manifest. ---
@@ -226,12 +230,12 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           narrate("writes", "summarising what's new");
           await moveTo("chat-log");
           tools.emit({ target: "chat-log", op: "append", provenance: "ai", commit: "pending",
-            html: `<div class="chat-message" data-role="ai" data-grade="grain"><span class="chat-message__who">AI</span><span class="chat-message__body" data-surface="desk-note"></span></div>` });
-          await stream("desk-note",
+            html: bubble("ai", "grain", `<span class="chat-message__body" data-surface="notes-digest"></span>`) });
+          await stream("notes-digest",
             "New this week: an app-like feel for the site, the case for betting on the browser, and a GitHub-native classroom.");
           await beat(HOLD_MS);
           spot("screen", false);
-          return { ok: true, ops: [], reply: "(demo) the desk read the newest notes and wrote a digest into the chat." };
+          return { ok: true, ops: [], reply: "(demo) the AI read the newest notes and wrote a digest into the chat." };
         }
 
         // Write a committed VALUE into a surface: stream it in grain (you watch it type),

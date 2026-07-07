@@ -102,6 +102,33 @@ test("demo.run on the /grain screen: narrates to the terminal, drives the /grain
   expect(s.at(-1)?.active).toBe(false);
 });
 
+test("demo.run on the /notes screen: reads the newest notes, writes the desk-note digest, releases", async () => {
+  const { tools, emitted } = fakeTools();
+  const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run", screen: "notes" }), tools);
+  expect(d.ok).toBe(true);
+  // narrates each note read to the console feed (legible, never "stuck")
+  expect(emitted.filter((o) => o.target === "console" && o.op === "append").length).toBeGreaterThanOrEqual(3);
+  // travels the real note surfaces MILL addresses (mill/serve.ts itemSurfacePrefix)
+  const targets = new Set(emitted.map((o) => o.target));
+  expect(targets.has("note:feels-like-an-app")).toBe(true);
+  expect(targets.has("note:the-browser-grew-up")).toBe(true);
+  expect(targets.has("note:how-i-turned-github-into-a-classroom")).toBe(true);
+  // the digest streams into desk-note and stays grain (AI-authored text stays grain)
+  const types = emitted.filter((o) => o.op === "type" && o.target === "desk-note");
+  expect(types.length).toBeGreaterThan(1);
+  // natural completion also releases the spotlight — not just the stop path (grain CLAUDE.md lesson 7)
+  const s = spots(emitted);
+  expect(s.at(-1)?.target).toBe("screen");
+  expect(s.at(-1)?.active).toBe(false);
+});
+
+test("demo.run on the /notes screen halts gracefully when cancelled: still releases, no throw", async () => {
+  const { tools, emitted } = fakeTools({ cancelled: () => true });
+  const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run", screen: "notes" }), tools);
+  expect(d.ok).toBe(true);
+  expect(spots(emitted).at(-1)?.active).toBe(false);
+});
+
 test("demo.run halts gracefully when cancelled: still releases the spotlight, no throw", async () => {
   const { tools, emitted } = fakeTools({ cancelled: () => true });
   const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run" }), tools);

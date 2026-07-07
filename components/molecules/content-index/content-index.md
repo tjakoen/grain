@@ -15,3 +15,13 @@ a summary, and tag badges. CSS-only: MILL composes it; nothing data-binds it.
   </li>
 </ul>
 ```
+
+## Variant: log
+
+`data-variant="log"` on the `<ul>` reads the listing as commit history — mono date gutter,
+title as the message, tags as branch chips. Opt in per collection (MILL's `indexVariant`);
+default listing is unchanged for collections that don't ask for it.
+
+```html
+<ul class="content-index" data-variant="log">…</ul>
+```

@@ -200,6 +200,40 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           return { ok: true, ops: [], reply: "(demo) the AI read, replied, completed a task, and drafted one — all through the door." };
         }
 
+        // --- /notes screen: "What have you been up to?" — the AI travels the newest notes
+        //     (real content, addressed by MILL's data-surface="note:<slug>", mill/serve.ts
+        //     itemSurfacePrefix), then writes a digest into the SIDEBAR CHAT (owner feedback,
+        //     NOTES-PAGE-PLAN.md 2026-07-07) — like anything else the desk says to you, not a
+        //     standalone card. A fresh grain bubble in the global "chat-log", same idiom as
+        //     chat.send's AI reply. Stub-demo choreography, hardcoded to today's newest three
+        //     (same bar as the /grain scenario above); the live model at M★ reads the manifest. ---
+        if (intent.screen === "notes") {
+          clearConsole();
+          narrate("reads", "checking the notebook");
+
+          const recent: [slug: string, title: string][] = [
+            ["feels-like-an-app", "This Site Feels Like an App"],
+            ["the-browser-grew-up", "The Browser Grew Up"],
+            ["how-i-turned-github-into-a-classroom", "How I Turned a GitHub Org Into My Classroom"],
+          ];
+          for (const [slug, title] of recent) {
+            narrate("reads", title);
+            await moveTo(`note:${slug}`);
+            await beat(HOLD_MS);
+            if (stopped()) return handBack;
+          }
+
+          narrate("writes", "summarising what's new");
+          await moveTo("chat-log");
+          tools.emit({ target: "chat-log", op: "append", provenance: "ai", commit: "pending",
+            html: `<div class="chat-message" data-role="ai" data-grade="grain"><span class="chat-message__who">AI</span><span class="chat-message__body" data-surface="desk-note"></span></div>` });
+          await stream("desk-note",
+            "New this week: an app-like feel for the site, the case for betting on the browser, and a GitHub-native classroom.");
+          await beat(HOLD_MS);
+          spot("screen", false);
+          return { ok: true, ops: [], reply: "(demo) the desk read the newest notes and wrote a digest into the chat." };
+        }
+
         // Write a committed VALUE into a surface: stream it in grain (you watch it type),
         // then settle to the CLEAN committed HTML. Speech stays grain; ground-truth data
         // settles clean — the same grain→clean an item.archive shows (AI-INTERFACE §5).

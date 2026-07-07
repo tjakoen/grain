@@ -26,3 +26,31 @@
 /* AI / in-transit: dashed terminal edge (non-text grain idiom) — never from MILL itself */
 .content-index__item[data-commit="pending"],
 [data-grade="grain"] .content-index__item { border-bottom-style: dashed; }
+
+/* variant: log — a collection read as commit history (mono date gutter, title as the
+   message, tags as branch chips). Opt-in per collection (indexVariant, mill/serve.ts);
+   default listing above is untouched for collections that don't ask for it. */
+.content-index[data-variant="log"] .content-index__item {
+  display: grid;
+  grid-template-columns: 9ch 1fr;
+  gap: 0 var(--space-4);
+}
+.content-index[data-variant="log"] .content-index__meta {
+  grid-column: 1;
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.content-index[data-variant="log"] .content-index__title,
+.content-index[data-variant="log"] .content-index__summary,
+.content-index[data-variant="log"] .note__tags {
+  grid-column: 2;
+}
+.content-index[data-variant="log"] .content-index__title { font-size: var(--text-base); font-weight: 600; }
+.content-index[data-variant="log"] .note__tags { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.content-index[data-variant="log"] .note__tags .badge {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.content-index[data-variant="log"] .note__tags .badge::before { content: "⎇ "; }

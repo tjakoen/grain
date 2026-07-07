@@ -1,0 +1,6 @@
+/* molecules/content-source — the Rendered/Source toggle on a MILL entry page: two `.tab`
+   atoms (reuse, not a new control), Rendered active by default. Container only; the tab
+   itself carries all the visual states (active/hover). */
+.content-source {
+  display: flex; border-bottom: 1px solid var(--color-line); margin: 0 0 var(--space-5);
+}

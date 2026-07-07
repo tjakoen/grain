@@ -492,13 +492,28 @@ aside retracts and the console rises to narrate.
   same closed vocabulary the door speaks (`ActionName`), so the narration can't describe an
   action the system can't actually take.
 - **The takeover is a shell state, not door machinery.** The client sets `data-acting` on
-  `.app-shell` when a spotlight raises, and clicks inside the assistant/console are **not**
+  `.app-shell` when a spotlight raises, and *plain* clicks inside the assistant/console are **not**
   treated as interrupts (chatting or preparing your next message while the AI works is
   allowed) — only clicking the *working page* asks it to stop (§5c). This is expressed entirely
   in `ai-dispatch.js` + `shell.js`; the reasoner just emits ops.
 
 The console makes the AI's process legible without a privileged channel: it's the same
 single-writer → render-op → surface path as everything else, addressed to one more surface.
+
+### Actionable chat dialogs — the chat is a door client too
+
+The chat is exempt from the "click = interrupt" rule, **not** from the action vocabulary. A
+`chat-message` may carry an `actions` row of controls (`data-action` + `data-target`, presence-gated
+with `data-ai-run`) — the AI offering the person a next move ("add to my notes", "see what's new").
+The dispatcher fires those triggers even though they live in the aside, through the **same** `POST
+/intent` door as any page control; only *plain* clicks in the chat stay non-interrupts. So a reply
+and its follow-up actions travel one path — no chat-only back channel. Grade doctrine holds: the
+offer *text* stays grain (the AI is speaking), but the buttons render clean and operable, because
+clicking them is the **human's** move (the message's grain grade would otherwise dash + disable them
+per b-button's control rule — the chat-message actions row undoes that while online, so the presence
+gate still wins offline). A dialog's verbs are ordinary `ActionName`s and walk the full alignment
+row like any other. (The composer's own Send button is the same mechanism — an action control in the
+aside.)
 
 ---
 

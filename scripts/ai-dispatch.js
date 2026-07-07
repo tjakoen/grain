@@ -373,15 +373,10 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     sseIsOpen ? send() : sseReady.then(send);                    // wait for the stream so no early ops are lost
   }
 
-  // click a button/link with a verb
-  document.addEventListener("click", (ev) => {
-    if (ev.target.closest(".ai-confirm")) return;        // the confirm popup handles its own clicks
-    // the assistant (chat) + the console are the AI's OWN surfaces — interacting there
-    // (chatting, preparing your next message, switching chat⇄terminal) is NOT an interrupt.
-    if (ev.target.closest(".app-shell__aside, .app-shell__console")) return;
-    if (isActing()) { ev.preventDefault(); interrupt(); return; }   // clicking the WORKING page = ask it to stop
-    const trig = ev.target.closest && ev.target.closest("[data-action]");
-    if (!trig || trig.tagName === "INPUT" || trig.tagName === "TEXTAREA") return;
+  // fire a [data-action] trigger (a button/link with a verb) through the ONE door. Shared by page
+  // controls AND "actionable chat dialogs" — buttons the AI offers inside a chat message, and the
+  // composer's Send — so a control in the chat goes through exactly the same path as one on the page.
+  function fireTrigger(ev, trig) {
     const action = trig.getAttribute("data-action");
     const target = targetOf(trig);
     if (!action || !target) return;
@@ -392,6 +387,25 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     const payload = src && "value" in src ? { text: src.value } : {};
     submit(action, target, payload, trig);
     if (src && "value" in src) src.value = "";
+  }
+
+  // click a button/link with a verb
+  document.addEventListener("click", (ev) => {
+    if (ev.target.closest(".ai-confirm")) return;        // the confirm popup handles its own clicks
+    const inOwnSurface = ev.target.closest(".app-shell__aside, .app-shell__console");
+    const trig = ev.target.closest && ev.target.closest("[data-action]");
+    const actionTrig = trig && trig.tagName !== "INPUT" && trig.tagName !== "TEXTAREA" ? trig : null;
+
+    // The AI's OWN surfaces (chat + console): interacting there — typing, scrolling, switching
+    // panes — is NEVER an interrupt. But an ACTION control living there still fires: a button the
+    // AI offered in a chat message (an ACTIONABLE CHAT DIALOG), or the composer's Send. The chat
+    // is exempt from the "click = interrupt" rule, not from the action vocabulary.
+    if (inOwnSurface) { if (actionTrig) fireTrigger(ev, actionTrig); return; }
+
+    // On the working PAGE: while the AI acts, a click asks it to stop — even on a control, so you
+    // never kick off a second run mid-flight. Otherwise a verb control fires normally.
+    if (isActing()) { ev.preventDefault(); interrupt(); return; }
+    if (actionTrig) fireTrigger(ev, actionTrig);
   });
 
   // Escape while the AI is acting → interrupt (ask to stop), don't force-kill

@@ -17,3 +17,21 @@
 /* the body reads the inherited grade font (a <span> isn't in grain.css's type selector), so the
    AI's line actually renders grain when the message carries data-grade="grain". */
 .chat-message__body { display: block; font-family: var(--type-font); }
+
+/* ACTIONABLE CHAT DIALOG: a message may offer action controls — buttons the AI puts in front of
+   the person ("add to my notes", "see what's new") that fire an Intent through the ONE door
+   (`data-action`/`data-target`, presence-gated with `data-ai-run`; the dispatcher fires them even
+   though they live in the chat). They wrap into a row under the body. The offer TEXT stays grain
+   (it's the AI speaking), but the affordances are the HUMAN's to click, so the row resets to the
+   clean font — a grain-lettered button would misread as AI-authored value (grade doctrine). */
+.chat-message__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
+  --type-font: var(--font-smooth); }
+/* the offered buttons sit inside a grain-graded message, so b-button's `[data-grade="grain"] .btn`
+   rule would dash them and kill their pointer events (that rule is for a control the AI is USING,
+   not one it's OFFERING). When the desk is ONLINE, undo that — the button is a live, clean, human
+   affordance. When OFFLINE (or presence not yet known) we leave the grain/disabled look on
+   purpose: the presence gate (`data-ai-run`) still holds, so an offered action reads honestly as
+   "not available right now" rather than a dead click. Scoped to online so that gate keeps winning. */
+body[data-ai-online="true"] .chat-message__actions .btn {
+  border-style: solid; border-color: var(--color-line); pointer-events: auto;
+}

@@ -28,7 +28,7 @@
   --type-font: var(--font-smooth); }
 /* the offered buttons sit inside a grain-graded message, so b-button's `[data-grade="grain"] .btn`
    rule would dash them and kill their pointer events (that rule is for a control the AI is USING,
-   not one it's OFFERING). When the desk is ONLINE, undo that — the button is a live, clean, human
+   not one it's OFFERING). When the AI is ONLINE, undo that — the button is a live, clean, human
    affordance. When OFFLINE (or presence not yet known) we leave the grain/disabled look on
    purpose: the presence gate (`data-ai-run`) still holds, so an offered action reads honestly as
    "not available right now" rather than a dead click. Scoped to online so that gate keeps winning. */

@@ -18,11 +18,8 @@ Bun git dependency, same as BATCH:
 
 GRAIN is two things, one-directional, so you can adopt only what you need:
 
-- **The design system** (always usable, no AI required) — the `b-*` atoms, the default theme
-  (`styles/variables.css` → `styles/global.css` → `styles/grain.css`), and grade-as-signal (useful
-  on its own: draft vs. saved, focus/editing, in-transit vs. committed).
-- **The AI-interaction layer** (opt-in) — `ai/*` (the door, the contract, the manifest), the
-  dispatcher island (`scripts/ai-dispatch.js`), and `ai/ai.css` (the "AI is acting" spotlight).
+- **The design system** (always usable, no AI required) — the `b-*` atoms, the default theme (`styles/variables.css` → `styles/global.css` → `styles/grain.css`), and grade-as-signal (useful on its own: draft vs. saved, focus/editing, in-transit vs. committed).
+- **The AI-interaction layer** (opt-in) — `ai/*` (the door, the contract, the manifest), the dispatcher island (`scripts/ai-dispatch.js`), and `ai/ai.css` (the "AI is acting" spotlight).
 
 To use just the design system in a plain BATCH app: link the three stylesheets + the `b-*` atoms,
 skip `ai/` entirely. Add the AI layer later — see `README.md` §0/§5 for the exact wiring.
@@ -42,9 +39,7 @@ The verbs themselves live in the closed registry, `ai/contract.ts` (`ActionName`
 ## Next steps
 
 - Read [`GRAIN.md`](GRAIN.md) for the full design (surfaces, one vocabulary, render ops, manifest).
-- Read [`AI-INTERFACE.md`](AI-INTERFACE.md) for the wire contract (the intent envelope, render-op
-  kinds, the SSE push channel, the AI-acts protocol).
+- Read [`AI-INTERFACE.md`](AI-INTERFACE.md) for the wire contract (the intent envelope, render-op kinds, the SSE push channel, the AI-acts protocol).
 - Browse every component live at [`/catalog`](/catalog) — it's self-documenting.
 - See it running end to end at [`/loop`](/loop), the reference "watch the AI act" screen.
-- A start-to-finish tutorial (making one surface operable, end to end) is planned but not built yet
-  — see the [developer docs hub](/docs) for what's next.
+- Follow [`TUTORIAL.md`](TUTORIAL.md) to build one operable surface end to end, with a real captured request/response.

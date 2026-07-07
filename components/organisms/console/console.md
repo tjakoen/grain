@@ -1,18 +1,24 @@
 # console
 
 The AI's narration **terminal** — a **docked bottom panel** (VS Code style), not a floating box. At
-rest it's a slim clickable bar (`Terminal ▸`); clicking `console-toggle` — or the AI taking over
-(`data-acting`) — opens the feed **in place** (the shell's `console` grid row grows to a fixed band,
-so the main pane shrinks and scrolls). A second control, `console-grow-toggle`, expands that band
-further to fill most of the shell (`data-console-expanded`) — for reading a long run back. It
-narrates the AI's steps as `action-badge` lines, each a plain row (not individually boxed — a run's
-lines read as one flowing entry, grouped by the feed's own border, not per-line borders). The
-terminal shows the AI's **thinking**; the `sidebar-panel` (chat) is for **communication** — the two
-coexist, so the chat no longer collapses during a run. CSS-only (no `.html`).
+rest it's a slim clickable bar (`Terminal ▸`); clicking `console-toggle` opens the feed **in place**
+(`data-console-open` — the shell's `console` grid row grows to a fixed ~16rem band, so the main pane
+shrinks and scrolls). A second control, `console-grow-toggle`, expands that band further to fill the
+whole shell (`data-console-expanded`, main collapses to 0) — for reading a long run back. **Every
+state change glides:** the row is a `minmax(<floor>, <fr>)` grid track whose endpoints are all
+lengths/fr, so `grid-template-rows` interpolates (bar → band → full-screen) instead of snapping; the
+feed is `flex: 1 1 0` and just fills the row (no `max-height` reveal). During a **run**
+(`data-acting`) the terminal stays **collapsed** — the `sidebar-panel` (chat) shows a live preview
+and the person clicks "open in terminal" (→ `data-console-open`) to see the full feed. It narrates
+the AI's steps as `action-badge` lines, each a plain row (not individually boxed — a run's lines read
+as one flowing entry). The terminal shows the AI's **thinking**; the chat is for **communication** —
+the two coexist, so the chat no longer collapses during a run. CSS-only (no `.html`).
 
 **Parent context (required):** lives inside the shell's `.app-shell__console` region (which docks
-under `main`) and is opened by `data-acting` / `data-console-open` (set by
-`grain/scripts/ai-dispatch.js` on a `spotlight` op, driven by `shell.js`). The AI narrates by pushing
+under `main`). Its height is driven by `--shell-console-min` / `--shell-console-fr` on the shell
+(`data-console-open` raises the floor to the band; `data-console-expanded` grows the fr to fill).
+`data-acting` (set by `grain/scripts/ai-dispatch.js` on a `spotlight` op) marks a run but does NOT
+open the feed. The AI narrates by pushing
 `append` ops at the `console` surface. Persona-neutral.
 
 ```html

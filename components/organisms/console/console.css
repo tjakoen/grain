@@ -7,7 +7,10 @@
    see console.md. (Loads after app-shell.css in the sorted bundle.) */
 
 .app-shell__console { display: flex; flex-direction: column; min-height: 0; background: var(--color-bg); }
-.console__box { display: flex; flex-direction: column; width: 100%; min-height: 0; overflow: hidden; background: var(--color-bg); }
+/* the box fills the console grid row (whose HEIGHT is what animates, in app-shell.css); the bar is
+   fixed, the feed flex-grows into the rest — so the row height alone drives open/expand and the
+   feed carries no intrinsic height (see the feed's `flex: 1 1 0` below). */
+.console__box { display: flex; flex-direction: column; width: 100%; flex: 1 1 auto; min-height: 0; overflow: hidden; background: var(--color-bg); }
 .console__bar { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto;
   padding: var(--space-2) var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm); color: var(--color-muted); }
 /* the expand control: a transparent, keyboard-operable button that looks like the bar text */
@@ -19,22 +22,22 @@
 .console__acting { display: none; color: var(--color-fg); }   /* shown only while acting */
 .console__chev { color: var(--ink-faint); transition: transform 0.2s ease; }   /* ▾ open · ▸ collapsed */
 .app-shell:not([data-console-open]):not([data-acting="true"]) .console__chev { transform: rotate(-90deg); }
-/* the feed is HIDDEN by default (the bar alone is the slim docked strip); it opens in place when
-   the panel is expanded (data-console-open) or the AI takes over (data-acting) — the grid row grows. */
-/* the feed opens ONLY on explicit expand — during a run the terminal stays collapsed to its bar,
-   while the chat shows a small live preview of the output (with "open in terminal" to expand).
-   Collapsed = max-height 0 (animated open/closed, not a snap); the padding + top border fold too. */
-.console__feed { display: flex; flex-direction: column; gap: var(--space-2); flex: 0 0 auto;
-  max-height: 0; overflow: hidden; scroll-behavior: smooth;
+/* the feed carries NO intrinsic height (`flex: 1 1 0`) — it simply fills whatever the console grid
+   row gives it beyond the bar. So closed (row = bar height) → feed 0 → hidden; open (row = the
+   16rem band) → feed ~13rem; expanded (row = 1fr) → feed fills the screen. All the animation lives
+   in the grid ROW height (app-shell.css), which glides because its endpoints are all lengths/fr —
+   the feed just follows. This replaced a `max-height` reveal that snapped on the auto↔fr expand. */
+.console__feed { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 0;
+  min-height: 0; overflow: auto; scroll-behavior: smooth;
   border-top: 0 solid var(--color-line);
-  padding: 0 var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm);
-  transition: max-height 0.26s ease, padding 0.26s ease; }
-.app-shell[data-console-open] .console__feed { max-height: 11rem; overflow: auto;
-  border-top-width: 1px; padding: var(--space-2) var(--space-4); }
-/* GROWN: the feed fills its grid row instead of the fixed 11rem band — the row itself grows via
-   --shell-console in app-shell.css, so this just lets the feed stretch to fill it. */
-.app-shell[data-console-expanded] .console__box { flex: 1 1 auto; min-height: 0; }
-.app-shell[data-console-expanded] .console__feed { flex: 1 1 auto; max-height: none; }
+  padding: 0 var(--space-4); font-family: var(--font-grain); font-size: var(--text-sm); }
+/* fully CLOSED = the feed is genuinely gone (not a 1-2px sliver that reads as "visible"): the row
+   is just the bar. It reappears when open/expanded, sliding in as the grid row grows around it.
+   (A run alone — data-acting — keeps it closed; the chat previews instead.) */
+.app-shell:not([data-console-open]):not([data-console-expanded]) .console__feed { display: none; }
+/* border + vertical padding appear once there's a feed to show (open / expanded) */
+.app-shell[data-console-open] .console__feed,
+.app-shell[data-console-expanded] .console__feed { border-top-width: 1px; padding-top: var(--space-2); padding-bottom: var(--space-2); }
 /* v3.1 tried boxing each line individually (mirrors chat-message) — reverted (owner, 2026-07-06):
    it read as harder to scan, not easier, and doubled up with the chat-thinking box's own border
    around the whole run's preview. A flowing stream, one row per line, is the readable form; the

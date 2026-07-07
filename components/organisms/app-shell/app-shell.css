@@ -15,7 +15,15 @@
   display: grid;
   height: 100dvh;
   grid-template-columns: var(--shell-rail, 15rem) minmax(0, 1fr) var(--shell-aside, 20rem);
-  grid-template-rows: auto auto var(--shell-main, minmax(0, 1fr)) var(--shell-console, auto) auto;
+  /* main + console rows are minmax tracks whose endpoints are ALL lengths/fr — never `auto` or
+     `min-content` — so grid-template-rows stays INTERPOLABLE and every console state change
+     (closed→open band→full-screen) GLIDES instead of snapping (an auto/px↔fr endpoint makes the
+     whole track list discrete → an instant jump; measured). The console height is driven entirely
+     by the track here, not by the feed's content: `--shell-console-min` is the floor (bar height
+     when closed, a band when open) and `--shell-console-fr` grows it to fill on expand. The feed
+     is `flex:1 1 0` (console.css) so it has zero intrinsic height and simply fills whatever the
+     track gives — which is what lets the floor be an exact length with no content-balloon. */
+  grid-template-rows: auto auto minmax(0, var(--shell-main-fr, 1fr)) minmax(var(--shell-console-min, 2.75rem), var(--shell-console-fr, 0fr)) auto;
   grid-template-areas:
     "window window  window"
     "rail   topbar  aside"
@@ -30,10 +38,17 @@
   transition: grid-template-columns 0.26s ease, grid-template-rows 0.26s ease;
 }
 .app-shell[data-rail-collapsed="true"] { --shell-rail: 3.25rem; }   /* icons-only rail */
-/* GROWN terminal (console.css's `console__grow` toggle): the console takes over the WHOLE
-   screen (the full main+console space between the topbar and status bar) instead of sizing to
-   its capped 11rem feed — main collapses to 0, not a peek. */
-.app-shell[data-console-expanded] { --shell-main: 0px; --shell-console: minmax(0, 1fr); }
+/* OPEN: the console grows from the slim bar to a docked BAND — the floor rises from the bar
+   height to ~16rem. A length↔length change, so it glides (grid-rows transition above). NOTE:
+   `data-acting` (a run) does NOT open the band — during a run the terminal stays collapsed and the
+   CHAT previews the output; the person clicks "open in terminal" (→ data-console-open) to expand
+   it (loop.e2e "takeover"). */
+.app-shell[data-console-open] { --shell-console-min: 16rem; }
+/* GROWN (console.css's `console__grow` toggle): the console takes over the WHOLE screen — main's
+   fr goes to 0 (`minmax(0, 0fr)` collapses it) and the console's fr goes to 1 so it fills the
+   freed space. Only the fr coefficients change against a fixed floor, so it glides both ways
+   (measured: a smooth main-height ramp to 0, not a snap). */
+.app-shell[data-console-expanded] { --shell-main-fr: 0fr; --shell-console-fr: 1fr; }
 
 /* ---- OPT-IN: a `.rail-head` (full-width, brand/title row) stacks the rail vertically — the
    head sits at the SAME height as the topbar row beside it, and everything below it (the icon

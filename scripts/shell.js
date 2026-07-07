@@ -145,6 +145,21 @@
   // crossing the breakpoint clears any stuck drawer / sheet state
   mobile.addEventListener?.("change", () => { setOpen(false); shell.removeAttribute("data-aside-open"); });
 
+  // VIEWPORT PREVIEW (demo, cosmetic clamp — owner 2026-07-07): cycles the shell's max-width
+  // desktop → tablet → mobile → desktop. This does NOT resize the real browser window, so real
+  // @media queries still read the actual viewport — the rail-drawer/bottom-sheet mobile behavior
+  // won't kick in. It's a narrower framed look for showing the design off-breakpoint, not a true
+  // device emulator (that needs an iframe with its own viewport — a heavier feature, deferred).
+  const VIEWPORTS = [null, "tablet", "mobile"];
+  for (const b of shell.querySelectorAll('[data-shell="viewport-toggle"]')) {
+    const label = b.querySelector("[data-viewport-name]");
+    b.addEventListener("click", () => {
+      const next = VIEWPORTS[(VIEWPORTS.indexOf(shell.getAttribute("data-viewport")) + 1) % VIEWPORTS.length];
+      if (next) shell.setAttribute("data-viewport", next); else shell.removeAttribute("data-viewport");
+      if (label) label.textContent = next || "desktop";
+    });
+  }
+
   // mark the CURRENT route in the rail + tabs — aria-current is accessible AND already styled
   // (nav-item/tab CSS targets [aria-current="page"]). The shared shell frame is identical on every
   // page; this is what tells you where you are, from the URL. A tab/nav-item also claims its

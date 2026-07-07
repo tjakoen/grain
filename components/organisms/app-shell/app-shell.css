@@ -140,6 +140,15 @@
   .app-shell__rail, .app-shell__scrim { transition: none; }
 }
 
+/* ---- viewport preview (shell.js: data-shell="viewport-toggle") — a cosmetic width clamp for
+   demo purposes, framing the shell to approximate a device width. NOT a real device emulator:
+   @media queries below still read the actual browser viewport, so this alone won't trigger the
+   mobile rail-drawer / hidden-aside rules above — it just narrows + centers the same layout. ---- */
+.app-shell[data-viewport] { max-width: var(--shell-viewport-w, 100%); margin-inline: auto;
+                            border-inline: 1px solid var(--color-line); }
+.app-shell[data-viewport="tablet"] { --shell-viewport-w: 48rem; }
+.app-shell[data-viewport="mobile"] { --shell-viewport-w: 24.4rem; }
+
 /* ---- single-page feel: the shell chrome PERSISTS across cross-document navigations (each name is
    present once per page, so it morphs in place); only <main> is in the root snapshot and cross-fades.
    Reduced-motion disables view transitions globally (grain/styles/global.css). ---- */

@@ -83,6 +83,8 @@ export interface PageInput {
   collection: MillCollection;
   /** the entry's frontmatter (entry pages only) */
   frontmatter?: Frontmatter;
+  /** the entry's slug (entry pages only) — lets a chrome link its raw `${prefix}/${slug}.md` twin */
+  slug?: string;
 }
 export type PageChrome = (input: PageInput) => string;
 
@@ -96,6 +98,11 @@ export interface MillCollection {
   source: ContentSource;
   /** consumer block/layout/link overrides, passed to the GRAIN adapter */
   adapter?: GrainAdapterOptions;
+  /** `content-index` listing variant (grain: attribute, not a page override) — e.g. "log" */
+  indexVariant?: string;
+  /** when set, each index item gets `data-surface="${prefix}:${slug}"` — makes an entry a real
+   *  spotlight target (e.g. an AI read-through demo can address it), opt-in per collection */
+  itemSurfacePrefix?: string;
   /** page chrome for this collection (falls back to deps.chrome, then the built-in default) */
   chrome?: PageChrome;
   /** serve an index listing at `prefix` (default true) */
@@ -142,7 +149,8 @@ function indexArticle(c: MillCollection, entries: IndexEntry[]): string {
     const meta = [fmStr(fm, "date"), fmStr(fm, "readingTime")].filter(Boolean).map(escapeHtml).join(" · ");
     const summary = fmStr(fm, "summary") || fmStr(fm, "subtitle") || fmStr(fm, "description");
     const tags = Array.isArray(fm.tags) ? fm.tags : [];
-    return `<li class="content-index__item">
+    const itemSurface = c.itemSurfacePrefix ? ` data-surface="${escapeHtml(`${c.itemSurfacePrefix}:${slug}`)}"` : "";
+    return `<li class="content-index__item"${itemSurface}>
       ${meta ? `<p class="content-index__meta">${meta}</p>` : ""}
       <h2 class="content-index__title"><a href="${escapeHtml(`${c.prefix}/${slug}`)}">${escapeHtml(title)}</a></h2>
       ${summary ? `<p class="content-index__summary">${escapeHtml(summary)}</p>` : ""}
@@ -151,9 +159,10 @@ function indexArticle(c: MillCollection, entries: IndexEntry[]): string {
   }).join("\n");
   const lede = c.description ? `<p class="note__lede">${escapeHtml(c.description)}</p>` : "";
   // same positive human-grade assertion as rendered documents: this is human content, listed.
+  const variant = c.indexVariant ? ` data-variant="${escapeHtml(c.indexVariant)}"` : "";
   return `<article class="note" data-grade="smooth">
   <header class="note__head"><h1 class="masthead">${escapeHtml(c.title)}</h1>${lede}<hr class="rule"></header>
-  <ul class="content-index">${items}</ul>
+  <ul class="content-index"${variant}>${items}</ul>
 </article>`;
 }
 
@@ -181,6 +190,20 @@ export async function listMillRoutes(collections: MillCollection[]): Promise<str
     for (const slug of await c.source.list())
       if (SLUG.test(slug)) out.push(`${c.prefix}/${slug}`);
   }
+  return out.sort();
+}
+
+/**
+ * Every entry's RAW `.md` twin (`${prefix}/${slug}.md`) — the honest-source route (the site is
+ * its own source tree). A data route, not a page: it serves bytes, not HTML, so a caller feeds
+ * this into an export's `dataRoutes` (literal-path, extension-aware), never `pages` (which wraps
+ * fetched bodies as `index.html`).
+ */
+export async function listMillRawRoutes(collections: MillCollection[]): Promise<string[]> {
+  const out: string[] = [];
+  for (const c of collections)
+    for (const slug of await c.source.list())
+      if (SLUG.test(slug)) out.push(`${c.prefix}/${slug}.md`);
   return out.sort();
 }
 
@@ -213,7 +236,19 @@ export function createMillRoutes(deps: MillServeDeps): MillRequestHandler {
       }
 
       if (path.startsWith(c.prefix + "/")) {
-        const slug = path.slice(c.prefix.length + 1);
+        const rawPath = path.slice(c.prefix.length + 1);
+
+        // the honest-source route: `${prefix}/${slug}.md` — the literal bytes, no chrome. A
+        // data route (not a page), so a caller freezes it via `listMillRawRoutes` → dataRoutes.
+        if (rawPath.endsWith(".md")) {
+          const slug = rawPath.slice(0, -3);
+          if (!SLUG.test(slug)) return new Response("Not found", { status: 404 });
+          const raw = await c.source.read(slug);
+          if (raw === null) return new Response("Not found", { status: 404 });
+          return new Response(raw, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+        }
+
+        const slug = rawPath;
         if (!SLUG.test(slug)) return new Response("Not found", { status: 404 });
         const raw = await c.source.read(slug);
         if (raw === null) return new Response("Not found", { status: 404 });
@@ -224,7 +259,7 @@ export function createMillRoutes(deps: MillServeDeps): MillRequestHandler {
           || c.description || "";
         const page = chrome({
           kind: "entry", title: doc.title || slug, description, body: doc.html,
-          collection: c, frontmatter: doc.frontmatter,
+          collection: c, frontmatter: doc.frontmatter, slug,
         });
         return html(await compose(page));
       }

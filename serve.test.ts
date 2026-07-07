@@ -3,7 +3,7 @@ import { test, expect, beforeAll, afterAll } from "bun:test";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createMillRoutes, dirSource, listMillRoutes, packageDocsSource, type MillCollection } from "./serve.ts";
+import { createMillRoutes, dirSource, listMillRoutes, listMillRawRoutes, packageDocsSource, type MillCollection } from "./serve.ts";
 
 let dir: string;
 
@@ -76,6 +76,36 @@ test("listMillRoutes enumerates the index + every entry; index:false drops the i
   expect(routes).toEqual(["/notes", "/notes/newer", "/notes/older"]);
   const noIndex = await listMillRoutes([{ ...notes(), index: false }]);
   expect(noIndex).toEqual(["/notes/newer", "/notes/older"]);
+});
+
+test("honest-source route: `${prefix}/${slug}.md` serves the raw bytes, no chrome", async () => {
+  const res = await createMillRoutes({ collections: [notes()] })("/notes/older.md");
+  expect(res?.status).toBe(200);
+  expect(res!.headers.get("Content-Type")).toBe("text/plain; charset=utf-8");
+  const body = await res!.text();
+  expect(body).toContain("title: Older Note");                 // raw frontmatter, unrendered
+  expect(body).not.toContain("<article");
+});
+
+test("honest-source route 404s for an unknown or traversal-shaped slug", async () => {
+  const handler = createMillRoutes({ collections: [notes()] });
+  expect((await handler("/notes/missing.md"))?.status).toBe(404);
+  expect((await handler("/notes/../secret.md"))?.status).toBe(404);
+});
+
+test("listMillRawRoutes enumerates every entry's raw .md twin, never the index", async () => {
+  const routes = await listMillRawRoutes([notes()]);
+  expect(routes).toEqual(["/notes/newer.md", "/notes/older.md"]);
+});
+
+test("itemSurfacePrefix makes each index item a real spotlight target; unset by default", async () => {
+  const res = await createMillRoutes({ collections: [{ ...notes(), itemSurfacePrefix: "note" }] })("/notes");
+  const body = await res!.text();
+  expect(body).toContain(`data-surface="note:older"`);
+  expect(body).toContain(`data-surface="note:newer"`);
+
+  const plain = await (await createMillRoutes({ collections: [notes()] })("/notes"))!.text();
+  expect(plain).not.toContain("data-surface");
 });
 
 test("packageDocsSource resolves layer docs from the installed package (never a sibling path)", async () => {

@@ -1,6 +1,6 @@
 # PROOF — plan
 
-> Status: **approved 2026-07-08; piece 1 (core) built.** PROOF — the dough rising before the bake,
+> Status: **approved 2026-07-08; pieces 1–2 built (core + board server).** PROOF — the dough rising before the bake,
 > and the proof of progress — is the stack's **AI plan board**: a standardized way to write an AI's
 > development plans as markdown files (`plans/`), and a kanban-style board that *renders* them.
 > It is its **own top-level project** (a sibling of `mill/`, above `batch/` + `grain/`, a consumer
@@ -87,7 +87,13 @@ which kills the efficiency the whole thing claims.
    PURE (no fs/git/clock — the loader + git-age live in the serve piece); **reuses
    `mill/core/frontmatter.ts`** (`parseFrontmatter`) by relative import (git dep on split). Invalid
    status/owner fall back to a default AND report an error (never silently dropped). 16 unit tests.
-2. **Board: `proof serve`.** BATCH server + GRAIN board page, read-only; card detail through MILL.
+2. **Board: `proof serve`.** ✅ (2026-07-08) — `proof/loader.ts` (fs + best-effort git age),
+   `proof/board.ts` (pure renderer, emits FINAL GRAIN-class HTML not `<b-…>` tags — MILL's rule),
+   `proof/board.css` (kanban layout, tokens-only, theme-aware for free), `proof/serve.ts`
+   (self-contained Bun server; assets resolve relative to the module so `bunx proof` runs from any
+   cwd; reads the consumer's `plans/`), `proof/cli.ts` (`proof serve [dir] [--port N]`). Card detail
+   renders the plan body through MILL (body-only layout). `/plans.json` = the derived index. Read-only.
+   Example plans in `proof/example/` (board demo + test fixtures). 28 unit tests; screenshots verified.
 3. **Live: watch + push.** File watcher → ops over SSE via the `OpChannel` port. (Respect the
    ready-handshake lesson — see memory `sse-ready-handshake-and-op-drop`.)
 4. **Inject: `proof init` + `proof check`.** Scaffold (plans/ + CLAUDE.md section + hook set) and

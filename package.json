@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "description": "PROOF — the AI plan board: plans-as-markdown (plans/*.md) rendered as a kanban projection. The files are the source of truth; the board never writes.",
   "type": "module",
+  "bin": { "proof": "./cli.ts" },
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/proof"

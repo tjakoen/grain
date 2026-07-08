@@ -9,6 +9,13 @@
 > Track E in [`../ROADMAP.md`](../ROADMAP.md). A companion blog note is drafted at
 > [`../tjakoen.github.io/notes/where-were-we.md`](../tjakoen.github.io/notes/where-were-we.md).
 
+> **Direction update (2026-07-08): PROOF is a mountable layer, not a server.** The standalone
+> server built in piece 2 will be **extracted into PANTRY** (the dev-docs cockpit app —
+> [`../pantry/PLAN.md`](../pantry/PLAN.md)). PROOF keeps `core/` + `loader.ts` + `board.ts` and
+> gains **`createProofRoutes(deps)`** (a transport-generic pathname handler, mirroring MILL's
+> `createMillRoutes`); `serve.ts`/`cli.ts`/asset wiring move to PANTRY. Don't extract until pieces
+> 3–4 settle the layer surface. The design law below is unchanged.
+
 ## Positioning
 
 PROOF is **plan legibility for AI-driven development**: the AI's intent as a visible surface, the

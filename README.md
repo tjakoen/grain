@@ -1,4 +1,4 @@
-# GRAIN — usage
+# 🌾 GRAIN — usage
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
@@ -217,3 +217,10 @@ Add the §2 conventions and the shared dispatcher drives it with **no bespoke JS
 manifest), a `data-action="verb"` trigger, and express AI-mode off `data-commit`/`data-grade`.
 Register the verb in the vocabulary (`ai/contract.ts` — see the §5 rough-edge note). That's the
 whole path: a themed, catalogued, AI-operable component without editing GRAIN.
+
+---
+
+🤖 **Built with Claude, on the same buttons you'd click.** I called the shots, Claude typed them,
+and the AI never got a backdoor into the DOM, same door as you, every time. **I don't prompt and
+pray, I prompt and prove.**
+[How I actually work with AI, receipts and all →](https://tjakoen.github.io/notes/ten-times-zero)

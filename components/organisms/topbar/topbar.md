@@ -22,5 +22,5 @@ CSS-only (no `.html`): compose the markup in your frame.
 </header>
 ```
 
-Persona-neutral: the presence label ("online", a product name, "TJ's Desk") is the consumer's — the
+Persona-neutral: the presence label ("online", a product name, "Acme's assistant") is the consumer's — the
 primitive ships no persona. The flavor list the cycle rotates is declared on `<html data-themes="…">`.

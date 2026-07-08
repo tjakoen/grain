@@ -219,6 +219,14 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
       case "spotlight":                              // the AI as actor: dim + light the target
         op.active ? spotlightOn(op.target, op.click) : spotlightOff();
         return;
+      case "log":                                    // one entry into the interaction TIMELINE (§5g)
+        if (el && typeof op.html === "string") {
+          el.insertAdjacentHTML("beforeend", op.html);
+          while (el.children.length > 80) el.removeChild(el.firstElementChild);   // cap the DOM — a log, not a leak
+          const oy = getComputedStyle(el).overflowY;
+          if (oy === "auto" || oy === "scroll") el.scrollTo({ top: el.scrollHeight });   // pin to newest
+        }
+        return;
     }
   }
 

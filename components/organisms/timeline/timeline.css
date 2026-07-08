@@ -1,0 +1,51 @@
+/* organisms/timeline — the INTERACTION TIMELINE: a read-only, push-only feed of every crossing of
+   the one door, human AND AI, recorded identically at the single writer (AI-INTERFACE §5g). The AI
+   only ever WRITES to it (`log` render ops at the `timeline` surface); nothing acts on it, so it's a
+   push surface, never a SurfaceKind. Provenance is shown the GRAIN way — by GRADE, not a hue: an AI
+   crossing renders in the grain font behind a dashed "terminal" edge (grain = AI); a human crossing
+   in the smooth font behind a solid edge; a system rejection stays faint. Tokens only. CSS-only
+   pattern (no .html): compose the markup below inside your page; see timeline.md. */
+
+.timeline { display: flex; flex-direction: column; min-height: 0;
+  border: 1px solid var(--color-line); border-radius: var(--radius-md); background: var(--color-bg); }
+
+.timeline__head { display: flex; align-items: baseline; gap: var(--space-3); flex: 0 0 auto;
+  padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--color-line);
+  font-family: var(--font-grain); font-size: var(--text-sm); color: var(--color-fg); }
+.timeline__hint { color: var(--color-muted); font-size: var(--text-xs); }
+
+/* the scrolling feed — the `data-surface="timeline"` element `log` ops land in. It sizes to its
+   content and CAPS at 18rem, scrolling inside there (pinned to newest by the dispatcher, since
+   overflowY = auto). `flex: 0 1 auto` (not `1 1 0`): this component sits in normal document flow,
+   so the feed must grow with its rows — a `1 1 0` basis would collapse it to a sliver here (that
+   fill-the-row behaviour is for a fixed-height parent like the docked console). */
+.timeline__feed { list-style: none; margin: 0; padding: var(--space-2) var(--space-3);
+  display: flex; flex-direction: column; gap: var(--space-1);
+  flex: 0 1 auto; min-height: 0; max-height: 18rem; overflow: auto; scroll-behavior: smooth; }
+.timeline__feed:empty::after { content: "No crossings yet — ask the AI, or watch it act.";
+  color: var(--ink-faint); font-family: var(--font-grain); font-size: var(--text-sm); padding: var(--space-2); }
+
+/* one crossing. The left edge carries the provenance; the row reads verb + detail. */
+.timeline__entry { display: flex; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-1) var(--space-2); padding-left: var(--space-3);
+  border-left: 3px solid var(--color-accent); font-size: var(--text-sm); color: var(--color-fg); }
+
+/* grade = provenance (DESIGN-SYSTEM §3): AI in the grain font behind a DASHED terminal edge (non-text
+   grain = dashed edge); the human in the smooth font behind a solid edge; a system rejection faint. */
+.timeline__entry[data-provenance="user"]   { font-family: var(--font-smooth); }
+.timeline__entry[data-provenance="ai"]      { font-family: var(--font-grain); border-left-style: dashed; }
+.timeline__entry[data-provenance="system"]  { font-family: var(--font-grain); border-left-color: var(--ink-faint); color: var(--ink-muted); }
+
+/* a failed crossing (rejected request / rolled-back write) reads as struck through, still legible. */
+.timeline__entry[data-ok="false"] { color: var(--ink-muted); }
+.timeline__entry[data-ok="false"] .timeline__verb { text-decoration: line-through; }
+
+.timeline__who { flex: 0 0 auto; min-width: 2.6rem; text-transform: uppercase;
+  letter-spacing: 0.06em; font-size: var(--text-xs); color: var(--color-muted); }
+.timeline__mark { flex: 0 0 auto; color: var(--color-accent); }
+.timeline__entry[data-ok="false"] .timeline__mark { color: var(--ink-muted); }
+.timeline__verb { flex: 0 0 auto; color: var(--color-fg); }
+.timeline__detail { flex: 1 1 auto; min-width: 0; color: var(--color-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) { .timeline__feed { scroll-behavior: auto; } }

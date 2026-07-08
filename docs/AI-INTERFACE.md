@@ -110,7 +110,7 @@ The built table **is** the live contract. It is defined once in TypeScript and e
 > - `ActionName` — the verbs · `ACTIONS` — the registry (depth + accepted kinds).
 > - `SurfaceKind` — the closed set of surface kinds a verb can accept (`item`,
 >   `reflection`, `say-stream`, `screen`, `chat-log`). Push-only display surfaces the
->   AI only *writes* to (e.g. `console`) are intentionally **not** kinds — see the note in `contract.ts`.
+>   AI only *writes* to (e.g. `console`, `timeline`) are intentionally **not** kinds — see the note in `contract.ts`.
 > - `surface(kind, id)` — the builder; always construct addresses with it, never by
 >   hand-concatenating strings, so a typo is a compile error.
 >
@@ -163,11 +163,11 @@ The interaction layer never returns "data for the client to render." It returns
 server-rendered hypermedia), so the client stays dumb and can't drift from the truth.
 
 ```ts
-type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight";
+type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log";
 interface RenderOp {
   target: Surface;                // a semantic address from §1a
   op: RenderOpKind;
-  html?: string;                  // server-rendered fragment (replace/append/flash)
+  html?: string;                  // server-rendered fragment (replace/append/flash/log)
   text?: string;                  // a streamed token (type)
   back?: number;                  // delete the last N chars (type) — the AI REVISING / overwriting
   done?: boolean;                 // last token of a stream → settle (type)
@@ -177,6 +177,10 @@ interface RenderOp {
   commit: "pending" | "committed";   // grade = commit state — see §5
 }
 ```
+
+> `log` appends one provenance-tagged entry to the interaction **timeline** (§5g) — the
+> unified human-and-AI history. The client caps the DOM and pins to newest; the entry's
+> colour/grade comes from `provenance`.
 
 > A surface is **overwritten** by streaming `back` ops (delete a char) then `text` ops
 > (type the new) — the AI visibly backspacing and retyping. The `/loop` demo uses this
@@ -559,6 +563,36 @@ offline — the mechanism is grain's, the words are the app's.
 **Static export.** `/grain` on a static host uses the client loopback door
 (`data-ai-transport="client"`): `markOnline(true)` on import, `false` on failure — so gating
 correctly disables the controls on a *broken* export instead of throwing silently per click.
+
+---
+
+## 5g. The interaction timeline — the unified human-and-AI log
+
+The spotlight (§5c) shows *where* the AI acts; the console (§5e) shows *what* it's doing this turn.
+The **timeline** is the durable, uniform record of **every crossing of the one door** — a human click
+*and* an AI decision — kept in one place, one format, source-tagged. It's the log the whole
+architecture implies: because both operators enter through the same `handleIntent`, recording *there*
+(the single writer, the natural choke point) is cheap and records them **identically** — the same
+uniform auditability a pixel-click imitation can't give (whitepaper §2, "legible action log").
+
+- **A port, wired at the composition root.** The door depends on a `LogSink` (`contract.ts`), never a
+  concrete store — exactly like `OpChannel`. `handleIntent` calls `logSink.record(entry)` for each
+  crossing: once for the incoming **request** (`kind:"intent"`, provenance = who raised it) and once
+  for the outgoing **response** (`kind:"response"`, provenance = who authored the render — `ai` on
+  success, `system` on a rejection/rollback). It is **optional**: observability, not core correctness.
+  Any impl satisfies it — a console logger, an audit journal, or the visible timeline.
+- **The visible timeline is one `LogSink` impl** (`grain/ai/timeline-log.ts` `createStreamLogSink`):
+  it pushes a `log` render op (§2b) to the `timeline` **push surface** for each entry, so the log
+  renders live over the same channel as any other op. **Push-only, never a `SurfaceKind`** — nothing
+  *acts* on it (like `console`); it's addressed by its bare slug. The client (`ai-dispatch.js`
+  `case "log"`) appends the entry, caps the DOM (~80 rows), and pins to newest.
+- **Provenance shows by GRADE, not a hue** (the palette is hueless): the `timeline` component renders
+  an **AI** crossing in the grain font behind a dashed terminal edge (grain = AI), a **human**
+  crossing in the smooth font behind a solid edge, a **system** rejection faint, and a failed
+  crossing struck-through. So the log *itself* demonstrates grade-as-signal.
+
+The timeline is a read-only surface: the AI only ever writes to it, and it survives both transports
+(server SSE and the client loopback door). Live on `/grain` — it fills as you ask or watch it act.
 
 ---
 

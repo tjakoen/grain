@@ -3,7 +3,7 @@ import { test, expect } from "bun:test";
 import { createInteractionLayer } from "./interaction-layer.ts";
 import { makeStubReasoner } from "./reasoner.ts";
 import type { Reasoner, ReasonTools } from "./reasoner.ts";
-import type { Intent, RenderOp, OpChannel } from "./contract.ts";
+import type { Intent, RenderOp, OpChannel, LogSink, LogEntry } from "./contract.ts";
 
 // An OpChannel double that records what got pushed and to whom (GRAIN's only port).
 function fakeStream() {
@@ -14,16 +14,25 @@ function fakeStream() {
   return { stream, pushed };
 }
 
+// A LogSink double: captures every recorded door crossing (the interaction timeline port).
+function fakeLog() {
+  const entries: LogEntry[] = [];
+  const sink: LogSink = { record: (e) => { entries.push(e); } };
+  return { sink, entries };
+}
+
 function makeLayer(opts: { failRate?: number } = {}) {
   const archived: string[] = [];
   const { stream, pushed } = fakeStream();
+  const { sink, entries } = fakeLog();
   const layer = createInteractionLayer({
     reasoner: makeStubReasoner({ failRate: opts.failRate ?? 0, thinkMs: 0 }),
     stream,
     archiveItem: async (id) => { archived.push(id); },
     renderSurface: async (s) => `<article data-surface="${s}" data-commit="committed">ok</article>`,
+    logSink: sink,
   });
-  return { layer, archived, pushed };
+  return { layer, archived, pushed, entries };
 }
 
 const intent = (over: Partial<Intent> = {}): Intent => ({
@@ -95,6 +104,47 @@ test("say.stream emits type tokens over SSE and settles with a committed done op
   const last = typeOps[typeOps.length - 1]!;
   expect(last.done).toBe(true);
   expect(last.commit).toBe("committed");                     // grain settles to clean
+});
+
+// --- the interaction TIMELINE: every crossing recorded at the one door (§5g) -----
+test("logs both halves of a valid crossing: the user's request, then the AI's response", async () => {
+  const { layer, entries } = makeLayer();
+  await layer.handleIntent(intent());
+
+  const req = entries.find((e) => e.kind === "intent")!;
+  const res = entries.find((e) => e.kind === "response")!;
+  expect(req.source).toBe("user");                 // the human raised it
+  expect(req.action).toBe("item.archive");
+  expect(req.session).toBe("sess-1");
+  expect(res.source).toBe("ai");                   // the AI authored the render
+  expect(res.ok).toBe(true);
+  expect(res.ops).toBeGreaterThan(0);              // it emitted render ops
+});
+
+test("a rejected request is logged as a system response (failed, no ops from the AI)", async () => {
+  const { layer, entries } = makeLayer();
+  await layer.handleIntent(intent({ action: "bogus.verb" as Intent["action"] }));
+
+  const res = entries.find((e) => e.kind === "response")!;
+  expect(res.source).toBe("system");               // the door refused — not the AI
+  expect(res.ok).toBe(false);
+});
+
+test("an AI-sourced intent is recorded with ai provenance (both operators, one format)", async () => {
+  const { layer, entries } = makeLayer();
+  await layer.handleIntent(intent({ source: "ai" }));
+
+  expect(entries.find((e) => e.kind === "intent")!.source).toBe("ai");
+});
+
+test("the door runs fine with no logSink wired (observability is optional)", async () => {
+  const archived: string[] = [];
+  const layer = createInteractionLayer({
+    reasoner: makeStubReasoner({ thinkMs: 0 }), stream: fakeStream().stream,
+    archiveItem: async (id) => { archived.push(id); }, renderSurface: async () => "",
+  });
+  const decision = await layer.handleIntent(intent());
+  expect(decision.ok).toBe(true);                  // no throw, no requirement on the sink
 });
 
 // --- stop control is keyed PER TURN (not per session) ---------------------------

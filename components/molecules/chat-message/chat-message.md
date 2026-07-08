@@ -26,7 +26,7 @@ alignment silently does nothing.
 An AI message can put **action controls** in front of the person — buttons that fire an `Intent`
 through the one door, exactly like a control on the page. Add a `chat-message__actions` row of
 `b-button`s carrying the vocabulary: `data-action` (the verb), `data-target` (the surface),
-`data-ai-run` (so they're presence-gated — disabled + honest when the desk is offline). The
+`data-ai-run` (so they're presence-gated — disabled + honest when the AI is offline). The
 dispatcher fires them even though they live in the chat (the chat is exempt from the "click =
 interrupt" rule, not from the vocabulary). The offer text stays grain (the AI is speaking); the
 buttons render clean, because clicking them is the **human's** move, not AI-authored value.

@@ -10,13 +10,12 @@
 
 ## Planned
 
-1. **Unified interaction log (human + AI).** A persistent, uniform history of *every* interaction — not
-   just the per-turn console narration or the chat-log. Record each **`source`-tagged `Intent`** (+ its
-   `RenderOp`s / decision) at the one door (`interaction-layer.ts` `handleIntent`) — the single writer is
-   the natural choke point, so it is cheap and records human and AI **identically**. Enables auditability
-   + observability (whitepaper §2 "legible action log"; memory `unified-interaction-log-idea`).
-   *Build sketch:* a `LogSink` port (like `OpChannel`), record in `handleIntent`, optional read surface to
-   view it → unit + integration tests → sync `docs/AI-INTERFACE.md`.
+1. ~~**Unified interaction log (human + AI).**~~ **BUILT** (2026-07-08) — the **interaction timeline**
+   (`docs/AI-INTERFACE.md` §5g). A `LogSink` port (`contract.ts`, like `OpChannel`) recorded in
+   `handleIntent` for *every* crossing — request + response, `source`-tagged — so the door logs human
+   and AI **identically**. The visible timeline is one impl (`ai/timeline-log.ts` `createStreamLogSink`)
+   pushing a `log` render op to the `timeline` push surface; the `timeline` component color-codes each
+   entry by provenance **through grade** (grain font = AI). Live on `/grain`. Unit + integration tested.
 2. **Direct-write seam (`/kb/*`).** User-owned ground-truth writes that bypass the AI door
    (AI-INTERFACE §5b — a documented seam, not yet built).
 3. **Reconnect & durability.** A durable op store + per-actor turn status, so a refresh mid-turn shows a

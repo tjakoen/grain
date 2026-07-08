@@ -102,7 +102,7 @@ test("demo.run on the /grain screen: narrates to the terminal, drives the /grain
   expect(s.at(-1)?.active).toBe(false);
 });
 
-test("demo.run on the /notes screen: reads the newest notes, writes the desk-note digest, releases", async () => {
+test("demo.run on the /notes screen: reads the newest notes, writes the notes-digest, releases", async () => {
   const { tools, emitted } = fakeTools();
   const d = await reasoner.decide(intent({ surface: "screen", action: "demo.run", screen: "notes" }), tools);
   expect(d.ok).toBe(true);
@@ -113,8 +113,8 @@ test("demo.run on the /notes screen: reads the newest notes, writes the desk-not
   expect(targets.has("note:feels-like-an-app")).toBe(true);
   expect(targets.has("note:the-browser-grew-up")).toBe(true);
   expect(targets.has("note:how-i-turned-github-into-a-classroom")).toBe(true);
-  // the digest streams into desk-note and stays grain (AI-authored text stays grain)
-  const types = emitted.filter((o) => o.op === "type" && o.target === "desk-note");
+  // the digest streams into notes-digest and stays grain (AI-authored text stays grain)
+  const types = emitted.filter((o) => o.op === "type" && o.target === "notes-digest");
   expect(types.length).toBeGreaterThan(1);
   // natural completion also releases the spotlight — not just the stop path (grain CLAUDE.md lesson 7)
   const s = spots(emitted);

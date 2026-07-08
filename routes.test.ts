@@ -56,3 +56,16 @@ test("mounted: the back-link points at the prefix", async () => {
 test("a bad plan id shape is rejected (traversal-safe), not served", async () => {
   expect(await standalone()("/plan/..%2f..")).toBeNull();
 });
+
+test("liveScriptSrc set: the board carries the live-board script tag and the surface wrapper", async () => {
+  const routes = createProofRoutes({ plansDir: EXAMPLE, chrome, lastModified: noAge, liveScriptSrc: "/board-live.js" });
+  const html = await (await routes("/"))!.text();
+  expect(html).toContain('<script type="module" src="/board-live.js"></script>');
+  expect(html).toContain('data-surface="proof-board"');
+});
+
+test("liveScriptSrc unset: no script tag, but the surface wrapper is still present", async () => {
+  const html = await (await standalone()("/"))!.text();
+  expect(html).not.toContain("board-live.js");
+  expect(html).toContain('data-surface="proof-board"');
+});

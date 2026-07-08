@@ -9,7 +9,7 @@ import { serveProof } from "../serve.ts";
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "screenshots");
 const PORT = 4388;
 
-const server = serveProof({ plansDir: join(dirname(fileURLToPath(import.meta.url)), "..", "example"), port: PORT });
+const proof = serveProof({ plansDir: join(dirname(fileURLToPath(import.meta.url)), "..", "example"), port: PORT });
 await mkdir(OUT, { recursive: true });
 
 const browser = await chromium.launch();
@@ -28,4 +28,4 @@ for (const [path, name, scheme] of shots) {
 }
 
 await browser.close();
-server.stop();
+proof.stop();

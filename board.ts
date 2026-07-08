@@ -68,6 +68,25 @@ export function renderBoard(plans: LoadedPlan[]): string {
   return `<div class="proof-board">${cols}</div>`;
 }
 
+// The full board BODY: masthead + lede + duplicate-id flag + the board itself, wrapped in the
+// `proof-board` surface. This is the ONE place that HTML is built — the standalone route
+// (routes.ts) and the live watcher (live.ts, piece 3) both call this so a pushed SSE `replace`
+// is byte-identical to a fresh page load. `data-surface="proof-board"` is the replace target: the
+// live client (board-live.js) swaps this div's innerHTML wholesale on every plans/ change.
+export function renderBoardBody(plans: LoadedPlan[], duplicates: string[]): string {
+  const dupNote = duplicates.length
+    ? `<p class="proof-card__flag">⚠ duplicate plan id(s): ${escapeHtml(duplicates.join(", "))}</p>`
+    : "";
+  return `<div data-surface="proof-board">
+<header>
+  <h1 class="proof-masthead">Plans</h1>
+  <p class="proof-lede">${plans.length} plan${plans.length === 1 ? "" : "s"}. The files are the source of truth; this board is a window.</p>
+  ${dupNote}
+</header>
+${renderBoard(plans)}
+</div>`;
+}
+
 // The card-detail header (shown above the MILL-rendered body): the frontmatter facts a plan file
 // carries, laid out plainly. The body itself is rendered by MILL in serve.ts.
 export function renderPlanHeader(lp: LoadedPlan): string {

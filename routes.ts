@@ -8,7 +8,7 @@ import { renderGrainDocument } from "../mill/adapters/grain/grain-adapter.ts";
 import { escapeHtml } from "../mill/core/engine.ts";
 import { loadPlans, type LastModified } from "./loader.ts";
 import { buildIndex } from "./core/index.ts";
-import { renderBoard, renderPlanHeader } from "./board.ts";
+import { renderBoardBody, renderPlanHeader } from "./board.ts";
 
 const SLUG = /^[a-z0-9][a-z0-9._-]*$/;   // plan id shape — traversal-safe
 
@@ -26,6 +26,9 @@ export interface ProofRoutesDeps {
   chrome: (title: string, body: string) => string | Promise<string>;
   /** git-age lookup (injectable for tests); default reads git, degrades to fs mtime */
   lastModified?: LastModified;
+  /** when set, the board route appends a module script tag pointing at the live-board client
+   *  (piece 3, board-live.js) — opt-in so a static/non-live host is unaffected */
+  liveScriptSrc?: string;
 }
 
 export type ProofRequestHandler = (pathname: string) => Promise<Response | null>;
@@ -57,15 +60,10 @@ export function createProofRoutes(deps: ProofRoutesDeps): ProofRequestHandler {
 
     // the board
     if (rel === "/" || rel === "") {
-      const dupNote = duplicates.length
-        ? `<p class="proof-card__flag">⚠ duplicate plan id(s): ${escapeHtml(duplicates.join(", "))}</p>`
+      const liveScript = deps.liveScriptSrc
+        ? `\n<script type="module" src="${escapeHtml(deps.liveScriptSrc)}"></script>`
         : "";
-      const body = `<header>
-  <h1 class="proof-masthead">Plans</h1>
-  <p class="proof-lede">${plans.length} plan${plans.length === 1 ? "" : "s"}. The files are the source of truth; this board is a window.</p>
-  ${dupNote}
-</header>
-${renderBoard(plans)}`;
+      const body = renderBoardBody(plans, duplicates) + liveScript;
       return htmlResponse(deps.chrome("Plans", body));
     }
 

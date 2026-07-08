@@ -1,6 +1,6 @@
 # PROOF — plan
 
-> Status: **pieces 1, 2, 4 built + the mount seam (`createProofRoutes`); piece 3 (live SSE) pending.** PROOF — the dough rising before the bake,
+> Status: **pieces 1–4 built + the mount seam (`createProofRoutes`); the board is LIVE over SSE.** PROOF — the dough rising before the bake,
 > and the proof of progress — is the stack's **AI plan board**: a standardized way to write an AI's
 > development plans as markdown files (`plans/`), and a kanban-style board that *renders* them.
 > It is its **own top-level project** (a sibling of `mill/`, above `batch/` + `grain/`, a consumer
@@ -105,8 +105,19 @@ which kills the efficiency the whole thing claims.
    pathname handler `(pathname) => Response|null`, prefix-configurable (mirrors MILL's
    `createMillRoutes`), chrome injected. `serve.ts` is now a thin standalone wrapper over it; PANTRY
    mounts it at `/plans`. This is the pivot in code: PROOF is a mountable layer, not a server.
-3. **Live: watch + push.** File watcher → ops over SSE via the `OpChannel` port. (Respect the
-   ready-handshake lesson — see memory `sse-ready-handshake-and-op-drop`.) *(pending — piece 3.)*
+3. **Live: watch + push.** ✅ (2026-07-08) — `proof/live.ts` (`watchPlans({plansDir, channel})`:
+   `fs.watch` recursive + 100ms debounce → reload → **broadcast** a `replace` `RenderOp` targeting
+   the `proof-board` surface; degrades to "not live" if `fs.watch` is unsupported/no plans dir).
+   `proof/board-live.js` = a receive-only SSE client (~23 lines — no door/watchdog; the v1 board is
+   read-only, initial state is server-rendered so no replay needed). `renderBoardBody` extracted so
+   the route and the watcher emit byte-identical HTML. Wired into both hosts: `serve.ts` owns a
+   private stream (`/stream` + `/board-live.js`, `serveProof` returns `{server, stop}`); PANTRY
+   reuses one host-wide stream (`app.ts`, gated on `surfaces.plans`). **Design refinement vs the
+   original note:** the board is a shared read-only view, so the watcher **broadcasts** (every tab)
+   rather than per-session `OpChannel.push`; and the ready-handshake drop is moot here — the board
+   never posts an intent, it only receives. `proof-board` is a PROOF-owned surface name (never added
+   to grain's `PUSH_SURFACES` — grain must not depend on proof). Unit test drives a real file change →
+   broadcast; end-to-end HTTP+SSE drive verified.
 4. **Inject: `proof init` + `proof check`.** ✅ (2026-07-08) — `proof/check.ts` (`runCheck` +
    `formatReport`: parse errors, dangling depends, done-with-open-tasks, stale `doing`, duplicate
    ids; exits nonzero for CI) and `proof/init.ts` (`runInit`: non-invasive scaffold — `plans/` +

@@ -35,7 +35,7 @@ async function main() {
 
   if (cmd === "serve") {
     const plansDir = abs(dir ?? "plans");
-    const server = serveProof({ plansDir, port });
+    const { server } = serveProof({ plansDir, port });
     console.log(`PROOF board on ${server.url} — reading plans from ${plansDir}`);
     console.log("The files are the source of truth; this board is a window. Ctrl-C to stop.");
     return;

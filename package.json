@@ -1,10 +1,22 @@
 {
-  "//": "Placeholder for the future standalone repo (see ../SPLIT-PLAN.md). PLANNED — nothing built yet; hence 0.0.0.",
+  "//": "Staged for the future standalone repo (see ../SPLIT-PLAN.md). Not consumed yet — today the monorepo root package.json + relative imports are authoritative. The exports/files maps below are live-ready so consumers can resolve mill's modules + docs from the installed package (e.g. import.meta.resolve('@tjakoen/mill/serve.ts')), which is how PANTRY mounts MILL without copying files. Root '.' entry (the TS composition surface) is added at extraction.",
   "name": "@tjakoen/mill",
-  "version": "0.0.0",
-  "description": "MILL — Markdown In, Living Layouts: a Markdown → GRAIN-pages CMS (planned; design only).",
+  "version": "0.1.0",
+  "description": "MILL — Markdown In, Living Layouts: a Markdown → GRAIN-pages CMS.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
-  "homepage": "https://tjakoen.github.io/mill"
+  "homepage": "https://tjakoen.github.io/mill",
+  "dependencies": {
+    "@tjakoen/batch": "workspace:*",
+    "@tjakoen/grain": "workspace:*"
+  },
+  "exports": {
+    "./serve.ts": "./serve.ts",
+    "./index.ts": "./index.ts",
+    "./core/*": "./core/*",
+    "./adapters/*": "./adapters/*",
+    "./PLAN.md": "./PLAN.md"
+  },
+  "files": ["adapters", "core", "index.ts", "serve.ts", "README.md", "CLAUDE.md", "PLAN.md", "LICENSE", "NOTICE"]
 }

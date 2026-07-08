@@ -4,8 +4,8 @@
 // prefix and tries it before its own pages. The page shell is INJECTED (`chrome`) so the host
 // owns the <head>/asset links — standalone PANTRY links the grain stylesheets; a BATCH host wraps
 // the board in its own frame. The board never writes: it's a window over the files (the design law).
-import { renderGrainDocument } from "../mill/adapters/grain/grain-adapter.ts";
-import { escapeHtml } from "../mill/core/engine.ts";
+import { renderGrainDocument } from "@tjakoen/mill/adapters/grain/grain-adapter.ts";
+import { escapeHtml } from "@tjakoen/mill/core/engine.ts";
 import { loadPlans, type LastModified } from "./loader.ts";
 import { buildIndex } from "./core/index.ts";
 import { renderBoardBody, renderPlanHeader } from "./board.ts";

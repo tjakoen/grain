@@ -8,10 +8,10 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
-import { bunRuntime } from "../batch/platform/bun-runtime.ts";
-import { makeStatic } from "../batch/http/static.ts";
-import { createStyleBundle } from "../batch/assets/style-bundle.ts";
-import { createStream, type Stream } from "../batch/http/stream.ts";
+import { bunRuntime } from "@tjakoen/batch/platform/bun-runtime.ts";
+import { makeStatic } from "@tjakoen/batch/http/static.ts";
+import { createStyleBundle } from "@tjakoen/batch/assets/style-bundle.ts";
+import { createStream, type Stream } from "@tjakoen/batch/http/stream.ts";
 import { boardPage } from "./board.ts";
 import { createProofRoutes } from "./routes.ts";
 import { watchPlans } from "./live.ts";

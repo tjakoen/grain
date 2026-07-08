@@ -3,7 +3,7 @@
 // hard-won rule (a component tag's children get replaced by its template) and it also keeps the
 // board a pure string builder with no renderer/compose dependency — trivially testable. The only
 // thing that DOES go through a renderer is the card-detail body (MILL, in serve.ts).
-import { escapeHtml } from "../mill/core/engine.ts";
+import { escapeHtml } from "@tjakoen/mill/core/engine.ts";
 import { STATUSES, type PlanStatus } from "./core/types.ts";
 import type { LoadedPlan } from "./loader.ts";
 

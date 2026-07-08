@@ -12,7 +12,7 @@
 // depend on proof (wrong layer direction, CONVENTIONS §1). PROOF depends on grain's `RenderOp`
 // wire shape + `OP_EVENT` name — the dependency runs one way only.
 import { watch, type FSWatcher } from "node:fs";
-import { OP_EVENT, type RenderOp } from "../grain/ai/contract.ts";
+import { OP_EVENT, type RenderOp } from "@tjakoen/grain/ai/contract.ts";
 import { loadPlans, type LastModified } from "./loader.ts";
 import { renderBoardBody } from "./board.ts";
 

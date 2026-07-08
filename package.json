@@ -1,17 +1,18 @@
 {
-  "//": "Staged for the future standalone repo (see ../SPLIT-PLAN.md). Not consumed yet — today the monorepo root package.json + relative imports are authoritative. The exports/files maps below are live-ready so consumers can resolve proof's modules + assets from the installed package (e.g. import.meta.resolve('@tjakoen/proof/board.css')), which is how PANTRY mounts PROOF without copying files. Root '.' entry (the TS composition surface) is added at extraction.",
   "name": "@tjakoen/proof",
   "version": "0.1.0",
   "description": "PROOF — the AI plan board: plans-as-markdown (plans/*.md) rendered as a kanban projection. The files are the source of truth; the board never writes.",
   "type": "module",
-  "bin": { "proof": "./cli.ts" },
+  "bin": {
+    "proof": "./cli.ts"
+  },
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/proof",
   "dependencies": {
-    "@tjakoen/batch": "workspace:*",
-    "@tjakoen/grain": "workspace:*",
-    "@tjakoen/mill": "workspace:*"
+    "@tjakoen/batch": "github:tjakoen/batch#main",
+    "@tjakoen/grain": "github:tjakoen/grain#main",
+    "@tjakoen/mill": "github:tjakoen/mill#main"
   },
   "exports": {
     "./routes.ts": "./routes.ts",
@@ -25,5 +26,28 @@
     "./core/*": "./core/*",
     "./PLAN.md": "./PLAN.md"
   },
-  "files": ["core", "example", "routes.ts", "live.ts", "init.ts", "serve.ts", "check.ts", "loader.ts", "board.ts", "board.css", "board-live.js", "cli.ts", "PLAN.md"]
+  "files": [
+    "core",
+    "example",
+    "routes.ts",
+    "live.ts",
+    "init.ts",
+    "serve.ts",
+    "check.ts",
+    "loader.ts",
+    "board.ts",
+    "board.css",
+    "board-live.js",
+    "cli.ts",
+    "PLAN.md"
+  ],
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "bun-types": "^1.3.14",
+    "typescript": "^5.8.0"
+  }
 }

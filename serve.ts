@@ -146,12 +146,19 @@ const fmStr = (fm: Frontmatter, k: string): string => typeof fm[k] === "string" 
 function indexArticle(c: MillCollection, entries: IndexEntry[]): string {
   const items = entries.map(({ slug, fm }) => {
     const title = fmStr(fm, "title") || slug;
-    const meta = [fmStr(fm, "date"), fmStr(fm, "readingTime")].filter(Boolean).map(escapeHtml).join(" · ");
+    // date + readingTime as SEPARATE spans (not one joined string) — the "log" variant (Idea 2,
+    // NOTES-PAGE-PLAN.md) puts the date alone in a fixed-width gutter; a joined "date · Nmin"
+    // string overflowed that gutter and painted over the title. Each collection's CSS decides
+    // how to lay the two spans out; the default listing still reads them inline.
+    const date = fmStr(fm, "date");
+    const readingTime = fmStr(fm, "readingTime");
+    const dateHtml = date ? `<span class="content-index__date">${escapeHtml(date)}</span>` : "";
+    const readHtml = readingTime ? `<span class="content-index__readtime">${escapeHtml(readingTime)}</span>` : "";
     const summary = fmStr(fm, "summary") || fmStr(fm, "subtitle") || fmStr(fm, "description");
     const tags = Array.isArray(fm.tags) ? fm.tags : [];
     const itemSurface = c.itemSurfacePrefix ? ` data-surface="${escapeHtml(`${c.itemSurfacePrefix}:${slug}`)}"` : "";
     return `<li class="content-index__item"${itemSurface}>
-      ${meta ? `<p class="content-index__meta">${meta}</p>` : ""}
+      ${dateHtml || readHtml ? `<p class="content-index__meta">${dateHtml}${readHtml}</p>` : ""}
       <h2 class="content-index__title"><a href="${escapeHtml(`${c.prefix}/${slug}`)}">${escapeHtml(title)}</a></h2>
       ${summary ? `<p class="content-index__summary">${escapeHtml(summary)}</p>` : ""}
       ${tags.length ? `<div class="note__tags">${tags.map(t => `<span class="badge" data-status="active">${escapeHtml(t)}</span>`).join(" ")}</div>` : ""}

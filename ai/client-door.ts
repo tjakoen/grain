@@ -11,6 +11,7 @@
 
 import { createInteractionLayer, type InteractionLayer } from "./interaction-layer.ts";
 import { makeStubReasoner, type StubOptions, type Reasoner } from "./reasoner.ts";
+import { createStreamLogSink } from "./timeline-log.ts";
 import { OP_EVENT, type OpChannel, type RenderOp } from "./contract.ts";
 
 export interface ClientDoorOptions extends StubOptions {
@@ -31,6 +32,7 @@ export function createClientDoor(applyOp: (op: RenderOp) => void, opts: ClientDo
   return createInteractionLayer({
     reasoner: reasoner ?? makeStubReasoner(reasonerOpts),
     stream: loopback,
+    logSink: createStreamLogSink(loopback),   // the timeline works on the client transport too (§5g)
     // Inert capabilities: no storage exists client-side. The service-free scenarios never call
     // these; if a future scenario does, renderSurface's empty string renders nothing rather than
     // faking committed state — the honest failure mode for a demo transport.

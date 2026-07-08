@@ -5,7 +5,7 @@
 // the originating session over SSE. Nothing reaches the DOM by any other path.
 
 import type { Reasoner, ReasonTools } from "./reasoner.ts";
-import type { Intent, Decision, Surface, OpChannel } from "./contract.ts";
+import type { Intent, Decision, Surface, OpChannel, LogSink, Provenance } from "./contract.ts";
 import { ACTIONS, isAction, surfaceKind, OP_EVENT, STOP_ACTION } from "./contract.ts";
 
 export interface LayerDeps {
@@ -13,6 +13,7 @@ export interface LayerDeps {
   stream: OpChannel;   // the push port — GRAIN depends on this, not on BATCH's SSE hub
   archiveItem: (id: string) => Promise<void>;       // the scoped write capability
   renderSurface: (surface: Surface) => Promise<string>;   // committed HTML for a surface
+  logSink?: LogSink;   // OPTIONAL: record every door crossing (the interaction timeline, §5g)
 }
 
 export interface InteractionLayer {
@@ -24,7 +25,30 @@ export interface InteractionLayer {
 const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export function createInteractionLayer(deps: LayerDeps): InteractionLayer {
-  const { reasoner, stream, archiveItem, renderSurface } = deps;
+  const { reasoner, stream, archiveItem, renderSurface, logSink } = deps;
+
+  // Record one door crossing on the LOG PORT (if wired). Both the incoming REQUEST (kind
+  // "intent", provenance = who raised it) and the outgoing DECISION (kind "response",
+  // provenance = who authored the render — ai on success, system on a rejection/rollback)
+  // are logged, so the timeline reads as request → response, source-tagged and identical
+  // for a human click or an AI decision (AI-INTERFACE §5g).
+  const logIntent = (intent: Intent) => logSink?.record({
+    session: intent.session, source: intent.source, kind: "intent",
+    screen: intent.screen, surface: intent.surface, action: intent.action, ok: true, ops: 0,
+  });
+  // opCount = every RenderOp this crossing produced: the reasoner's mid-decision `emit`s (streamed
+  // tokens/appends) PLUS the ops in the returned decision. The streaming verbs return ops:[] and emit
+  // inline, so counting decision.ops alone would read a chat or demo as "0 ops" — hence both.
+  const logResponse = (intent: Intent, decision: Decision, opCount = decision.ops.length) => {
+    if (!logSink) return;
+    const source: Provenance = decision.ops.some((o) => o.provenance === "ai") ? "ai"
+      : decision.ok ? "ai" : "system";
+    logSink.record({
+      session: intent.session, source, kind: "response",
+      screen: intent.screen, surface: intent.surface, action: intent.action,
+      ok: decision.ok, ops: opCount,
+    });
+  };
 
   const reject = (intent: Intent, reason: string, message: string): Decision => ({
     ok: false,
@@ -41,17 +65,22 @@ export function createInteractionLayer(deps: LayerDeps): InteractionLayer {
   const stoppedTurns = new Set<number>();               // turn ids asked to stop
 
   async function handleIntent(intent: Intent): Promise<Decision> {
+    logIntent(intent);   // record the crossing the moment it enters the one door (both operators, uniformly)
+
     // `desk.stop` is a CONTROL signal: it never reaches the reasoner. It flags every turn
     // running for this session; each running decision notices and hands back cleanly.
     if (intent.action === STOP_ACTION) {
       for (const id of activeTurns.get(intent.session) ?? []) stoppedTurns.add(id);
-      return { ok: true, ops: [], reply: "Asked the AI to stop." };
+      const stop: Decision = { ok: true, ops: [], reply: "Asked the AI to stop." };
+      logResponse(intent, stop);
+      return stop;
     }
 
     const turn = ++turnSeq;
     const running = activeTurns.get(intent.session) ?? new Set<number>();
     running.add(turn); activeTurns.set(intent.session, running);
 
+    let emitted = 0;   // RenderOps the reasoner streams mid-decision (the timeline counts these too)
     let decision: Decision;
     try {
       // "See if it's possible with the interfaces given" (MVP step 5): a lookup.
@@ -63,7 +92,7 @@ export function createInteractionLayer(deps: LayerDeps): InteractionLayer {
         const tools: ReasonTools = {
           archiveItem: (id) => archiveItem(id),
           renderSurface: (s) => renderSurface(s),
-          emit: (op) => stream.push(intent.session, OP_EVENT, op),   // stream tokens mid-decision
+          emit: (op) => { emitted++; stream.push(intent.session, OP_EVENT, op); },   // stream tokens mid-decision
           cancelled: () => stoppedTurns.has(turn),                   // per-turn — no cross-turn clobber
           delay,
         };
@@ -91,6 +120,7 @@ export function createInteractionLayer(deps: LayerDeps): InteractionLayer {
     if (aiActing) stream.push(intent.session, OP_EVENT,
       { target: intent.surface, op: "spotlight", active: false, provenance: "ai", commit: "committed" });
 
+    logResponse(intent, decision, emitted + decision.ops.length);   // record the outcome — the response half of the crossing
     return decision;
   }
 

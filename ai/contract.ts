@@ -70,7 +70,9 @@ export interface Intent {
 //   type — stream a text token into the target (text), or finish it (done);
 //   spotlight — show the AI AS ACTOR: dim everything, light the target, pulse it like a
 //          click; `active:false` releases. Driven by AI provenance (AI-INTERFACE §5c).
-export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight";
+//   log — append one provenance-tagged entry to the interaction TIMELINE (§5g); the client
+//          caps the DOM + pins to newest. The unified human-and-AI log made visible.
+export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log";
 export type Provenance = "user" | "ai" | "system";
 export type Commit = "pending" | "committed";   // grade = commit state (DESIGN-SYSTEM §3)
 
@@ -104,6 +106,7 @@ export const PUSH_SURFACES = {
   summary:       "summary",        // demo summary text
   askInput:      "ask-input",      // demo ask-input field
   demoTaskBadge: "demo-task-badge",// demo task badge
+  timeline:      "timeline",       // the interaction TIMELINE feed (unified log, §5g) — `log` ops land here
 } as const;
 export type PushSurface = typeof PUSH_SURFACES[keyof typeof PUSH_SURFACES];
 
@@ -116,4 +119,28 @@ export const OP_EVENT = "op";
 // would too. This is what keeps GRAIN runnable on something other than BATCH.
 export interface OpChannel {
   push(session: string, event: string, data: unknown): void;
+}
+
+// ---- The interaction LOG — a uniform record of every door crossing --------------
+// Every Intent — human OR AI — enters through handleIntent (the single writer, the natural
+// choke point). Recording it THERE yields ONE uniform, source-tagged history of both operators
+// for a few lines at one place — and because both cross the same door, they're recorded
+// IDENTICALLY (uniform auditability; AI-INTERFACE §5g). The visual "interaction timeline" is
+// just a LogSink impl that pushes `log` RenderOps to the `timeline` surface (timeline-log.ts).
+export interface LogEntry {
+  session: string;              // the SSE stream this crossing belongs to (where a `log` op is pushed)
+  source: Provenance;           // WHO authored it — user | ai | system (drives the timeline colour + grade)
+  kind: "intent" | "response";  // the request that came IN, or the decision that went OUT
+  screen: string;
+  surface: Surface;             // what was touched / referred to
+  action: ActionName;
+  ok: boolean;                  // request valid / write succeeded
+  ops: number;                  // how many RenderOps the decision emitted (0 for an intent record)
+}
+
+// The LOG PORT GRAIN needs — a place to record each crossing. Like OpChannel, GRAIN depends on
+// this interface, never a concrete store: a console logger, an audit journal, or the timeline
+// stream-sink all satisfy it. OPTIONAL at the door (observability, not core correctness).
+export interface LogSink {
+  record(entry: LogEntry): void;
 }

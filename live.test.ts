@@ -4,7 +4,7 @@ import { test, expect } from "bun:test";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { OP_EVENT } from "../grain/ai/contract.ts";
+import { OP_EVENT } from "@tjakoen/grain/ai/contract.ts";
 import { watchPlans } from "./live.ts";
 
 const noAge = async () => null;

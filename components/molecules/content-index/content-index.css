@@ -12,6 +12,9 @@
   letter-spacing: 0.08em;
   margin: 0 0 var(--space-1);
 }
+/* date + readingTime ship as separate spans (mill/serve.ts) so the "log" variant below can put
+   the date alone in a fixed gutter; the default listing joins them back inline with a rule. */
+.content-index__readtime::before { content: " \00b7 "; }
 .content-index__title { font-size: var(--text-xl); margin: 0 0 var(--space-2); }
 .content-index__title a { color: var(--color-fg); text-decoration: none; }
 .content-index__title a:hover { text-decoration: underline; }
@@ -27,28 +30,56 @@
 .content-index__item[data-commit="pending"],
 [data-grade="grain"] .content-index__item { border-bottom-style: dashed; }
 
-/* variant: log — a collection read as commit history (mono date gutter, title as the
-   message, tags as branch chips). Opt-in per collection (indexVariant, mill/serve.ts);
-   default listing above is untouched for collections that don't ask for it. */
+/* variant: log — a collection read as `git log --graph`: a node + connecting rail down the
+   left edge, a mono date gutter, the title as the commit message, tags as branch chips. Opt-in
+   per collection (indexVariant, mill/serve.ts); default listing above is untouched for
+   collections that don't ask for it.
+
+   THREE grid columns: [graph] [date] [message]. The graph column holds no grid child — the
+   node + rail are pseudo-elements on the LI itself (position:absolute is excluded from grid
+   auto-placement, so they can't collide with the real columns), same technique as the
+   side-rail's own icon-gutter line. `.content-index__meta`'s two children (date, readingTime —
+   separate spans since mill/serve.ts) go `display:contents` so each can be grid-placed on its
+   own: date into the fixed gutter, readingTime down with the message instead of crowding the
+   gutter — that crowding (both joined in one nowrap string) was the overlap bug. */
 .content-index[data-variant="log"] .content-index__item {
+  position: relative;
   display: grid;
-  grid-template-columns: 9ch 1fr;
-  gap: 0 var(--space-4);
+  grid-template-columns: 1.25rem 11ch 1fr;
+  column-gap: var(--space-3);
 }
-.content-index[data-variant="log"] .content-index__meta {
-  grid-column: 1;
-  font-family: var(--font-mono);
-  text-transform: none;
-  letter-spacing: normal;
-  white-space: nowrap;
+/* the rail: one hairline down the graph column, full item height — trimmed at the first/last
+   entry so it starts/stops at the tip and root commit instead of dangling past the list. */
+.content-index[data-variant="log"] .content-index__item::before {
+  content: ""; position: absolute; left: 0.625rem; top: 0; bottom: 0;
+  width: 1px; background: var(--color-line);
 }
-.content-index[data-variant="log"] .content-index__title,
-.content-index[data-variant="log"] .content-index__summary,
-.content-index[data-variant="log"] .note__tags {
-  grid-column: 2;
+.content-index[data-variant="log"] .content-index__item:first-child::before { top: 0.95rem; }
+.content-index[data-variant="log"] .content-index__item:last-child::before { bottom: calc(100% - 0.95rem); }
+/* the node: an accent dot on the rail, haloed in the page background so the rail reads as
+   passing BEHIND it (the same halo trick a git-graph renderer uses). */
+.content-index[data-variant="log"] .content-index__item::after {
+  content: ""; position: absolute; left: 0.625rem; top: 0.95rem;
+  width: 7px; height: 7px; margin-left: -3px; border-radius: 50%;
+  background: var(--color-accent); border: 2px solid var(--color-bg);
 }
-.content-index[data-variant="log"] .content-index__title { font-size: var(--text-base); font-weight: 600; }
-.content-index[data-variant="log"] .note__tags { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.content-index[data-variant="log"] .content-index__meta { display: contents; }
+.content-index[data-variant="log"] .content-index__date {
+  grid-column: 2; grid-row: 1;
+  font-family: var(--font-mono); text-transform: none; letter-spacing: normal; white-space: nowrap;
+  color: var(--color-muted);
+}
+.content-index[data-variant="log"] .content-index__title {
+  grid-column: 3; grid-row: 1;
+  font-size: var(--text-base); font-weight: 600;
+}
+.content-index[data-variant="log"] .content-index__readtime {
+  grid-column: 3; grid-row: 2;
+  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-muted);
+}
+.content-index[data-variant="log"] .content-index__readtime::before { content: ""; }   /* cancel the default " · " prefix — no longer beside the date */
+.content-index[data-variant="log"] .content-index__summary { grid-column: 3; grid-row: 3; }
+.content-index[data-variant="log"] .note__tags { grid-column: 3; grid-row: 4; display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .content-index[data-variant="log"] .note__tags .badge {
   font-family: var(--font-mono);
   font-size: var(--text-xs);

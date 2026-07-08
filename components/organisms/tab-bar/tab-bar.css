@@ -1,8 +1,31 @@
 /* organisms/tab-bar — the top strip of open views inside the app-shell topbar. A
    horizontal, scrollable row of tabs; the page places controls (⌘K, presence) after it in
-   the topbar. A layout class composed with tab. */
+   the topbar. A layout class composed with tab. flex:1 so it fills the topbar's remaining
+   width — that's what pins .tab-bar__close-all to the topbar's true far edge instead of
+   floating right after the last tab with empty space beyond it. */
 .tab-bar {
-  display: flex; align-items: stretch; min-width: 0;
+  display: flex; align-items: stretch; min-width: 0; flex: 1 1 auto;
   overflow-x: auto; scrollbar-width: none;
 }
 .tab-bar::-webkit-scrollbar { display: none; }
+
+/* the close-all affordance — a small TAB-SHAPED cell pinned past the scrollable strip (a sibling
+   in the topbar, never a child of .tab-bar), so it never scrolls out of reach no matter how many
+   tabs are open. Same height as .tab for one continuous band; a left hairline (mirrors .tab's own
+   border-right) reads it as its own cell, distinct from each tab's individual .tab__close.
+   tabs.js toggles [hidden] when nothing closable is open (pinned tabs don't count) — `all: unset`
+   resets `display` to its initial value (inline) UNCONDITIONALLY, and author CSS always beats
+   the UA `[hidden]{display:none}` rule regardless of specificity, so the base rule alone already
+   overrode `hidden` (the button showed, just un-flexed) — `[hidden]{display:none}` below is the
+   fix: a class+attribute selector out-specifies the plain class rule, restoring `hidden`. */
+.tab-bar__close-all {
+  all: unset; box-sizing: border-box; cursor: pointer;
+  display: flex; flex: none; align-items: center; justify-content: center;
+  height: 2.5rem; width: 2.25rem;
+  border-left: 1px solid var(--color-line);
+  color: var(--color-muted);
+}
+.tab-bar__close-all[hidden] { display: none; }
+.tab-bar__close-all:hover { color: var(--color-fg); background: color-mix(in srgb, var(--color-bg) 55%, transparent); }
+.tab-bar__close-all:focus-visible { outline: 1px solid var(--color-accent); outline-offset: -2px; }
+.tab-bar__close-all .icon { width: 0.85rem; height: 0.85rem; }

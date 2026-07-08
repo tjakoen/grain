@@ -22,9 +22,24 @@
 .cmdk::backdrop { background: color-mix(in srgb, var(--ink) 18%, transparent); }
 @media (prefers-reduced-motion: reduce) { .cmdk { transition: none; transform: none; } }
 
+/* anchored: dropped directly beneath the title bar's search field (cmdk.js measures it on open,
+   not guessed — grain/CLAUDE.md lesson 9). Reads as that field growing a results list, not a
+   separate floating box: same left edge + width, flush top corners, top border dropped so the
+   field's own bottom edge is the only seam. */
+.cmdk--anchored {
+  top: var(--cmdk-top); left: var(--cmdk-left); width: var(--cmdk-width);
+  max-width: none; margin: 0;
+  border-top-left-radius: 0; border-top-right-radius: 0; border-top-color: transparent;
+}
+
+.cmdk__row {
+  display: flex; align-items: center; gap: var(--space-2);
+  border-bottom: 1px solid var(--color-line); padding: 0 1rem;
+}
+.cmdk__icon { width: 1rem; height: 1rem; color: var(--color-muted); flex: none; }
 .cmdk__input {
-  width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--color-line);
-  background: transparent; padding: .85rem 1rem;
+  width: 100%; box-sizing: border-box; border: 0;
+  background: transparent; padding: .85rem 0;
   font-family: inherit; font-size: 1.1rem; color: inherit; outline: none;
 }
 .cmdk__input::placeholder { color: var(--ink-faint); }

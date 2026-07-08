@@ -20,7 +20,10 @@
     root.className = "cmdk";
     root.setAttribute("aria-label", "Search");
     root.innerHTML = `
-      <input class="cmdk__input" type="text" placeholder="Search pages and components…" aria-label="Search">
+      <div class="cmdk__row">
+        <svg class="icon cmdk__icon" aria-hidden="true"><use href="/assets/sprite.svg#search"></use></svg>
+        <input class="cmdk__input" type="text" placeholder="Search pages and components…" aria-label="Search">
+      </div>
       <ul class="cmdk__list" role="listbox"></ul>
       <div class="cmdk__hint">↑↓ navigate · ↵ open · esc close</div>`;
     document.body.appendChild(root);
@@ -74,7 +77,20 @@
     // Escape is handled natively by <dialog> (cancel → close)
   }
 
-  function open() { root.showModal(); input.value = ""; load().then(render); input.focus(); }
+  // Anchor the palette directly beneath the title bar's search field (measured, not guessed —
+  // grain/CLAUDE.md lesson 9: a positioning token must be mechanically consumed). Falls back to
+  // the CSS-only centered position (cmdk.css defaults) if no field is on the page.
+  function reposition() {
+    const anchor = document.querySelector(".window-bar__search");
+    if (!anchor || anchor.offsetParent === null) { root.classList.remove("cmdk--anchored"); return; }
+    const r = anchor.getBoundingClientRect();
+    root.style.setProperty("--cmdk-top", `${r.bottom + 4}px`);
+    root.style.setProperty("--cmdk-left", `${r.left}px`);
+    root.style.setProperty("--cmdk-width", `${r.width}px`);
+    root.classList.add("cmdk--anchored");
+  }
+
+  function open() { root.showModal(); reposition(); input.value = ""; load().then(render); input.focus(); }
   function close() { if (root.open) root.close(); }
 
   function init() {
@@ -87,6 +103,7 @@
     document.addEventListener("click", (ev) => {
       if (ev.target.closest && ev.target.closest("[data-cmdk-open]")) { ev.preventDefault(); open(); }
     });
+    window.addEventListener("resize", () => { if (isOpen()) reposition(); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

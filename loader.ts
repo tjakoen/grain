@@ -19,6 +19,12 @@ export interface LoadedPlan {
 // and `depends: [001-timeline]` resolves. Traversal-safe: we only ever read `${dir}/${name}`.
 const idOf = (file: string) => basename(file, ".md").toLowerCase();
 
+// A plans/ folder carries docs alongside the plans — chiefly the README that `proof init` writes
+// to teach the schema. Those are NOT plans; treating them as one makes a freshly-scaffolded folder
+// fail its own `proof check` (missing status/owner). Reserved, case-insensitive.
+const RESERVED = new Set(["readme.md"]);
+const isPlanFile = (name: string) => name.endsWith(".md") && !RESERVED.has(name.toLowerCase());
+
 // Injected so tests stay off git and the clock. Default: the file's last git commit time
 // (the plan's real timeline — see PLAN.md "Git as the timeline"), degrading to fs mtime, then
 // null. Never throws: a plan folder that isn't a git repo still loads, just without ages.
@@ -50,7 +56,7 @@ export interface LoadResult {
 export async function loadPlans(dir: string, lastModified: LastModified = gitOrMtime): Promise<LoadResult> {
   let files: string[];
   try {
-    files = (await readdir(dir)).filter((f) => f.endsWith(".md")).sort();
+    files = (await readdir(dir)).filter(isPlanFile).sort();
   } catch {
     return { plans: [], duplicates: [] };   // no plans/ folder yet → an empty board, not a crash
   }

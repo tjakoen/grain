@@ -22,6 +22,20 @@ test("parses frontmatter + body into the Plan (status, owner, depends, tasks)", 
   expect(board.raw).toContain("# The board server");
 });
 
+test("a README.md in the folder is NOT treated as a plan", async () => {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const d = await mkdtemp(join(tmpdir(), "proof-loader-"));
+  try {
+    await writeFile(join(d, "README.md"), "# not a plan\n", "utf8");
+    await writeFile(join(d, "001-real.md"), "---\nstatus: todo\nowner: ai\n---\n# Real\n", "utf8");
+    const { plans } = await loadPlans(d, noAge);
+    expect(plans.map((p) => p.plan.id)).toEqual(["001-real"]);
+  } finally {
+    await rm(d, { recursive: true, force: true });
+  }
+});
+
 test("a missing plans folder yields an empty board, not a crash", async () => {
   const { plans, duplicates } = await loadPlans(join(EXAMPLE, "does-not-exist"), noAge);
   expect(plans).toEqual([]);

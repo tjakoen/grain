@@ -1,6 +1,6 @@
 # PROOF — plan
 
-> Status: **approved 2026-07-08, unbuilt (docs-only).** PROOF — the dough rising before the bake,
+> Status: **approved 2026-07-08; piece 1 (core) built.** PROOF — the dough rising before the bake,
 > and the proof of progress — is the stack's **AI plan board**: a standardized way to write an AI's
 > development plans as markdown files (`plans/`), and a kanban-style board that *renders* them.
 > It is its **own top-level project** (a sibling of `mill/`, above `batch/` + `grain/`, a consumer
@@ -82,8 +82,11 @@ which kills the efficiency the whole thing claims.
 
 ## Pieces (build order)
 
-1. **Core: schema + parser + derived index.** Framework-agnostic (like MILL's core); **reuses
-   `mill/core/frontmatter.ts`** (`parseFrontmatter`). Unit tests. No UI dependency.
+1. **Core: schema + parser + derived index.** ✅ (2026-07-08) — `proof/core/` (`types.ts`,
+   `schema.ts` = `parsePlan`, `index.ts` = `buildIndex` + `validateBoard`). Framework-agnostic and
+   PURE (no fs/git/clock — the loader + git-age live in the serve piece); **reuses
+   `mill/core/frontmatter.ts`** (`parseFrontmatter`) by relative import (git dep on split). Invalid
+   status/owner fall back to a default AND report an error (never silently dropped). 16 unit tests.
 2. **Board: `proof serve`.** BATCH server + GRAIN board page, read-only; card detail through MILL.
 3. **Live: watch + push.** File watcher → ops over SSE via the `OpChannel` port. (Respect the
    ready-handshake lesson — see memory `sse-ready-handshake-and-op-drop`.)

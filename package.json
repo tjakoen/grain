@@ -1,0 +1,10 @@
+{
+  "//": "Placeholder for the future standalone repo (see ../SPLIT-PLAN.md). Core (piece 1) is built; serve/init/check are not. Version stays 0.0.0 until the board ships.",
+  "name": "@tjakoen/proof",
+  "version": "0.0.0",
+  "description": "PROOF — the AI plan board: plans-as-markdown (plans/*.md) rendered as a kanban projection. The files are the source of truth; the board never writes.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
+  "homepage": "https://tjakoen.github.io/proof"
+}

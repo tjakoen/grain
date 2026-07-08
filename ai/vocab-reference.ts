@@ -25,6 +25,7 @@ export const RENDER_OP_KINDS: readonly { kind: string; means: string }[] = [
   { kind: "flash", means: "a transient note; also rolls back an optimistic pending state" },
   { kind: "type", means: "stream one text token into the target, or (done) settle it" },
   { kind: "spotlight", means: "show the AI as actor — dim everything, light (and optionally pulse) the target" },
+  { kind: "log", means: "append one provenance-tagged entry to the interaction timeline (the unified human+AI log)" },
 ];
 
 // The one door's HTTP surface (AI-INTERFACE.md) — guarded by vocab-reference.test.ts

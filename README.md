@@ -1,8 +1,8 @@
-# MILL
+# ⚙️ MILL
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
-[![Status](https://img.shields.io/badge/status-in_progress-blue)](PLAN.md)
+[![Status](https://img.shields.io/badge/status-live-brightgreen)](PLAN.md)
 
 **Markdown In, Living Layouts** — a Markdown → GRAIN-pages CMS. Feed it a folder of `.md` +
 frontmatter + images; it renders them as real GRAIN pages by mapping Markdown nodes to components.
@@ -34,3 +34,10 @@ never a build-time re-render (keeps [export-as-projection](../batch/docs/ARCHITE
 - **[mill/PLAN.md](PLAN.md)** — the canonical plan (design, seams, mapping model, build pieces).
 - **[../tjakoen.github.io/PHILOSOPHY.md](../tjakoen.github.io/PHILOSOPHY.md)** — why content is Markdown and pages are a projection of it.
 - **[../CLAUDE.md](../CLAUDE.md)** — how MILL fits the four concerns.
+
+---
+
+🤖 **Built with Claude, fed on markdown and nothing fancier.** I wrote the plan, Claude wrote the
+parser, and the whole engine still runs with no build step. **I don't prompt and pray, I prompt
+and prove.**
+[How I actually work with AI, receipts and all →](https://tjakoen.github.io/notes/ten-times-zero)

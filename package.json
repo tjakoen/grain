@@ -14,7 +14,9 @@
     "./styles/*": "./styles/*",
     "./scripts/*": "./scripts/*",
     "./assets/*": "./assets/*",
-    "./fonts/*": "./fonts/*"
+    "./fonts/*": "./fonts/*",
+    "./catalog/*": "./catalog/*",
+    "./PLAN.md": "./PLAN.md"
   },
-  "files": ["ai", "assets", "components", "docs", "fonts", "scripts", "styles"]
+  "files": ["ai", "assets", "catalog", "components", "docs", "fonts", "scripts", "styles", "PLAN.md"]
 }

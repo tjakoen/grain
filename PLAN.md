@@ -1,6 +1,6 @@
 # PROOF — plan
 
-> Status: **approved 2026-07-08; pieces 1–2 built (core + board server).** PROOF — the dough rising before the bake,
+> Status: **pieces 1, 2, 4 built + the mount seam (`createProofRoutes`); piece 3 (live SSE) pending.** PROOF — the dough rising before the bake,
 > and the proof of progress — is the stack's **AI plan board**: a standardized way to write an AI's
 > development plans as markdown files (`plans/`), and a kanban-style board that *renders* them.
 > It is its **own top-level project** (a sibling of `mill/`, above `batch/` + `grain/`, a consumer
@@ -101,10 +101,18 @@ which kills the efficiency the whole thing claims.
    cwd; reads the consumer's `plans/`), `proof/cli.ts` (`proof serve [dir] [--port N]`). Card detail
    renders the plan body through MILL (body-only layout). `/plans.json` = the derived index. Read-only.
    Example plans in `proof/example/` (board demo + test fixtures). 28 unit tests; screenshots verified.
+   **Mount seam (2026-07-08): `proof/routes.ts` = `createProofRoutes(deps)`** — a transport-generic
+   pathname handler `(pathname) => Response|null`, prefix-configurable (mirrors MILL's
+   `createMillRoutes`), chrome injected. `serve.ts` is now a thin standalone wrapper over it; PANTRY
+   mounts it at `/plans`. This is the pivot in code: PROOF is a mountable layer, not a server.
 3. **Live: watch + push.** File watcher → ops over SSE via the `OpChannel` port. (Respect the
-   ready-handshake lesson — see memory `sse-ready-handshake-and-op-drop`.)
-4. **Inject: `proof init` + `proof check`.** Scaffold (plans/ + CLAUDE.md section + hook set) and
-   the lint. This piece is what makes it portable.
+   ready-handshake lesson — see memory `sse-ready-handshake-and-op-drop`.) *(pending — piece 3.)*
+4. **Inject: `proof init` + `proof check`.** ✅ (2026-07-08) — `proof/check.ts` (`runCheck` +
+   `formatReport`: parse errors, dangling depends, done-with-open-tasks, stale `doing`, duplicate
+   ids; exits nonzero for CI) and `proof/init.ts` (`runInit`: non-invasive scaffold — `plans/` +
+   README contract + session-start/pre-commit hook scripts; prints the one manual wiring step,
+   never edits a host's files). `proof <serve|check|init>`. `init`→`check` roundtrip verified clean
+   (README.md is excluded from plans at the loader). This piece is what makes it portable.
 5. **Dogfood: migrate this repo.** ROADMAP tracks become `plans/*.md` files; ROADMAP.md shrinks to
    the frame + milestone + a pointer. **Owner gate before migrating** — ROADMAP is load-bearing
    and parallel sessions read it.

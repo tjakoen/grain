@@ -7,8 +7,8 @@
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/mill",
   "dependencies": {
-    "@tjakoen/batch": "github:tjakoen/batch#8da87f9",
-    "@tjakoen/grain": "github:tjakoen/grain#e2530fc"
+    "@tjakoen/batch": "github:tjakoen/batch#f9ecb03",
+    "@tjakoen/grain": "github:tjakoen/grain#3e94bdc"
   },
   "exports": {
     "./serve.ts": "./serve.ts",

@@ -8,8 +8,8 @@ source of truth. **Built so far (pieces 1–4, 2026-07-03/04):** the framework-a
 wiring (`../tjakoen.github.io/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested. Next:
 piece 4b (AI-facing outputs: meta/JSON-LD, `llms.txt`, `knowledge.json`, `data-surface`).
 
-> This file follows `../tjakoen.github.io/standards/CLAUDE.starter.md`. Personal standards live in
-> `../tjakoen.github.io/standards/`.
+> This file follows the `CLAUDE.starter.md` template from the published standards index
+> <https://tjakoen.github.io/standards> (the `@tjakoen/standards` package) — referenced, never forked.
 
 ## What this is
 

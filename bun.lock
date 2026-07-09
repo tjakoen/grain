@@ -5,8 +5,8 @@
     "": {
       "name": "@tjakoen/mill",
       "dependencies": {
-        "@tjakoen/batch": "github:tjakoen/batch#main",
-        "@tjakoen/grain": "github:tjakoen/grain#main",
+        "@tjakoen/batch": "github:tjakoen/batch#8da87f9",
+        "@tjakoen/grain": "github:tjakoen/grain#e2530fc",
       },
       "devDependencies": {
         "bun-types": "^1.3.14",

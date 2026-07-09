@@ -5,9 +5,9 @@
     "": {
       "name": "@tjakoen/proof",
       "dependencies": {
-        "@tjakoen/batch": "github:tjakoen/batch#main",
-        "@tjakoen/grain": "github:tjakoen/grain#main",
-        "@tjakoen/mill": "github:tjakoen/mill#main",
+        "@tjakoen/batch": "github:tjakoen/batch#8da87f9",
+        "@tjakoen/grain": "github:tjakoen/grain#e2530fc",
+        "@tjakoen/mill": "github:tjakoen/mill#22c8cfa",
       },
       "devDependencies": {
         "@playwright/test": "^1.61.1",

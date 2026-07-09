@@ -10,9 +10,9 @@
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/proof",
   "dependencies": {
-    "@tjakoen/batch": "github:tjakoen/batch#main",
-    "@tjakoen/grain": "github:tjakoen/grain#main",
-    "@tjakoen/mill": "github:tjakoen/mill#main"
+    "@tjakoen/batch": "github:tjakoen/batch#8da87f9",
+    "@tjakoen/grain": "github:tjakoen/grain#e2530fc",
+    "@tjakoen/mill": "github:tjakoen/mill#22c8cfa"
   },
   "exports": {
     "./routes.ts": "./routes.ts",
@@ -43,7 +43,8 @@
   ],
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "deps:refresh": "for p in batch grain mill; do bun add @tjakoen/$p@github:tjakoen/$p#$(git ls-remote https://github.com/tjakoen/$p.git main | cut -c1-7); done"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

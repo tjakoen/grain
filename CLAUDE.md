@@ -9,7 +9,7 @@ wiring (`../tjakoen.github.io/content.ts`: `/notes`, `/grain/docs`, `/batch/docs
 piece 4b (AI-facing outputs: meta/JSON-LD, `llms.txt`, `knowledge.json`, `data-surface`).
 
 > This file follows the `CLAUDE.starter.md` template from the published standards index
-> <https://tjakoen.github.io/standards> (the `@tjakoen/standards` package) — referenced, never forked.
+> <https://tjakoen.github.io/standards> (homed in the portfolio at `tjakoen.github.io/standards/`) — referenced, never forked.
 
 ## What this is
 

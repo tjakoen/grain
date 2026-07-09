@@ -4,8 +4,9 @@ Onboarding + operating rules for any AI (or human) working in **`grain/`**, the 
 design system. Read this first, then the docs it points to. Keep it accurate — if you change how
 grain works, update this file.
 
-> Personal standards (voice, badges, AI-use posture) live in `../tjakoen.github.io/standards/`
-> (`VOICE.md`, `README-STANDARD.md`) and this file is seeded from `CLAUDE.starter.md`.
+> Personal standards (voice, badges, AI-use posture) live at the published index
+> <https://tjakoen.github.io/standards> (the `@tjakoen/standards` package) — referenced, never
+> forked. This file is seeded from its `CLAUDE.starter.md`.
 
 ## What this is
 
@@ -131,5 +132,5 @@ Code + the right test tier(s) (unit / conformance e2e) + `tsc` and `bun test` gr
 
 - Commit/push only when asked; branch off `main` if you must. No AI attribution trailers on
   commits (the "built with Claude" receipt is the README badge + footer, not commit metadata).
-- Voice for any prose in the owner's name: `../tjakoen.github.io/standards/VOICE.md` (no backticks in prose).
-- README badges/footer: `../tjakoen.github.io/standards/README-STANDARD.md`.
+- Voice for any prose in the owner's name: <https://tjakoen.github.io/standards/voice> (no backticks in prose).
+- README badges/footer: <https://tjakoen.github.io/standards/readme-standard>.

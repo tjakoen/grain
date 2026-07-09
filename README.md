@@ -9,16 +9,21 @@ presence shown as a visible signal (*grain = AI*). It runs on a **substrate** (B
 the reference one) but imports nothing from it.
 
 - **The beliefs behind it:** [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md)
-- **Overview / why:** [`docs/GRAIN.md`](docs/GRAIN.md)
+- **Overview / why:** [GRAIN](https://tjakoen.github.io/grain/docs/grain)
 - **The full contract** (intent envelope, render ops, manifest, the AI-acts protocol,
-  the two write paths): [`docs/AI-INTERFACE.md`](docs/AI-INTERFACE.md)
+  the two write paths): [AI-INTERFACE](https://tjakoen.github.io/grain/docs/ai-interface)
 - **Built on top of GRAIN:** [`MILL`](../mill/PLAN.md), the Markdown→pages CMS (a layer above).
 - **Roadmap / planned features:** [`PLAN.md`](PLAN.md)
+
+> **Docs live at [tjakoen.github.io/grain/docs](https://tjakoen.github.io/grain/docs).** GRAIN's
+> explanatory docs are canonically homed in the portfolio repo (`tjakoen.github.io/docs/grain/`) and
+> rendered there through MILL. This repo keeps its components, code, PLAN, and this README; it no
+> longer ships a `docs/` folder.
 
 This file is the practical reference: what a host must provide, the markup conventions,
 and how to wire it.
 
-**What GRAIN gives you** (the full, tiered list is the source in [`docs/GRAIN.md`](docs/GRAIN.md) §"What GRAIN gives you"):
+**What GRAIN gives you** (the full, tiered list is the source in [GRAIN](https://tjakoen.github.io/grain/docs/grain) §"What GRAIN gives you"):
 
 - **Hero:** one vocabulary, two operators (human + AI, one door → `RenderOp`s) · grade-as-signal
   (the AI's presence is visible) · self-documenting (a live `/catalog`).

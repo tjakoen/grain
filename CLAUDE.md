@@ -20,15 +20,16 @@ the grade-as-signal mechanism) — usable with no AI at all — and the **option
 ## Start here (reading order)
 
 1. [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md) — the *why* beneath the whole stack.
-2. [`../batch/docs/CONVENTIONS.md`](../batch/docs/CONVENTIONS.md) — the **build standard** (layering,
+2. [CONVENTIONS](https://tjakoen.github.io/batch/docs/conventions) — the **build standard** (layering,
    components, tokens, the action vocabulary, the 3-tier testing bar). The rulebook.
-3. [`docs/GRAIN.md`](docs/GRAIN.md) — the design system + AI layer overview.
-4. [`docs/AI-INTERFACE.md`](docs/AI-INTERFACE.md) — the **contract**: one door → `RenderOp`s, the
-   manifest, grade = commit state, and the **control lifecycle** (§5).
-5. [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md) — the look + grade-as-signal.
+3. [GRAIN](https://tjakoen.github.io/grain/docs/grain) — the design system + AI layer overview.
+4. [AI-INTERFACE](https://tjakoen.github.io/grain/docs/ai-interface) — the **contract**: one door →
+   `RenderOp`s, the manifest, grade = commit state, and the **control lifecycle** (§5).
+5. [DESIGN-SYSTEM](https://tjakoen.github.io/grain/docs/design-system) — the look + grade-as-signal.
 
-The SSOT for what's operable is **`ai/contract.ts`** (`SurfaceKind`, `ActionName`, `ACTIONS`,
-`RenderOp`). The doc map for the whole monorepo is [`../DOCS.md`](../DOCS.md).
+The GRAIN docs are canonically homed in the portfolio repo (`tjakoen.github.io/docs/grain/`), rendered
+via MILL. The SSOT for what's operable is **`ai/contract.ts`** (`SurfaceKind`, `ActionName`, `ACTIONS`,
+`RenderOp`). The published docs home for the whole stack is <https://tjakoen.github.io>.
 
 **What's next for grain lives in [`../ROADMAP.md`](../ROADMAP.md) — Track A** (finish the modality,
 then wire the live model at M★). Read it before starting substantive grain work; it's the canonical
@@ -126,7 +127,8 @@ instead of the vocabulary GRAIN already ships, and contracts that fail *silently
 ## Definition of done
 
 Code + the right test tier(s) (unit / conformance e2e) + `tsc` and `bun test` green + docs synced
-(the `.md` next to the component, and the concept docs above) + a memory if a decision was made.
+(the `.md` next to the component, and the concept docs above — now homed in
+`tjakoen.github.io/docs/grain/`) + a memory if a decision was made.
 
 ## Working notes
 

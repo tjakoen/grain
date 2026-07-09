@@ -7,7 +7,6 @@
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/grain",
   "exports": {
-    "./docs/*": "./docs/*",
     "./ai/*": "./ai/*",
     "./components/*": "./components/*",
     "./styles/*": "./styles/*",
@@ -22,7 +21,6 @@
     "assets",
     "catalog",
     "components",
-    "docs",
     "fonts",
     "scripts",
     "styles",

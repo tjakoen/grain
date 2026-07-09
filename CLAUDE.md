@@ -39,7 +39,10 @@ build it.
   in the `.md`) still passes through for BATCH to compose.
 - **Grade guardrail.** MILL output is human-authored → clean ink (`data-grade="smooth"`, never grain,
   never `data-commit`). `renderGrainDocument` enforces it (`core/grade.ts`). Only the AI grains.
-- **Layer docs are package-resolved, never path-reached.** `/grain/docs` + `/batch/docs` read their
-  `.md` through `packageDocsSource` (`import.meta.resolve('@tjakoen/grain/docs/…')`) — never a
-  `../grain/docs` relative path. Same code in the monorepo (workspaces) and after the split (git dep).
+- **Content sources are package-resolved, never path-reached.** MILL reads a collection's `.md`
+  through `dirSource`/`packageDocsSource` (`import.meta.resolve('@pkg/…')`) — never a `../sibling`
+  relative path. Same code in the monorepo (workspaces) and after the split (git dep). Note: the
+  layer docs behind `/grain/docs` + `/batch/docs` were folded into the portfolio in the 2026-07-09
+  option-b docs home, so the portfolio's `content.ts` now points those two collections at its own
+  `docs/<layer>/` via `dirSource` — MILL's resolution mechanism is unchanged, only the source dir.
 - **Build against the plan and keep it canonical.** `PLAN.md` tracks what's built vs. deferred.

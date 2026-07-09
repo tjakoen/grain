@@ -108,10 +108,13 @@ test("itemSurfacePrefix makes each index item a real spotlight target; unset by 
   expect(plain).not.toContain("data-surface");
 });
 
-test("packageDocsSource resolves layer docs from the installed package (never a sibling path)", async () => {
-  const source = packageDocsSource("@tjakoen/grain/docs/GRAIN.md");
+test("packageDocsSource resolves a package-exported dir via import.meta.resolve (never a sibling path)", async () => {
+  // Anchor on a file the package still exports: grain keeps its PLAN.md (the PROOF contract — plans
+  // stay in their repo). packageDocsSource resolves the installed package, not a `../grain` sibling
+  // path, then lists the .md beside the anchor. (The explanatory layer docs themselves moved to the
+  // portfolio in the 2026-07-09 option-b docs home, so they're no longer a grain-package export.)
+  const source = packageDocsSource("@tjakoen/grain/PLAN.md");
   const slugs = await source.list();
-  expect(slugs).toContain("grain");
-  expect(slugs).toContain("ai-interface");
-  expect(await source.read("grain")).toContain("GRAIN");
+  expect(slugs).toContain("plan");
+  expect(await source.read("plan")).toContain("GRAIN");
 });

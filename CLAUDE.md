@@ -5,7 +5,7 @@ design system. Read this first, then the docs it points to. Keep it accurate —
 grain works, update this file.
 
 > Personal standards (voice, badges, AI-use posture) live at the published index
-> <https://tjakoen.github.io/standards> (the `@tjakoen/standards` package) — referenced, never
+> <https://tjakoen.github.io/standards> (homed in the portfolio at `tjakoen.github.io/standards/`) — referenced, never
 > forked. This file is seeded from its `CLAUDE.starter.md`.
 
 ## What this is

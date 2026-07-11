@@ -1,9 +1,9 @@
 // proof/core/schema.ts — parse one plan file's raw markdown into a typed Plan.
 // Frontmatter splitting is REUSED from MILL (the layer below): PROOF is a consumer of MILL,
-// so it doesn't reinvent the YAML-ish parser. In the monorepo that's a relative import; on
-// the split it becomes the `@tjakoen/mill` git dep (see ../PLAN.md, ../../SPLIT-PLAN.md).
-import { parseFrontmatter } from "../../mill/core/frontmatter.ts";
-import type { Frontmatter, FrontmatterValue } from "../../mill/core/types.ts";
+// so it doesn't reinvent the YAML-ish parser. Imported via the `@tjakoen/mill` package
+// specifier (sha-pinned git dep) — never a relative sibling path (see PLAN.md).
+import { parseFrontmatter } from "@tjakoen/mill/core/frontmatter.ts";
+import type { Frontmatter, FrontmatterValue } from "@tjakoen/mill/core/types.ts";
 import {
   STATUSES, OWNERS,
   type Plan, type PlanStatus, type PlanOwner, type PlanTask, type ParsedPlan, type PlanError,

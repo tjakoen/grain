@@ -27,6 +27,16 @@ board.**
 - Delete PROOF and the plans are still just readable markdown. The tool is a viewport. It is never
   a store.
 
+### `plans/` vs `PLAN.md`
+
+A `plans/` board is **opt-in per project** — across this stack only bread, greenroom, and
+portfolio run one. PROOF itself does not: its own roadmap lives in prose in [`PLAN.md`](PLAN.md).
+The two are distinct and not interchangeable. `PLAN.md` is a narrative roadmap, one file, meant
+to be read top to bottom. `plans/*.md` is PROOF's structured board input: one file per plan,
+frontmatter + checklist, parsed and rendered. A repo with no `plans/` directory is not failing
+the contract, it simply hasn't opted in — `proof check` has nothing to lint there, which is
+expected, not a silent pass to worry about.
+
 ## What's built
 
 - **The core** (`core/`): a framework-agnostic parser and derived index. An invalid status or

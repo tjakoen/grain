@@ -27,7 +27,7 @@ first-class **BATCH+GRAIN adapter** as the default. That MILL exists at all is p
 BATCH + GRAIN proving they compose into a real, reusable tool.
 
 MILL **renders live** on the BATCH app at request time; `batch/export` then freezes the output —
-never a build-time re-render (keeps [export-as-projection](../batch/docs/ARCHITECTURE.md) intact).
+never a build-time re-render (keeps [export-as-projection](https://tjakoen.github.io/batch/docs/architecture) intact).
 
 ## Read next
 

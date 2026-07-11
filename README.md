@@ -68,7 +68,7 @@ GRAIN is portable to any host that supplies three things:
    from its own contract, never the implementation. *(Future, additive: a durable
    sibling — a per-actor turn-status store — lets a reconnecting client reflect a
    still-running turn. It sits beside this port; the component conventions don't change.
-   See `docs/AI-INTERFACE.md` §5d.)*
+   See <https://tjakoen.github.io/grain/docs/ai-interface> §5d.)*
 2. **A renderer that understands the binding vocabulary** below (§3). BATCH's
    composition engine implements it; another substrate must too.
 3. **A filesystem** (`ai/accepts.ts` reads component files to harvest the manifest) —
@@ -168,7 +168,7 @@ const layer = createInteractionLayer({
 > **Rough edge (honest):** the action *vocabulary values* and the reasoner's *tools*
 > (`archiveItem` …) are currently entangled with GRAIN rather than fully app-injected.
 > Pushing the vocabulary down to the consumer is a known next step (see
-> `docs/AI-INTERFACE.md` §1b note). Until then, edit `ai/contract.ts` to add verbs.
+> <https://tjakoen.github.io/grain/docs/ai-interface> §1b note). Until then, edit `ai/contract.ts` to add verbs.
 
 ---
 

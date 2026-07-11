@@ -1,4 +1,4 @@
-// /app/ai/contract.ts — the action vocabulary contract (see docs/AI-INTERFACE.md).
+// /app/ai/contract.ts — the action vocabulary contract (see https://tjakoen.github.io/grain/docs/ai-interface).
 //
 // Two closed registries + three envelopes. Both a human interaction and an AI
 // decision become the SAME Intent, flow through the SAME door, and come back as
@@ -24,7 +24,7 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //   say.set       — input → AI writes back into a reflection line (grain → settles clean)
 //   say.stream    — button → AI types a line out, token by token, over SSE
 //   chat.send     — composer → your message (clean) + the AI's reply streamed (grain) into a chat log
-// The full product vocabulary lives in docs/AI-INTERFACE.md.
+// The full product vocabulary lives at https://tjakoen.github.io/grain/docs/ai-interface.
 export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send";
 export type Depth = "light" | "heavy";
 

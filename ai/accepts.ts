@@ -2,7 +2,7 @@
 //
 // Scans each component's .html for `data-kind` + `data-accepts` and returns a
 // kind → action-names map. This is the single source the AI manifest reads, so it
-// can't drift from what the components actually expose (docs/AI-INTERFACE.md §4).
+// can't drift from what the components actually expose (https://tjakoen.github.io/grain/docs/ai-interface §4).
 // Generic: it knows nothing about the app's specific verbs or surfaces.
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";

@@ -1,5 +1,5 @@
 // grain/ai/vocab-reference.ts — a GENERATED reference for the AI vocabulary contract
-// (docs/AI-INTERFACE.md), for the developer-docs `/reference` route (../../DEV-DOCS.md
+// (https://tjakoen.github.io/grain/docs/ai-interface), for the developer-docs `/reference` route (../../DEV-DOCS.md
 // step 5). This renders the REAL registries at request time — never a hand-copied
 // table — so the reference can't drift from `contract.ts` the way prose easily does.
 //

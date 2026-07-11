@@ -11,7 +11,7 @@
 ## Planned
 
 1. ~~**Unified interaction log (human + AI).**~~ **BUILT** (2026-07-08) — the **interaction timeline**
-   (`docs/AI-INTERFACE.md` §5g). A `LogSink` port (`contract.ts`, like `OpChannel`) recorded in
+   (<https://tjakoen.github.io/grain/docs/ai-interface> §5g). A `LogSink` port (`contract.ts`, like `OpChannel`) recorded in
    `handleIntent` for *every* crossing — request + response, `source`-tagged — so the door logs human
    and AI **identically**. The visible timeline is one impl (`ai/timeline-log.ts` `createStreamLogSink`)
    pushing a `log` render op to the `timeline` push surface; the `timeline` component color-codes each

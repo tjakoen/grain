@@ -7,9 +7,12 @@
 //
 // It EMBEDS /catalog in the pane's <iframe> and maps each rendered CSS class to its catalog
 // section slug (the .md title slug — stable for grain's components). The catalog exposes a
-// "single" mode (data-peek-single + .is-peek-active, driven here via window.__catSetActive). The
-// reveal mechanic is POINTER-ONLY: on touch/coarse devices the pane shows the full, scrollable
-// catalog instead. Only runs where the pane exists.
+// "single" mode (data-peek-single + .is-peek-active, driven here via window.__catSetActive).
+// The bridge adapts to the pointer: with a HOVERING pointer it's a hover-reveal in single mode
+// (one entry at a time, cross-fading). On a COARSE pointer (touch, no hover) a finger can't hover,
+// so the same usage→specimen link becomes a TAP: tapping a component opens the pane and scrolls
+// that entry into view in the full, scrollable catalog (single mode stays off — a finger needs the
+// surrounding list to scroll back through). Only runs where the pane exists.
 (() => {
   "use strict";
   const shell = document.querySelector(".app-shell");
@@ -60,7 +63,8 @@
   // default to the first entry so the pane isn't blank before the first hover. Pointer-only:
   // on touch we skip single mode and leave the full scrollable catalog.
   frame.addEventListener("load", () => {
-    if (!canHover) return;
+    // touch: no single mode — honour a tap that fired before the frame finished loading.
+    if (!canHover) { if (pendingTouch) { scrollToInFrame(pendingTouch); pendingTouch = null; } return; }
     try {
       const doc = frame.contentDocument;
       const cat = doc && doc.querySelector(".cat");
@@ -72,7 +76,7 @@
     } catch { /* cross-origin / not ready — ignore */ }
   });
 
-  let last = null, showTimer = 0;
+  let last = null, showTimer = 0, pendingTouch = null;
   // Reveal one entry (cross-fading), debounced so sweeping the pointer doesn't strobe the fade.
   function showInFrame(slug) {
     clearTimeout(showTimer);
@@ -107,5 +111,32 @@
     // No component under the pointer → HOLD the current reveal (don't switch on prose/gaps). This
     // lets you move the pointer across the page to the sidebar and scroll the revealed entry
     // without it changing out from under you.
+  });
+
+  // TOUCH bridge (coarse pointer / no hover): scroll a component's entry into view in the full
+  // catalog — the reveal a mouse gets for free by hovering, driven by a finger.
+  function scrollToInFrame(slug) {
+    try {
+      const el = frame.contentDocument?.getElementById(slug);
+      if (!el) return;
+      const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
+    } catch { /* iframe not ready / cross-origin — ignore */ }
+  }
+  // A TAP on a catalogued component opens the Catalog pane (raises the sheet on mobile) and brings
+  // that entry into view. Only fires on touch; leaves operable controls alone so a real press isn't
+  // swallowed (links/buttons/inputs, and the door clients [data-action] / peek hooks [data-peek]).
+  if (!canHover) demo.addEventListener("click", (e) => {
+    if (e.target.closest("a,button,input,textarea,select,label,[data-action],[data-peek]")) return;
+    let el = e.target, slug = null;
+    while (el && el !== demo && !slug) {
+      if (el.classList) for (const cls in MAP) if (el.classList.contains(cls)) { slug = MAP[cls]; break; }
+      el = el.parentElement;
+    }
+    if (!slug) return;
+    pendingTouch = slug;
+    pane.setAttribute("data-peek-slug", slug);            // observable state (e2e + reference), as on hover
+    setOpen(true);                                        // open + raise the Catalog sheet
+    if (frame.getAttribute("src")) { scrollToInFrame(slug); pendingTouch = null; }   // loaded → now; else on load
   });
 })();

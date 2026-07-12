@@ -26,6 +26,10 @@
    clean font — a grain-lettered button would misread as AI-authored value (grade doctrine). */
 .chat-message__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
   --type-font: var(--font-smooth); }
+/* keep each offer label on ONE line — the ROW wraps between buttons (flex-wrap above), but a label
+   must never break mid-phrase ("SEE WHAT'S / NEW") when the bubble is narrow. A short verb phrase is
+   an atomic affordance; let a too-wide button overflow-scroll its own text rather than stack words. */
+.chat-message__actions .btn { white-space: nowrap; }
 /* the offered buttons sit inside a grain-graded message, so b-button's `[data-grade="grain"] .btn`
    rule would dash them and kill their pointer events (that rule is for a control the AI is USING,
    not one it's OFFERING). When the AI is ONLINE, undo that — the button is a live, clean, human

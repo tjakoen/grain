@@ -1,0 +1,39 @@
+/* atoms/b-meter — a proportional horizontal bar split into segments: a health bar (passed/
+   failed/pending share), a storage bar, a progress bar, a poll result. Grain had no meter/
+   progress primitive at all. One class per element (BEM); tone is an attribute. Each segment's
+   width is one custom property (--seg) so it's data-bindable server-side with zero JS.
+   Monochrome: segments differ by TEXTURE + ink-level, never by hue (DESIGN-SYSTEM §2) — solid
+   ink (ok), hatched (bad), faint (the rest) — the e-ink language. */
+.meter {
+  display: flex; align-items: stretch;
+  height: var(--space-2); overflow: hidden;
+  border-radius: var(--radius-pill); background: var(--line-soft);
+}
+/* a segment fills its share of the track; default/"pending" reads faint solid */
+.meter__seg { flex: 0 0 auto; width: var(--seg, 0); background: var(--ink-faint); }
+/* ok — solid ink (the load-bearing "good" share) */
+.meter__seg[data-tone="ok"] { background: var(--ink); }
+/* bad — a dense diagonal hatch of ink (stands out by texture, not colour) */
+.meter__seg[data-tone="bad"] {
+  background-color: transparent;
+  background-image: repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 5px);
+}
+/* pending — a sparse dotted hatch, echoing the in-transit e-ink grain (lighter than "bad") */
+.meter__seg[data-tone="pending"] {
+  background-color: transparent;
+  background-image: repeating-linear-gradient(45deg, var(--ink-faint) 0 1px, transparent 1px 4px);
+}
+
+/* ---- indeterminate: running, totals unknown yet. A single faint stripe sweeps the track.
+   Honours reduced-motion (falls back to a static faint fill). ---- */
+.meter[data-state="busy"] .meter__seg { width: 35%; background: var(--ink-faint); animation: meter-sweep 1.1s ease-in-out infinite; }
+@keyframes meter-sweep { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .meter[data-state="busy"] .meter__seg { animation: none; width: 100%; }
+}
+
+/* ---- AI / in-transit: the non-text grain, same vocabulary as the rest of the family
+   (AI-INTERFACE §5). A meter the AI is updating (live pending, or any grain ancestor) wears the
+   dashed "terminal" edge on the track. ---- */
+.meter[data-commit="pending"],
+[data-grade="grain"] .meter { border: 1px dashed var(--ink); }

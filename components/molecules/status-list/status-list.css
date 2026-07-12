@@ -1,0 +1,47 @@
+/* molecules/status-list — a list where each row carries a leading status mark, a title, and
+   trailing meta (duration, target). A live pass/fail checklist, a job queue, a deploy pipeline, a
+   task run-down — b-list is prose-marker only, this is a three-slot structural row. One class per
+   element (BEM). Monochrome: the mark you place carries the signal (a glyph / b-badge / b-icon in
+   currentColor), never a hue baked in here (DESIGN-SYSTEM §2).
+
+   The load-bearing idea: an in-flight row wears data-commit="pending" (dashed leading edge +
+   blinking caret) and settles on result — the grain control lifecycle (lesson 2) mapped onto a
+   list item, no new "running" state invented. A not-yet-reached row reads faint via
+   data-state="waiting". Rows take data-surface so an AI can address one row at a time. */
+.status-list { list-style: none; margin: 0; padding: 0; }
+.status-list__item {
+  display: flex; align-items: baseline; gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border-top: 1px solid var(--line-soft);
+}
+.status-list__item:first-child { border-top: 0; }
+/* the leading mark slot: fixed width so titles align; author fills it with a glyph/badge/icon,
+   rendered in the row's ink (monochrome) */
+.status-list__mark { flex: 0 0 1.5em; text-align: center; color: var(--ink); }
+.status-list__title { flex: 1 1 auto; min-inline-size: 0; color: var(--ink); }
+.status-list__meta { flex: 0 0 auto; font-size: var(--text-sm); color: var(--color-muted); }
+
+/* ---- waiting: a row the runner hasn't reached yet recedes to faint (generic queue/pending
+   state — not a domain status) ---- */
+.status-list__item[data-state="waiting"] .status-list__mark,
+.status-list__item[data-state="waiting"] .status-list__title { color: var(--ink-faint); }
+
+/* ---- AI / in-transit + "this row is being acted on": the grain control lifecycle (lesson 2),
+   same vocabulary as the button/field. An in-flight row (a runner is acting on it, or the AI is)
+   wears the dashed "terminal" leading edge; a blinking block caret trails the title. Keyed off
+   the row's own pending state OR any grain ancestor. ---- */
+.status-list__item[data-commit="pending"],
+[data-grade="grain"] .status-list__item {
+  border-left: 2px dashed var(--ink); padding-left: calc(var(--space-3) - 2px);
+}
+.status-list__item[data-commit="pending"] .status-list__title::after,
+[data-grade="grain"] .status-list__item .status-list__title::after {
+  content: ""; display: inline-block;
+  width: 0.5ch; height: 1em; margin-left: 0.4ch; vertical-align: text-bottom;
+  background: currentColor;
+  animation: caret-blink 1s steps(1) infinite;   /* keyframes in grain/styles/grain.css */
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-list__item[data-commit="pending"] .status-list__title::after,
+  [data-grade="grain"] .status-list__item .status-list__title::after { animation: none; }
+}

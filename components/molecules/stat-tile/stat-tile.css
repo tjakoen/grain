@@ -1,0 +1,34 @@
+/* molecules/stat-tile — a KPI tile: one big number, a small label, an optional sub-line.
+   The standard dashboard primitive; grain had nothing between b-badge and card. One class per
+   element (BEM); tone is an attribute. Monochrome: tone is carried by ink-level + border weight,
+   never by hue (DESIGN-SYSTEM §2) — same doctrine as b-badge's "active". Tiles compose in a plain
+   flex/grid row; no wrapper component (see the .md). */
+.stat {
+  display: flex; flex-direction: column; gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border); border-radius: var(--radius-md);
+  min-inline-size: 0;
+}
+/* the number sits at display scale so grain texture reads if it's AI-written (grade doctrine) */
+.stat__value {
+  font-size: var(--text-2xl); font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight); color: var(--ink);
+}
+.stat__label { font-size: var(--text-sm); color: var(--color-muted); }
+.stat__sub { font-size: var(--text-xs); color: var(--ink-faint); }
+
+/* ---- tone (attribute) — ink-level + border weight, NOT hue ----
+   default : the calm baseline (a healthy/positive count needs no shouting).
+   ok      : same calm baseline — an explicit "good" that reads identical, by design.
+   bad     : draws the eye monochromatically — a solid-ink border + full-ink value.
+   muted   : a context/secondary count (skipped, pending, a total) recedes to faint. */
+.stat[data-tone="bad"] { border-color: var(--ink); }
+.stat[data-tone="muted"] .stat__value { color: var(--ink-faint); }
+.stat[data-tone="muted"] .stat__label { color: var(--ink-faint); }
+
+/* ---- AI / in-transit: the non-text grain, same vocabulary as the button/field/badge
+   (AI-INTERFACE §5). A tile whose number is mid-update wears the dashed "terminal" edge; a
+   value the AI is writing carries data-grade="grain" so its digits render in the grain family
+   via the inherited --type-font. */
+.stat[data-commit="pending"],
+[data-grade="grain"] .stat { border-style: dashed; border-color: var(--ink); }

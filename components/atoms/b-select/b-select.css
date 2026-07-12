@@ -1,0 +1,35 @@
+/* atoms/b-select — the field family's dropdown; reuses .field/.field__label from b-input,
+   adds .field__select. One class per element (BEM, component-scoped); variants are attributes,
+   same pattern as the input/button. Native dropdown arrow kept (no appearance: none) — accessible,
+   and a hardcoded caret color would break the tokens-only rule. */
+.field__select {
+  width: 100%; box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--type-font); font-size: var(--text-base);
+  color: var(--ink); background: transparent;
+  border: var(--border); border-radius: var(--radius-sm);
+}
+/* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
+   b-input) — never `autofocus`, which would steal focus + scroll the catalog on load. */
+.field__select:focus-visible, .field__select[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+/* invalid state — native, no JS. Monochrome: a heavier rule, not a red one. */
+.field__select:user-invalid { border-width: 2px; }
+
+/* ---- sizes (attribute, on .field, same as b-input) ---- */
+.field[data-size="sm"] .field__select { padding: var(--space-1) var(--space-2); font-size: var(--text-sm); }
+.field[data-size="lg"] .field__select { padding: var(--space-3) var(--space-4); font-size: var(--text-lg); }
+
+/* Inline variant (.field[data-variant="inline"]) already works — it's declared on .field itself
+   in b-input.css, so b-select gets it for free by reusing the same frame. Not re-declared here. */
+
+/* ---- AI / in-transit: the non-text grain, same language as the button/field (AI-INTERFACE §5).
+   A select the AI is touching (live pending, or any grain ancestor) wears the dashed "terminal"
+   edge; the label + value already swap to the grain family via --type-font.
+   EXCEPTION: while the AI is actively COMPOSING, the dispatcher sets data-grade="smooth" on the
+   select itself (clean ink, like a human choosing) — so that stays solid. The
+   `:not([data-grade="smooth"])` guard makes the exception explicit: a self-smooth select never
+   matches the dashed rule, so the outcome doesn't depend on stylesheet source order. */
+.field[data-commit="pending"] .field__select:not([data-grade="smooth"]),
+[data-grade="grain"] .field__select:not([data-grade="smooth"]) { border-style: dashed; }
+.field__select[data-grade="smooth"] { border-style: solid; }

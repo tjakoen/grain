@@ -1,0 +1,35 @@
+/* molecules/chip-group — one class per element; a set of selectable pills acting as a form
+   control (single- or multi-select). Native inputs inside labels → zero JS, form-postable,
+   keyboard + AX for free; checked state styled via :has()/:checked. Monochrome: a hairline pill,
+   no fill — state is carried by ink vs muted, not by hue (DESIGN-SYSTEM §2), same doctrine as
+   b-badge's "active". */
+.chips {
+  border: 0; margin: 0; padding: 0; min-inline-size: 0;
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+}
+.chips__chip {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-3); font-size: var(--text-sm);
+  border: 1px solid var(--line-soft); border-radius: var(--radius-pill);
+  color: var(--color-muted); cursor: pointer; user-select: none;
+}
+/* the native input stays focusable/keyboard-operable — sr-only, never display:none (that kills
+   keyboard). The label is the visible target. */
+.chips__chip input {
+  position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0;
+}
+/* selected (monochrome, like badge "active") */
+.chips__chip:has(:checked) { color: var(--ink); border-color: var(--ink); }
+/* focus ring (keyboard) */
+.chips__chip:has(:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+/* hover (subtle, muted → fg) */
+.chips__chip:hover { color: var(--ink); }
+
+/* data-select="single" (radios) needs no separate CSS — radios vs checkboxes are a markup
+   swap; the :has(:checked) rule above covers both. Do not invent per-variant classes. */
+
+/* ---- AI / in-transit: the non-text grain. A chip the AI is toggling (live pending, or any
+   grain ancestor) wears the dashed "terminal" edge; the label already swaps to the grain family
+   via --type-font. Same vocabulary as the button + field + badge. */
+.chips[data-commit="pending"] .chips__chip,
+[data-grade="grain"] .chips__chip { border-style: dashed; border-color: var(--ink); }

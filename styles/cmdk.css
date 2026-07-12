@@ -40,7 +40,9 @@
 .cmdk__input {
   width: 100%; box-sizing: border-box; border: 0;
   background: transparent; padding: .85rem 0;
-  font-family: inherit; font-size: 1.1rem; color: inherit; outline: none;
+  font-family: inherit; font-size: 1.1rem; color: inherit;
+  /* no outline:none — the input is the palette's focused control; it takes the global
+     :focus-visible accent ring (global.css) so keyboard focus is visible on open. */
 }
 .cmdk__input::placeholder { color: var(--ink-faint); }
 

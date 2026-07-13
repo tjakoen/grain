@@ -12,7 +12,7 @@
   "dependencies": {
     "@tjakoen/batch": "github:tjakoen/batch#d13d361",
     "@tjakoen/grain": "github:tjakoen/grain#8e85a47",
-    "@tjakoen/mill": "github:tjakoen/mill#c6bd1c9"
+    "@tjakoen/mill": "github:tjakoen/mill#7051ef8"
   },
   "exports": {
     "./routes.ts": "./routes.ts",

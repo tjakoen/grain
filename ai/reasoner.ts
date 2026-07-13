@@ -8,10 +8,9 @@
 
 import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
 import { ACTIONS, PUSH_SURFACES, surfaceId } from "./contract.ts";
-
-// Escape untrusted text before it goes into an emitted HTML fragment. Canned demo strings
-// are trusted; chat carries USER input, so it must be escaped at the single writer.
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// The reusable reasoner primitives — the stub DOGFOODS them so the exported kit (what a consumer's
+// real model composes with) and the shipped chat markup can never drift apart.
+import { esc, chatBubble, narrationLine } from "./reasoner-kit.ts";
 
 // The scoped capabilities the reasoner is allowed to use — its tool surface. The
 // real reasoner reaches storage through least-privilege tools exactly like this.
@@ -83,7 +82,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       // (contract.ts) made visible. The shell surfaces this feed while it takes over.
       const narrate = (verb: string, desc: string) =>
         tools.emit({ target: PUSH_SURFACES.console, op: "append", provenance: "ai", commit: "committed",
-          html: `<div class="console__line"><span class="action-badge">${verb}</span><span class="console__desc">${esc(desc)}</span></div>` });
+          html: narrationLine(verb, desc) });
       const clearConsole = () =>
         tools.emit({ target: PUSH_SURFACES.console, op: "replace", provenance: "ai", commit: "committed",
           html: `<div class="console__feed" data-surface="console"></div>` });
@@ -91,9 +90,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       // One chat bubble, one place — your message (clean, human) or the AI's (grain, provenance
       // persists). Shared by chat.send AND the demo scenarios so the markup never diverges. `who`
       // defaults from the role ("You"/"AI"); pass it to override (the /grain showcase signs "GRAIN").
-      const bubble = (role: string, grade: string, inner: string, who?: string) =>
-        `<div class="chat-message" data-role="${role}"${grade ? ` data-grade="${grade}"` : ""}>` +
-        `<span class="chat-message__who">${who ?? (role === "you" ? "You" : "AI")}</span>${inner}</div>`;
+      const bubble = chatBubble;   // dogfood the exported kit — one definition, no drift
 
       // --- say.stream: button → the AI types a reflection. Spotlit: a human clicked, but
       //     the AI is the one writing, so show where it acts (grade = AI as actor, §5c). ---

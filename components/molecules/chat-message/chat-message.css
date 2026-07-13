@@ -10,6 +10,15 @@
 }
 .chat-message[data-role="you"] { align-self: flex-end;   background: var(--color-bg); }
 .chat-message[data-role="ai"]  { align-self: flex-start; background: transparent; }   /* grain via data-grade */
+/* LEGIBILITY FLOOR (2026-07-14): a bubble is --text-sm — well under the >= --text-2xl floor where
+   Redaction 50's texture reads as texture, not roughness (CLAUDE.md lesson 4). grain.css's
+   `[data-grade="grain"]`/`[data-commit="pending"]` rules would otherwise hand this element
+   `--font-grain` (Redaction 50) at 0-1-0 specificity; this rule is 0-2-0 (class + attribute), so it
+   wins regardless of CSS bundle order and swaps in the fine face instead — same mechanism
+   (`--type-font`), same idiom as `.field:focus-within` below in grain.css, just a different value.
+   The "AI wrote this" signal survives (still a visibly non-smooth Redaction face); only the
+   roughest strokes, which just turn to mush at this size, are gone. */
+.chat-message[data-grade="grain"], .chat-message[data-commit="pending"] { --type-font: var(--font-grain-fine); }
 .chat-message__who {
   display: block; margin-bottom: 2px;
   font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint);

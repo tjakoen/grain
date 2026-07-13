@@ -11,6 +11,18 @@ narrows the rail to icons; on mobile the rail becomes a drawer (`data-rail-open`
 `app-shell__scrim`. See the live composition on any page of the reference app (it's the EDITOR
 chrome — `tjakoen.github.io`'s `portfolio-frame`).
 
+**Parent context (implicit, self-installing).** `.app-shell` must be a direct-or-nested child of
+`<body>` — every real composition already is. `app-shell.css` sets `container-type: inline-size`
+on `body:has(.app-shell)` (named `shell-frame`) because the shell's own mobile/tablet layout
+breakpoints restyle `.app-shell`'s OWN grid properties, and an element can never `@container`-query
+a condition on itself — only a descendant can query an ancestor container. Using `body` (rather
+than a purpose-built wrapper) means the real narrow-viewport case works with zero JS; the
+viewport-toggle (`data-shell="viewport-toggle"`) clamps `body[data-viewport]`'s max-width so its
+preview shrinks the same container a real narrow window does. `sidebar-panel` and `status-bar`
+share this container for their own mobile rules. One documented gap: `app-window`'s backdrop
+padding lives on `body` itself (`.app-window-backdrop`), so it can't follow suit — it stays a real
+`@media` and only responds to a genuinely narrow window, not the toggle preview.
+
 Two **optional full-width rows** bracket the workspace: `__window` (top — the `app-window`
 title bar) and `__status` (bottom — the `status-bar`). They're auto rows, so a shell that
 places nothing in them renders exactly as before; fill them to dress the shell as an editor

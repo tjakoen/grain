@@ -4,6 +4,11 @@
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 2.75rem; height: 2.75rem;        /* ≥44px touch target */
+  flex-shrink: 0;                         /* the ≥44px promise is dead if a flex parent can shrink
+                                              it — e.g. the mobile topbar squeezing the rail-toggle
+                                              hamburger down to an untappable sliver (2026-07-14
+                                              responsive-polish audit). A square icon affordance has
+                                              no "shrink gracefully" reading; it's this size or gone. */
   padding: 0;
   border: var(--border); border-radius: var(--radius-sm);
   background: transparent; color: var(--ink);

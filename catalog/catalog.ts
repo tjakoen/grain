@@ -153,7 +153,10 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
     const ai = c.ai ?? c.human;   // no .ai.md → AI view re-uses the human panels, grain-flipped
     return `<section class="cat-doc" id="${c.slug}" data-grade="smooth" data-layer="${c.layer}">
       <header class="cat-doc__head">
-        <h2>${esc(c.name)}</h2>
+        <div class="cat-doc__title">
+          <p class="cat-doc__eyebrow">${esc(cap(c.layer))}</p>
+          <h2>${esc(c.name)}</h2>
+        </div>
         <div class="grade-toggle" role="group" aria-label="Interaction mode for ${esc(c.name)}">
           <button type="button" class="grade-toggle__btn is-on" data-grade-set="smooth">Human</button>
           <button type="button" class="grade-toggle__btn" data-grade-set="grain">AI</button>
@@ -232,9 +235,21 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
   .cat-nav a { display: block; color: var(--color-muted); text-decoration: none; padding: var(--space-1) 0; }
   .cat-nav a:hover { color: var(--ink); text-decoration: underline; }
   .cat-main { padding: var(--space-8); max-width: 900px; }
-  .cat-doc { margin-bottom: var(--space-8); scroll-margin-top: var(--space-4); }
-  .cat-doc h2 { font-size: var(--text-2xl); margin: 0 0 var(--space-2); }
-  .cat-doc__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+  /* each component reads as a bounded CARD (hairline + generous padding), not bare text loose on
+     the page — a doc with no live panels (a CSS-only pattern component, prose-only) used to read
+     as an unstyled wall between two anonymous headings; the border gives every entry the same
+     footing regardless of how much it renders. No background of its own (stays page-toned) so
+     .panel's --color-surface stays the one lifted tone inside it — this system has no third tier. */
+  .cat-doc {
+    margin-bottom: var(--space-8); scroll-margin-top: var(--space-4);
+    padding: var(--space-6); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  }
+  .cat-doc h2 { font-size: var(--text-2xl); margin: 0; }
+  .cat-doc__eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--color-muted); margin: 0 0 var(--space-1); }
+  .cat-doc__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4);
+    flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-line); }   /* masthead rhythm: title block → hairline → body */
   .grade-toggle { display: inline-flex; border: 1px solid var(--ink); border-radius: var(--radius-sm); overflow: hidden; }
   .grade-toggle__btn { font-family: var(--font-smooth); font-size: var(--text-xs); text-transform: uppercase;
     letter-spacing: 0.08em; padding: var(--space-1) var(--space-3); cursor: pointer;

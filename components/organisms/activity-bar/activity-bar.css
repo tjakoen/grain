@@ -10,9 +10,14 @@
   padding: var(--space-2) 0;
   border-right: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent);
 }
+/* ≥44px touch target (DESIGN-SYSTEM §7 — the same promise b-icon-button makes; this is a bespoke
+   square, not a composed .icon-btn, so it has to hold the floor itself). Was 2.25rem/36px until
+   the 2026-07-14 responsive-polish audit flagged the rail-toggle path as untappable on mobile; the
+   3.25rem column still centers a 2.75rem item with 4px to spare on each side. flex-shrink:0 for the
+   same reason b-icon-button carries it now — a squeezed rail column must never shrink the target. */
 .activity-bar__item {
-  display: flex; align-items: center; justify-content: center;
-  width: 2.25rem; height: 2.25rem; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2.75rem; height: 2.75rem; border-radius: var(--radius-sm);
   position: relative;
   color: var(--color-muted); background: transparent; border: 0; cursor: pointer;
   text-decoration: none;

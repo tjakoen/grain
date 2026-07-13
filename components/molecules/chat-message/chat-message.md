@@ -9,6 +9,12 @@ grain (grain = AI, AI-INTERFACE §5). The single writer emits matching markup ov
 flex column — so **compose messages inside a [`chat-log`](#chat-log)**. In a bare `div` the
 alignment silently does nothing.
 
+**Legibility floor.** A bubble renders at `--text-sm`, under the `>= --text-2xl` floor where
+Redaction 50's grade texture reads as texture rather than roughness (CLAUDE.md lesson 4). So an
+AI message (`data-grade="grain"` or mid-stream `data-commit="pending"`) renders in
+`--font-grain-fine` (Redaction 35 only) instead of the sitewide `--font-grain` (Redaction 50) — the
+grain signal still reads, just without the roughest strokes turning to mush at bubble size.
+
 ## Roles
 
 ### You (human — clean)

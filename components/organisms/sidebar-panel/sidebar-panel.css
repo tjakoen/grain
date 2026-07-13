@@ -40,8 +40,14 @@
 .app-shell[data-acting="true"] .app-shell__aside { position: relative; z-index: var(--z-ai-surface, 9002); }
 
 /* mobile (<768px): the panel becomes a bottom SHEET. The shell drops the aside column, so re-show it
-   fixed to the bottom, collapsed to its header as a grab bar; tap the header to raise the full panel. */
-@media (max-width: 768px) {
+   fixed to the bottom, collapsed to its header as a grab bar; tap the header to raise the full panel.
+   `@container shell-frame`, not `@media` (app-shell.css establishes the container on `<body>` and
+   converts its own layout breakpoints the same way — this one has to move in lockstep, or the
+   viewport-toggle would hide the aside per app-shell.css's mobile block without this bottom-sheet
+   override ever kicking in to replace it, since its old `@media` never fired off the toggle's
+   clamp). Every selector here targets a descendant of body (`.app-shell__aside`, `.assistant__head`),
+   never body itself, so the container-query self-query rule doesn't block this file. */
+@container shell-frame (max-width: 768px) {
   .app-shell__aside {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-ai-surface, 9002);
     height: 85dvh; opacity: 1;

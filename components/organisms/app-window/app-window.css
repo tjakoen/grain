@@ -91,9 +91,21 @@
 .window-bar__search:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
 
 /* ---- mobile: the window collapses — no backdrop padding, no frame, no title bar
-   (the shell's drawer chrome carries the brand there); the status bar stays. ---- */
+   (the shell's drawer chrome carries the brand there); the status bar stays.
+
+   SPLIT ON PURPOSE (2026-07-14): app-shell.css turns its own layout breakpoints into
+   `@container shell-frame`, keyed to `<body>` — but `.app-window-backdrop` IS `<body>` itself
+   (see the class on `<body>` in the comment up top), and a container can never legally query its
+   own condition, only a descendant's (CSS containment spec). So the backdrop padding stays a real
+   `@media`: it tracks a real narrow WINDOW correctly, but the shell's viewport-toggle preview
+   (which clamps body's width, not the real viewport) can't collapse it — a known, harmless gap in
+   a demo-only feature. `.app-shell.app-window` and `.window-bar`, though, are DESCENDANTS of body,
+   not body itself, so they're free to follow the container — converted, so the toggle's preview at
+   least drops the frame border/shadow/title-bar even though the backdrop margin lingers. ---- */
 @media (max-width: 768px) {
   .app-window-backdrop { padding: 0; }
+}
+@container shell-frame (max-width: 768px) {
   .app-shell.app-window { border: 0; border-radius: 0; box-shadow: none; }
   .window-bar { display: none; }
 }

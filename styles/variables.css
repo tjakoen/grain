@@ -52,6 +52,13 @@
   --font-smooth: "Redaction",    "Times New Roman", Georgia, serif;
   --font-grain:  "Redaction 50", "Redaction 35", "Times New Roman", Georgia, serif;
   --font-accent: "Redaction 70", "Times New Roman", Georgia, serif;
+  /* the FINE grain face — grade 35 only, skipping the rougher 50. Grade texture only reads as
+     texture (not noise) at >= --text-2xl (CLAUDE.md lesson 4); a component that must show the
+     AI-grain signal in small text (a chat bubble, --text-sm) reads this instead of --font-grain so
+     the "AI wrote this" cue survives without Redaction 50's rough strokes collapsing into mush at
+     14px. Still a Redaction face, still visibly not --font-smooth — the signal doesn't disappear,
+     it just doesn't demonstrate the roughest texture where it can't read anyway. */
+  --font-grain-fine: "Redaction 35", "Times New Roman", Georgia, serif;
 
   /* monospace — code blocks / inline code (grade-independent: code stays mono, the AI
      signal for code is the dashed edge, not a font swap). System stack, nothing to host. */

@@ -23,8 +23,11 @@
 .status-bar button:hover { color: var(--color-fg); }
 .status-bar button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
 
-/* narrow screens: keep presence + controls, let the middle meta-text go */
-@media (max-width: 768px) {
+/* narrow screens: keep presence + controls, let the middle meta-text go. `@container shell-frame`
+   (app-shell.css establishes the container on `<body>`) so this fires off BOTH a real narrow
+   window and the shell's viewport-toggle clamp, not just the real one — `.status-bar` is a
+   descendant of body, never body itself, so it's legal to query here (see app-shell.css). */
+@container shell-frame (max-width: 768px) {
   .status-bar { gap: var(--space-4); }
   .status-bar [data-status-optional] { display: none; }
 }

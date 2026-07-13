@@ -87,9 +87,17 @@
    the rail's own icon-gutter line, so the eye reads gutter > rail-edge as two weights. */
 .app-shell__rail    { grid-area: rail;    min-height: 0;
                       border-right: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent); }
+/* position:relative + a real z-index (not "auto") pins the topbar — and the rail-toggle hamburger
+   inside it — above anything else painting in this stacking context; explicit pointer-events:auto
+   guards against ever inheriting a stray `none` from an ancestor. Defensive: the 2026-07-14 audit
+   found the mobile hamburger timing out in Playwright (present, but unclickable) at squeezed
+   widths — the root cause was the grid-squeeze the @container fix above resolves, but a control
+   this load-bearing (it's the ONLY way to reach the rail on mobile) shouldn't also depend on
+   nothing else ever drifting a z-index/pointer-events value over it. */
 .app-shell__topbar  { grid-area: topbar;  min-width: 0; display: flex; align-items: stretch;
                       min-height: var(--editor-header-h, 2.9rem);   /* aligns with the panel head (one line) */
-                      border-bottom: 1px solid var(--color-line); background: var(--color-surface); }
+                      border-bottom: 1px solid var(--color-line); background: var(--color-surface);
+                      position: relative; z-index: 1; pointer-events: auto; }
 /* __main owns the page scroll inside the shell — it must OPT INTO the smooth-scroll contract
    (global.css sets it on html, but scrollIntoView scrolls the nearest scrollable ancestor,
    which in a shell is this pane; without it the AI's focus jumps are instant). */
@@ -101,15 +109,34 @@
                       background: var(--color-bg); }
 .app-shell__scrim   { display: none; }   /* only used as the drawer scrim on mobile */
 
+/* ---- CONTAINER (2026-07-14 responsive-polish fix): the two layout breakpoints below used to be
+   `@media`, which reads the actual BROWSER viewport — so the viewport-toggle's cosmetic max-width
+   clamp on `.app-shell` (see the bottom of this file) never made them fire; a squeezed real window
+   between 768-1100px also just squeezed the fixed rail/aside tracks instead of collapsing (the
+   `minmax(0,1fr)` main column went to zero, not the layout).
+
+   Fix: `.app-shell` cannot query an `@container` condition on ITSELF (the CSS containment spec:
+   a container never matches its own query, only its descendants' do) — so the container has to be
+   an ANCESTOR. `.app-shell` has no wrapper of its own in any real composition (portfolio-frame,
+   this file's own .md demo): it is always a DIRECT CHILD of `<body>`. So `<body>` becomes the named
+   container (`shell-frame`), scoped with `:has()` so a page with no shell is untouched. Both
+   `.app-shell` and its descendants (`.app-shell__aside`, `sidebar-panel`, `status-bar`) can then
+   legally query it. The viewport-toggle's clamp moves to `body[data-viewport]` too (below) — so
+   shrinking body for the toggle shrinks the SAME container real narrow windows shrink, and both
+   paths now drive the identical mobile layout. `container-type: inline-size` only tracks/queries
+   the inline axis, which is exactly the width-based breakpoints below — height stays content-sized
+   as before (100dvh via .app-shell, unaffected). */
+body:has(.app-shell) { container-type: inline-size; container-name: shell-frame; }
+
 /* ---- narrow desktop: keep all three columns but tighten the aside so the assistant
    stays reachable (dropping it here stranded the chat on laptop-width windows) ---- */
-@media (max-width: 1100px) {
+@container shell-frame (max-width: 1100px) {
   .app-shell { --shell-aside: 16rem; }
 }
 
 /* ---- mobile: single column; the rail becomes an off-canvas drawer. The aside (assistant)
-   is hidden here until its bottom-sheet form lands — reach the AI on wider screens. ---- */
-@media (max-width: 768px) {
+   becomes a bottom sheet (sidebar-panel.css, which loads after this file and wins the tie). ---- */
+@container shell-frame (max-width: 768px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "window" "topbar" "main" "console" "status";
@@ -140,14 +167,20 @@
   .app-shell__rail, .app-shell__scrim { transition: none; }
 }
 
-/* ---- viewport preview (shell.js: data-shell="viewport-toggle") — a cosmetic width clamp for
-   demo purposes, framing the shell to approximate a device width. NOT a real device emulator:
-   @media queries below still read the actual browser viewport, so this alone won't trigger the
-   mobile rail-drawer / hidden-aside rules above — it just narrows + centers the same layout. ---- */
-.app-shell[data-viewport] { max-width: var(--shell-viewport-w, 100%); margin-inline: auto;
-                            border-inline: 1px solid var(--color-line); }
-.app-shell[data-viewport="tablet"] { --shell-viewport-w: 48rem; }
-.app-shell[data-viewport="mobile"] { --shell-viewport-w: 24.4rem; }
+/* ---- viewport preview (shell.js: data-shell="viewport-toggle") — clamps `<body>`, the SAME
+   element the @container queries above read (`shell-frame`), not `.app-shell`. That's what makes
+   this a real (if imperfect) breakpoint drive now instead of a cosmetic frame: shrinking body's
+   inline-size shrinks the container, so the toggle fires the identical mobile/tablet layout a real
+   narrow window does — the rail becomes a drawer, the aside hides, etc. Still not a full device
+   emulator (no simulated touch/DPR, and app-window.css's OWN backdrop/title-bar collapse — a
+   separate `@media` — can't follow suit: that rule restyles `body.app-window-backdrop` itself,
+   and a container may never query its own condition, only a descendant's; see that file). The
+   shell's framed border stays keyed off `.app-shell` (a descendant of body, so this is legal) so
+   the visual frame still hugs the shell's own edge, not body's padding box. */
+body[data-viewport] { max-width: var(--shell-viewport-w, 100%); margin-inline: auto; }
+body[data-viewport] .app-shell { border-inline: 1px solid var(--color-line); }
+body[data-viewport="tablet"] { --shell-viewport-w: 48rem; }
+body[data-viewport="mobile"] { --shell-viewport-w: 24.4rem; }
 
 /* ---- single-page feel: the shell chrome PERSISTS across cross-document navigations (each name is
    present once per page, so it morphs in place); only <main> is in the root snapshot and cross-fades.

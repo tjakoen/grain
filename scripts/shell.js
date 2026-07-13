@@ -145,17 +145,21 @@
   // crossing the breakpoint clears any stuck drawer / sheet state
   mobile.addEventListener?.("change", () => { setOpen(false); shell.removeAttribute("data-aside-open"); });
 
-  // VIEWPORT PREVIEW (demo, cosmetic clamp — owner 2026-07-07): cycles the shell's max-width
-  // desktop → tablet → mobile → desktop. This does NOT resize the real browser window, so real
-  // @media queries still read the actual viewport — the rail-drawer/bottom-sheet mobile behavior
-  // won't kick in. It's a narrower framed look for showing the design off-breakpoint, not a true
-  // device emulator (that needs an iframe with its own viewport — a heavier feature, deferred).
+  // VIEWPORT PREVIEW (demo — owner 2026-07-07, made a REAL breakpoint drive 2026-07-14): cycles
+  // desktop → tablet → mobile → desktop by clamping `<body>`'s max-width, NOT `.app-shell`'s.
+  // `<body>` is the `@container` named `shell-frame` that app-shell.css's mobile/tablet layout
+  // breakpoints query (a container can't query its own condition, only a descendant's — see that
+  // file's comment) — so shrinking body here shrinks the SAME container a real narrow window
+  // shrinks, and the toggle now genuinely triggers the rail-drawer / hidden-aside / single-column
+  // layout, not just a framed width clamp. Still not a full device emulator (no simulated
+  // touch/DPR, and app-window.css's backdrop/title-bar collapse can't follow — that rule targets
+  // body itself, which can never legally container-query itself; deferred).
   const VIEWPORTS = [null, "tablet", "mobile"];
   for (const b of shell.querySelectorAll('[data-shell="viewport-toggle"]')) {
     const label = b.querySelector("[data-viewport-name]");
     b.addEventListener("click", () => {
-      const next = VIEWPORTS[(VIEWPORTS.indexOf(shell.getAttribute("data-viewport")) + 1) % VIEWPORTS.length];
-      if (next) shell.setAttribute("data-viewport", next); else shell.removeAttribute("data-viewport");
+      const next = VIEWPORTS[(VIEWPORTS.indexOf(document.body.getAttribute("data-viewport")) + 1) % VIEWPORTS.length];
+      if (next) document.body.setAttribute("data-viewport", next); else document.body.removeAttribute("data-viewport");
       if (label) label.textContent = next || "desktop";
     });
   }

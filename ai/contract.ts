@@ -24,8 +24,9 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //   say.set       — input → AI writes back into a reflection line (grain → settles clean)
 //   say.stream    — button → AI types a line out, token by token, over SSE
 //   chat.send     — composer → your message (clean) + the AI's reply streamed (grain) into a chat log
+//   navigate      — a control (or a reasoner's own decision) asks to change screens; see below
 // The full product vocabulary lives at https://tjakoen.github.io/grain/docs/ai-interface.
-export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send";
+export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send" | "navigate";
 export type Depth = "light" | "heavy";
 
 export interface ActionDef {
@@ -41,6 +42,11 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
   "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"] },   // plays an AI-acting demo
   "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"] },   // user asks the AI to halt (mediated)
   "chat.send":    { name: "chat.send",    depth: "light", accepts: ["chat-log"] }, // send a message; AI replies over SSE
+  // ActionName AND a RenderOpKind, deliberately BOTH (see the `navigate` RenderOpKind below for why
+  // one alone doesn't cover it): registering it here as a "screen" verb is what makes it show up in
+  // `actionsForKind("screen")` — and so in the manifest (manifest.ts/manifest-dom.ts) — as something
+  // a control (or a reasoner reading the manifest) can see is legal to invoke on the current screen.
+  "navigate":     { name: "navigate",     depth: "light", accepts: ["screen"] },
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);
@@ -72,7 +78,19 @@ export interface Intent {
 //          click; `active:false` releases. Driven by AI provenance (AI-INTERFACE §5c).
 //   log — append one provenance-tagged entry to the interaction TIMELINE (§5g); the client
 //          caps the DOM + pins to newest. The unified human-and-AI log made visible.
-export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log";
+//   navigate — change the browser's location (href). The ONLY op that leaves the page, so it's
+//          the ONE op the dispatcher validates before acting on (isSafeNavigateHref, below) —
+//          every other op only ever touches the DOM the manifest already exposed as addressable.
+//          Why a RenderOpKind and not just the `navigate` ActionName above: an ActionName is a
+//          REQUEST vocabulary word (what a control may ask the door to do); a RenderOpKind is an
+//          EFFECT the single writer (the reasoner) hands back for the dispatcher to apply — and
+//          the dispatcher (scripts/ai-dispatch.js) only ever executes RenderOps, never ActionNames
+//          directly. So the reasoner handling ANY intent (not only a `navigate` one — e.g. a
+//          chat.send reply that decides to route the user somewhere) needs an op it can emit to
+//          actually move the browser. Both exist because they answer different questions: "is this
+//          verb legal here" (ActionName, surfaced in the manifest) vs "make it happen" (RenderOp,
+//          applied by the dispatcher).
+export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate";
 export type Provenance = "user" | "ai" | "system";
 export type Commit = "pending" | "committed";   // grade = commit state (DESIGN-SYSTEM §3)
 
@@ -86,9 +104,23 @@ export interface RenderOp {
   active?: boolean;            // spotlight on (move to target) vs off (release)
   click?: boolean;            // spotlight: this is a "click" → pulse the target (else just lift it)
   message?: string;            // human-facing note (flash)
+  href?: string;                // navigate: where to (validated — isSafeNavigateHref, below)
   provenance: Provenance;
   commit: Commit;
 }
+
+// ---- navigate's href validator — the SSOT the dispatcher's own guard must never drift from ------
+// Same-origin, ROOT-RELATIVE paths only. Rejects:
+//   - any absolute URL ("https://…", "http://…") — external navigation is never AI-directed
+//   - a scheme with no "//" ("javascript:…", "data:…", "mailto:…") — never starts with "/"
+//   - protocol-relative ("//evil.com") — a second leading "/" is rejected by the lookahead
+//   - a leading backslash right after the slash ("/\evil.com") — some browsers treat "\" as "/",
+//     which would otherwise smuggle a protocol-relative URL past the "//" check
+//   - any whitespace — blocks control-character / smuggling tricks, and no real route needs one
+// A bare "/" (root) is valid. Query strings and hashes are valid ("/notes?x=1#y").
+const SAFE_NAV_HREF = /^\/(?!\/)[^\s\\]*$/;
+export const isSafeNavigateHref = (href: unknown): href is string =>
+  typeof href === "string" && SAFE_NAV_HREF.test(href);
 
 // ---- The reasoner's verdict ------------------------------------------------------
 export interface Decision {

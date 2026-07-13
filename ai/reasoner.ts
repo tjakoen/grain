@@ -7,10 +7,10 @@
 // PLUMBING, never faked judgment (MVP §"Build Order").
 
 import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
-import { ACTIONS, PUSH_SURFACES, surfaceId } from "./contract.ts";
+import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref } from "./contract.ts";
 // The reusable reasoner primitives — the stub DOGFOODS them so the exported kit (what a consumer's
 // real model composes with) and the shipped chat markup can never drift apart.
-import { esc, chatBubble, narrationLine } from "./reasoner-kit.ts";
+import { esc, chatBubble, narrationLine, navigateOp } from "./reasoner-kit.ts";
 
 // The scoped capabilities the reasoner is allowed to use — its tool surface. The
 // real reasoner reaches storage through least-privilege tools exactly like this.
@@ -112,6 +112,25 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         await beat(HOLD_MS);
         spot(intent.surface, false);
         return d;
+      }
+
+      // --- navigate: change screens. Minimal on purpose — this stub is PLUMBING (file header), so
+      //     it only proves the mechanism (a reasoner CAN emit a validated navigate op) rather than
+      //     deciding where to go; a real reasoner supplies the judgment. The href travels in the
+      //     payload (a control wiring data-action="navigate" would set it via data-payload or
+      //     equivalent); an unsafe/missing one fails the request rather than the dispatcher, per
+      //     CLAUDE.md lesson #3/#5 (contracts must not fail silently). ---
+      if (intent.action === "navigate") {
+        const href = intent.payload.href;
+        if (!isSafeNavigateHref(href)) {
+          return {
+            ok: false,
+            reason: "stub: missing or unsafe navigate href",
+            ops: [{ target: intent.surface, op: "flash", message: "Couldn't navigate — invalid destination.",
+                     provenance: "system", commit: "committed" }],
+          };
+        }
+        return { ok: true, ops: [navigateOp(intent.surface, href)] };
       }
 
       // --- chat.send: the assistant conversation. Your message settles CLEAN (human), then

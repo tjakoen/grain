@@ -3,7 +3,7 @@
 // lib.dom), so kind derivation, accepts intersection/inversion, and push-only classification
 // are all testable without a browser. Full DOM behavior is covered by the terminal e2e.
 import { test, expect } from "bun:test";
-import { deriveKind, deriveAccepts, targetLabel, harvestTargets, domManifest, type DomEl } from "./manifest-dom.ts";
+import { deriveKind, deriveAccepts, targetLabel, harvestTargets, domManifest, manifestForReasoner, type DomEl } from "./manifest-dom.ts";
 import { actionsForKind } from "./contract.ts";
 
 const el = (attrs: Record<string, string>): DomEl => ({ getAttribute: (n) => attrs[n] ?? null });
@@ -73,4 +73,40 @@ test("domManifest: same shape as the server manifest, marked a live-DOM projecti
   expect(m.targets[0].id).toBe("chat-log");
   expect(m.inView).toEqual({ surfaces: ["chat-log"] });
   expect(m.note).toMatch(/live dom/i);
+});
+
+test("manifestForReasoner: deterministic, prompt-ready text — same fixed DOM in, same string out", () => {
+  const doc = {
+    body: el({ "data-screen": "notes" }),
+    querySelectorAll: () => [
+      el({ "data-surface": "item:ITM-1", "data-kind": "item", "data-accepts": "item.archive" }),
+      el({ "data-surface": "chat-log" }),
+      el({ "data-surface": "console" }),   // push-only — no verb targets it
+    ],
+  };
+  const first = manifestForReasoner(doc);
+  const second = manifestForReasoner(doc);
+  expect(first).toBe(second);                        // deterministic
+  expect(first).toBe(
+    "screen: notes\n" +
+    "targets: (3)\n" +
+    "- item:ITM-1 [item] -> item.archive\n" +
+    "- chat-log [chat-log] -> chat.send\n" +
+    "- console [console] -> (no verb currently targets this)"
+  );
+});
+
+test("manifestForReasoner: a screen-kind surface lists navigate among its accepted verbs", () => {
+  const doc = {
+    body: el({ "data-screen": "grain" }),
+    querySelectorAll: () => [el({ "data-surface": "screen", "data-kind": "screen" })],
+  };
+  const text = manifestForReasoner(doc);
+  expect(text).toContain("- screen [screen] ->");
+  expect(text).toContain("navigate");
+});
+
+test("manifestForReasoner: no [data-surface] elements — says so plainly, doesn't crash", () => {
+  const doc = { body: el({ "data-screen": "empty" }), querySelectorAll: () => [] };
+  expect(manifestForReasoner(doc)).toBe("screen: empty\ntargets: (none — this page declares no [data-surface] elements)");
 });

@@ -26,6 +26,7 @@ export const RENDER_OP_KINDS: readonly { kind: string; means: string }[] = [
   { kind: "type", means: "stream one text token into the target, or (done) settle it" },
   { kind: "spotlight", means: "show the AI as actor — dim everything, light (and optionally pulse) the target" },
   { kind: "log", means: "append one provenance-tagged entry to the interaction timeline (the unified human+AI log)" },
+  { kind: "navigate", means: "change the browser's location (href) — same-origin, root-relative only" },
 ];
 
 // The one door's HTTP surface (AI-INTERFACE.md) — guarded by vocab-reference.test.ts

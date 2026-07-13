@@ -159,3 +159,23 @@ test("chat.send escapes user input (no HTML injection at the single writer)", as
   expect(you?.html).not.toContain("<img");
   expect(you?.html).toContain("&lt;img");
 });
+
+test("navigate: a safe href returns a single committed navigate op", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(intent({ surface: "screen", action: "navigate", payload: { href: "/notes" } }), tools);
+  expect(d.ok).toBe(true);
+  expect(d.ops).toHaveLength(1);
+  expect(d.ops[0]).toMatchObject({ op: "navigate", href: "/notes", target: "screen", commit: "committed" });
+});
+
+test("navigate: an unsafe/missing href fails the REQUEST (not the dispatcher) — ok:false, a flash, no navigate op", async () => {
+  const { tools } = fakeTools();
+  const unsafe = await reasoner.decide(intent({ surface: "screen", action: "navigate", payload: { href: "javascript:alert(1)" } }), tools);
+  expect(unsafe.ok).toBe(false);
+  expect(unsafe.ops.some((o) => o.op === "navigate")).toBe(false);
+  expect(unsafe.ops[0]?.op).toBe("flash");
+
+  const missing = await reasoner.decide(intent({ surface: "screen", action: "navigate", payload: {} }), tools);
+  expect(missing.ok).toBe(false);
+  expect(missing.ops.some((o) => o.op === "navigate")).toBe(false);
+});

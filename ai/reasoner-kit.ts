@@ -6,7 +6,11 @@
 // shipped behaviour can never diverge. CLIENT-SAFE (§19.2): pure, no DOM, relative import only.
 
 import type { RenderOp, Surface } from "./contract.ts";
-import { PUSH_SURFACES } from "./contract.ts";
+import { PUSH_SURFACES, isSafeNavigateHref } from "./contract.ts";
+// Re-exported so a consumer building on the kit finds settle-time markdown rendering right next
+// to the op-builders it pairs with, without a second import path to remember. Canonical home +
+// tests: ./markdown.ts (kept separate so this file stays about OP shapes, not text rendering).
+export { renderMarkdown } from "./markdown.ts";
 
 // ---- markup: the exact fragments the dispatcher's applyOp expects (chat bubbles, console lines) ----
 
@@ -65,3 +69,15 @@ export const narrateOp = (verb: string, desc: string, surface: Surface = PUSH_SU
  *  click. `active:false` releases. Driven by AI provenance (AI-INTERFACE §5c). */
 export const spotlightOp = (target: Surface, opts: { active: boolean; click?: boolean } = { active: true }): RenderOp =>
   ({ target, op: "spotlight", active: opts.active, click: opts.click, provenance: "ai", commit: opts.active ? "pending" : "committed" });
+
+/** Navigate the browser to `href` — a same-origin, root-relative path only (contract.ts's
+ *  `isSafeNavigateHref`). Throws on an unsafe href RIGHT HERE, at the point a reasoner composes
+ *  the op, rather than letting a bad value travel all the way to the dispatcher and fail silently
+ *  there (CLAUDE.md lesson #3/#5: a contract must not fail silently) — the dispatcher's own guard
+ *  is defense-in-depth against a tampered wire payload, not the first line of defense. `commit` is
+ *  "committed": navigation is terminal for this page, there's nothing left to settle. */
+export const navigateOp = (target: Surface, href: string): RenderOp => {
+  if (!isSafeNavigateHref(href))
+    throw new Error(`navigateOp: unsafe href ${JSON.stringify(href)} — must be a same-origin, root-relative path`);
+  return { target, op: "navigate", href, provenance: "ai", commit: "committed" };
+};

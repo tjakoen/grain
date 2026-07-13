@@ -1,25 +1,35 @@
-// grain/scripts/catalog-peek.js — a DEMO-only island: the sidebar-panel's CATALOG pane in the
-// reference app, bridging usage → specimen. On a hovering pointer, hovering a component in the
-// demo REVEALS that component's entry in the embedded /catalog (one at a time, cross-fading — no
-// scrolling). The pane itself is a sidebar-panel MODE (shell.js owns the Chat⇄Catalog switch);
-// this island only adds the catalog behaviours: [data-peek] open/close hooks, the lazy iframe
-// load, and the hover bridge.
+// grain/scripts/catalog-peek.js — the sidebar-panel's CATALOG pane. Its BASE job runs on ANY page
+// that has the pane: embed /catalog in the pane's <iframe> the first time it's shown, so "Catalog"
+// is always a real, working reference browser — never an empty pane. Its ENHANCED job (this file's
+// original scope) is grain's OWN reference app: bridging usage → specimen, where hovering a
+// component in the demo REVEALS that component's entry in the embedded catalog (one at a time,
+// cross-fading — no scrolling). That bridge needs a demo root ([data-peek-root]) to hover WITHIN,
+// which only grain's own pages declare — everywhere else it's simply not there, and this file
+// degrades to the base job with no crash and no empty pane. The pane itself is a sidebar-panel MODE
+// (shell.js owns the Chat⇄Catalog switch); this island adds the catalog behaviours: [data-peek]
+// open/close hooks, the lazy iframe load (base, unconditional), and the hover/tap bridge (enhanced,
+// gated on the demo root existing).
 //
-// It EMBEDS /catalog in the pane's <iframe> and maps each rendered CSS class to its catalog
-// section slug (the .md title slug — stable for grain's components). The catalog exposes a
-// "single" mode (data-peek-single + .is-peek-active, driven here via window.__catSetActive).
-// The bridge adapts to the pointer: with a HOVERING pointer it's a hover-reveal in single mode
-// (one entry at a time, cross-fading). On a COARSE pointer (touch, no hover) a finger can't hover,
-// so the same usage→specimen link becomes a TAP: tapping a component opens the pane and scrolls
-// that entry into view in the full, scrollable catalog (single mode stays off — a finger needs the
-// surrounding list to scroll back through). Only runs where the pane exists.
+// It maps each rendered CSS class to its catalog section slug (the .md title slug — stable for
+// grain's components). The catalog exposes a "single" mode (data-peek-single + .is-peek-active,
+// driven here via window.__catSetActive). The bridge adapts to the pointer: with a HOVERING
+// pointer it's a hover-reveal in single mode (one entry at a time, cross-fading). On a COARSE
+// pointer (touch, no hover) a finger can't hover, so the same usage→specimen link becomes a TAP:
+// tapping a component opens the pane and scrolls that entry into view in the full, scrollable
+// catalog (single mode stays off — a finger needs the surrounding list to scroll back through).
 (() => {
   "use strict";
   const shell = document.querySelector(".app-shell");
   const pane = document.querySelector('.assistant__pane[data-pane="catalog"]');
-  const demo = document.querySelector("[data-peek-root]");   // the site's content root (chrome sits outside it)
-  if (!shell || !pane || !demo) return;
-  const frame = pane.querySelector("iframe");
+  const frame = pane && pane.querySelector("iframe");
+  // BASE requirement: the pane + its iframe. Without these there's nothing to embed the catalog
+  // into at all, so there's genuinely nothing this island can do.
+  if (!shell || !pane || !frame) return;
+  // ENHANCED requirement, OPTIONAL: the demo root the hover/tap bridge reveals FROM. Every branch
+  // below that touches `demo` is gated on this — every page without one still gets a fully working
+  // catalog pane (this was previously an all-or-nothing early return that left non-grain pages with
+  // a permanently empty pane).
+  const demo = document.querySelector("[data-peek-root]");
   // the hover-to-reveal mechanic only makes sense with a hovering pointer (desktop mouse) —
   // on touch it would be undrivable, so there we leave the full scrollable catalog.
   const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -101,7 +111,11 @@
     showInFrame(slug);   // reveal-one: the pane shows just this entry, cross-fading — no scrolling
   }
 
-  demo.addEventListener("mouseover", (e) => {
+  // Everything below is the ENHANCED hover/tap bridge — a PROGRESSIVE ENHANCEMENT gated on `demo`
+  // existing. A page with no [data-peek-root] (every non-grain consumer) still got a fully working
+  // catalog pane above; it just has nothing to hover/tap INTO the pane from, which is correct — it
+  // has no grain component demo on the page to bridge from in the first place.
+  if (demo) demo.addEventListener("mouseover", (e) => {
     if (!canHover || !isOpen()) return;
     let el = e.target;
     while (el && el !== demo) {
@@ -126,7 +140,7 @@
   // A TAP on a catalogued component opens the Catalog pane (raises the sheet on mobile) and brings
   // that entry into view. Only fires on touch; leaves operable controls alone so a real press isn't
   // swallowed (links/buttons/inputs, and the door clients [data-action] / peek hooks [data-peek]).
-  if (!canHover) demo.addEventListener("click", (e) => {
+  if (demo && !canHover) demo.addEventListener("click", (e) => {
     if (e.target.closest("a,button,input,textarea,select,label,[data-action],[data-peek]")) return;
     let el = e.target, slug = null;
     while (el && el !== demo && !slug) {

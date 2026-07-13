@@ -82,3 +82,26 @@ export function domManifest(doc: DomDoc): Manifest {
            "and the verbs the registry allows on it. Same shape as the server manifest (AI-INTERFACE §4).";
   return m;
 }
+
+/** A compact, deterministic, PLAIN-TEXT rendering of `domManifest()` — meant to be dropped
+ *  straight into an LLM system/user prompt so a consumer reasoner (a real model) decides what to
+ *  click/navigate from the REAL, live affordances on screen, instead of a hardcoded address list
+ *  that can silently drift from the UI (the same anti-drift promise `domManifest` already makes —
+ *  this is just its prose form). Built ON `domManifest`, not a second harvest: one truth, two
+ *  shapes (JSON for code, text for a prompt). Deterministic: the same DOM in always yields the
+ *  same string out — target order follows `harvestTargets`' DOM walk (document order), never a
+ *  Set/Map/Object whose iteration order could vary across engines. Pure — no DOM writes, no I/O. */
+export function manifestForReasoner(doc: DomDoc): string {
+  const m = domManifest(doc);
+  const lines: string[] = [`screen: ${m.screen || "(none)"}`];
+  if (!m.targets.length) {
+    lines.push("targets: (none — this page declares no [data-surface] elements)");
+    return lines.join("\n");
+  }
+  lines.push(`targets: (${m.targets.length})`);
+  for (const t of m.targets) {
+    const verbs = t.accepts.length ? t.accepts.join(", ") : "(no verb currently targets this)";
+    lines.push(`- ${t.id} [${t.kind}] -> ${verbs}`);
+  }
+  return lines.join("\n");
+}

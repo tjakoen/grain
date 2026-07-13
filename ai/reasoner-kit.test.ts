@@ -3,7 +3,8 @@
 import { test, expect, describe } from "bun:test";
 import {
   esc, chatBubble, chatBody, narrationLine,
-  userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp,
+  userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp,
+  renderMarkdown,
 } from "./reasoner-kit.ts";
 
 describe("markup", () => {
@@ -52,5 +53,15 @@ describe("op-builders", () => {
   test("spotlightOp: active pends, release commits", () => {
     expect(spotlightOp("screen", { active: true, click: true })).toMatchObject({ op: "spotlight", active: true, click: true, commit: "pending" });
     expect(spotlightOp("screen", { active: false })).toMatchObject({ op: "spotlight", active: false, commit: "committed" });
+  });
+  test("navigateOp: a same-origin path becomes a committed navigate op", () => {
+    expect(navigateOp("screen", "/notes")).toMatchObject({ target: "screen", op: "navigate", href: "/notes", commit: "committed" });
+  });
+  test("navigateOp: an unsafe href throws here, at compose time — not later, silently, at the dispatcher", () => {
+    expect(() => navigateOp("screen", "javascript:alert(1)")).toThrow();
+    expect(() => navigateOp("screen", "https://evil.example")).toThrow();
+  });
+  test("renderMarkdown is re-exported from the kit (same module ai/markdown.ts exports)", () => {
+    expect(renderMarkdown("**hi**")).toContain("<strong>hi</strong>");
   });
 });

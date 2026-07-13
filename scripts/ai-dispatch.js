@@ -38,6 +38,67 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
 
   const ACTING_LABEL = "✶ the AI is acting…";
 
+  // ---- navigate: same-origin, root-relative hrefs only ---------------------------
+  // Mirrors ai/contract.ts's `isSafeNavigateHref` EXACTLY (same regex, same reasons — see that
+  // file's comment). Duplicated here on purpose: this script is grain's "ONE accepted bit of
+  // client JS" (file header) and stays self-contained, no cross-module import of ai/*.ts into the
+  // browser. ai-dispatch.test.ts drift-guards this literal against contract.ts's so the two can't
+  // silently diverge (CLAUDE.md lesson #5) — the dispatcher is the LAST line of defense before an
+  // actual browser navigation, so it re-checks even though the reasoner already validated.
+  const SAFE_NAV_HREF = /^\/(?!\/)[^\s\\]*$/;
+  // A `navigate` op tears the page down — irreversible, so give any in-flight settle (the
+  // spotlight's glide off, a caret's last frame) a beat to read before that happens, instead of a
+  // bare synchronous location.assign mid-render. Named per CLAUDE.md lesson #9 (a magic number
+  // with no name can't be tuned) — a consumer wanting a snappier or gentler hand-off tunes this.
+  const NAVIGATE_SETTLE_MS = 220;
+
+  // ---- settle-time sanitizing markdown (mirrors ai/markdown.ts's renderMarkdown) -------------
+  // Streaming stays textContent (safe by construction — see applyType). Once a message SETTLES,
+  // re-render its accumulated plain text through this SMALL allowlist renderer so **bold**,
+  // `code`, and links read as formatting. Escapes every character FIRST, then builds ONLY the
+  // allowlisted tags around the escaped text, so raw <script>/HTML in the source is always inert —
+  // the only markup that can appear in the output is markup this function wrote. No innerHTML is
+  // ever set from unsanitized text. Kept an intentional, drift-guarded copy of ai/markdown.ts (see
+  // that file's header) for the same self-contained reason as SAFE_NAV_HREF above.
+  const mdEsc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const MD_CODE_RE = /`([^`]+)`/g;
+  const MD_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const MD_STRONG_RE = /\*\*([^*]+)\*\*/g;
+  const MD_EM_RE = /(?:\*([^*]+)\*|_([^_]+)_)/g;
+  const MD_LIST_ITEM_RE = /^[-*]\s+/;
+  const MD_BLOCK_SPLIT_RE = /\n{2,}/;
+  // Placeholder delimiter for pulled-out code spans (below) — \x00 can't occur in real chat text.
+  const MD_CODE_PLACEHOLDER_RE = /\x00(\d+)\x00/g;
+  function mdInline(escaped) {
+    // Code spans are pulled OUT first (placeholdered), so their literal contents can never be
+    // re-interpreted by strong/em/links below — spliced back in verbatim at the end.
+    const codeSpans = [];
+    let out = escaped.replace(MD_CODE_RE, (_m, code) => {
+      codeSpans.push(`<code>${code}</code>`);
+      return `\x00${codeSpans.length - 1}\x00`;
+    });
+    out = out.replace(MD_LINK_RE, (_m, text, href) => (SAFE_NAV_HREF.test(href) ? `<a href="${href}">${text}</a>` : text));
+    out = out.replace(MD_STRONG_RE, (_m, t) => `<strong>${t}</strong>`);
+    out = out.replace(MD_EM_RE, (_m, a, b) => `<em>${a ?? b}</em>`);
+    out = out.replace(MD_CODE_PLACEHOLDER_RE, (_m, i) => codeSpans[Number(i)]);
+    return out;
+  }
+  function renderMarkdown(text) {
+    const blocks = text.split(MD_BLOCK_SPLIT_RE);
+    const out = [];
+    for (const block of blocks) {
+      const lines = block.split("\n").filter((l) => l.length > 0);
+      if (!lines.length) continue;
+      if (lines.every((l) => MD_LIST_ITEM_RE.test(l))) {
+        const items = lines.map((l) => `<li>${mdInline(mdEsc(l.replace(MD_LIST_ITEM_RE, "")))}</li>`).join("");
+        out.push(`<ul>${items}</ul>`);
+      } else {
+        out.push(`<p>${lines.map((l) => mdInline(mdEsc(l))).join("<br>")}</p>`);
+      }
+    }
+    return out.join("");
+  }
+
   // ---- "the AI is acting": spotlight the surface the AI is touching --------------
   // The backdrop/label/lit/pulse DOM is grain's shared createSpotlight; the orchestration below is
   // this dispatcher's. clicking the veil → interrupt (ask, don't force-kill).
@@ -219,6 +280,16 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
       case "spotlight":                              // the AI as actor: dim + light the target
         op.active ? spotlightOn(op.target, op.click) : spotlightOff();
         return;
+      case "navigate":                                // AI-directed browser navigation (contract.ts's `navigate` op)
+        if (typeof op.href !== "string" || !SAFE_NAV_HREF.test(op.href)) {
+          console.error("[ai-dispatch] rejected navigate op with an unsafe href", op.href);
+          return;
+        }
+        // through the normal op/settle flow, not a bare synchronous assign mid-render: let the
+        // op's own "committed" handling above (clearTrigger) and any spotlight release the
+        // reasoner already emitted read first, THEN leave the page.
+        setTimeout(() => { location.assign(op.href); }, NAVIGATE_SETTLE_MS);
+        return;
       case "log":                                    // one entry into the interaction TIMELINE (§5g)
         if (el && typeof op.html === "string") {
           el.insertAdjacentHTML("beforeend", op.html);
@@ -261,6 +332,11 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (op.done) {
       const caret = el.querySelector(".caret");
       if (caret) caret.remove();
+      // Re-render the ACCUMULATED plain text through the sanitizing markdown renderer above —
+      // never innerHTML from the raw stream. renderMarkdown only ever emits its own allowlisted
+      // tags around escaped text, so this is safe even though body.textContent is untrusted
+      // (AI-composed, and AI-composed text may itself echo user input).
+      body.innerHTML = renderMarkdown(body.textContent);
       el.setAttribute("data-commit", "committed");   // finished — but grade stays grain (it's AI)
       el.classList.add("settled");                   // subtle fade-in; grade unchanged
     }

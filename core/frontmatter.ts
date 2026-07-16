@@ -23,7 +23,13 @@ export function parseFrontmatter(raw: string): ParsedFrontmatter {
   return { data, body };
 }
 
-const unquote = (s: string) => s.replace(/^(["'])(.*)\1$/, "$2");
+// Strip surrounding quotes. Double-quoted scalars process YAML escapes (`\"`, `\\`);
+// single-quoted scalars are verbatim inside (no backslash escaping in YAML).
+const unquote = (s: string) => {
+  const m = s.match(/^(["'])(.*)\1$/);
+  if (!m) return s;
+  return m[1] === '"' ? m[2].replace(/\\(["\\])/g, "$1") : m[2];
+};
 
 function parseYamlish(lines: string[]): Frontmatter {
   const data: Frontmatter = {};

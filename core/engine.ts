@@ -36,10 +36,15 @@ function makeContext(adapter: RenderAdapter): RenderContext {
   return ctx;
 }
 
-function deriveTitle(fm: Frontmatter, ast: MillNode[]): string {
-  if (typeof fm.title === "string" && fm.title.trim()) return fm.title.trim();
-  const h = ast.find((n): n is Extract<MillNode, { type: "heading" }> => n.type === "heading");
-  return h ? inlineText(h.children) : "";
+// Derive the masthead title. `headingIndex` is the ast index of the heading the title was
+// taken from (or -1 when the title came from frontmatter / no heading exists), so the caller
+// can drop that node from the rendered body and avoid showing the title twice.
+function deriveTitle(fm: Frontmatter, ast: MillNode[]): { title: string; headingIndex: number } {
+  if (typeof fm.title === "string" && fm.title.trim()) return { title: fm.title.trim(), headingIndex: -1 };
+  const headingIndex = ast.findIndex(n => n.type === "heading");
+  if (headingIndex === -1) return { title: "", headingIndex: -1 };
+  const h = ast[headingIndex] as Extract<MillNode, { type: "heading" }>;
+  return { title: inlineText(h.children), headingIndex };
 }
 
 // Render one Markdown document through an adapter. The result carries the rendered `html`
@@ -48,8 +53,11 @@ export function renderDocument(raw: string, adapter: RenderAdapter): RenderResul
   const { data: frontmatter, body } = parseFrontmatter(raw);
   const ast = parseMarkdown(body);
   const ctx = makeContext(adapter);
-  const bodyHtml = ctx.renderBlocks(ast);
-  const title = deriveTitle(frontmatter, ast);
+  const { title, headingIndex } = deriveTitle(frontmatter, ast);
+  // When the title was lifted from the first heading, keep it out of the rendered body so the
+  // masthead + body don't repeat it. The returned `ast` stays whole (TOC / RAG consumers).
+  const bodyAst = headingIndex >= 0 ? ast.filter((_, i) => i !== headingIndex) : ast;
+  const bodyHtml = ctx.renderBlocks(bodyAst);
   const type = typeof frontmatter.type === "string" ? frontmatter.type : "";
   const html = adapter.layout({ type, title, frontmatter, body: bodyHtml, ctx });
   return { html, frontmatter, ast, title, type };

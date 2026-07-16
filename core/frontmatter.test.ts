@@ -37,6 +37,16 @@ test("strips surrounding quotes and a leading BOM", () => {
   expect(data.title).toBe("Quoted Title");
 });
 
+test("a double-quoted scalar unescapes `\\\"` and `\\\\`", () => {
+  const { data } = parseFrontmatter(`---\ntitle: "\\"Vibe coder\\" \\\\ ship"\n---\nx`);
+  expect(data.title).toBe(`"Vibe coder" \\ ship`);
+});
+
+test("a single-quoted scalar keeps backslashes verbatim (no YAML escaping)", () => {
+  const { data } = parseFrontmatter(`---\ntitle: 'a\\nb'\n---\nx`);
+  expect(data.title).toBe(`a\\nb`);
+});
+
 test("carriage returns are tolerated", () => {
   const { data, body } = parseFrontmatter(`---\r\ntitle: CRLF\r\n---\r\nbody`);
   expect(data.title).toBe("CRLF");

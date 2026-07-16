@@ -44,6 +44,18 @@ test("title falls back to the first heading when frontmatter has none", () => {
   expect(title).toBe("The First Heading");
 });
 
+test("a heading-derived title is dropped from the rendered body (no duplicate title)", () => {
+  const { title, html, ast } = renderDocument(`# Only Heading\n\nbody`, fake);
+  expect(title).toBe("Only Heading");
+  expect(html).toBe(`<doc title="Only Heading">[p:body]</doc>`);   // heading not re-rendered
+  expect(ast.map(n => n.type)).toEqual(["heading", "paragraph"]);  // …but the ast stays whole
+});
+
+test("a frontmatter title leaves the body H1 in place", () => {
+  const { html } = renderDocument(`---\ntitle: Set\n---\n# Head\n\nbody`, fake);
+  expect(html).toBe(`<doc title="Set">[h1:Head][p:body]</doc>`);
+});
+
 test("the ast is returned for downstream use (TOC / RAG)", () => {
   const { ast } = renderDocument(`# A\n\n- one\n- two`, fake);
   expect(ast.map(n => n.type)).toEqual(["heading", "list"]);

@@ -11,8 +11,8 @@
   "homepage": "https://tjakoen.github.io/proof",
   "dependencies": {
     "@tjakoen/batch": "github:tjakoen/batch#d13d361",
-    "@tjakoen/grain": "github:tjakoen/grain#8e85a47",
-    "@tjakoen/mill": "github:tjakoen/mill#7051ef8"
+    "@tjakoen/grain": "github:tjakoen/grain#599f7d9",
+    "@tjakoen/mill": "github:tjakoen/mill#c767085"
   },
   "exports": {
     "./routes.ts": "./routes.ts",

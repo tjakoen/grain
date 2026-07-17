@@ -14,6 +14,19 @@ export function createSpotlight({ onInterrupt } = {}) {
     backdrop = document.createElement("div");            // invisible click-catcher: the interrupt gesture
     backdrop.className = "ai-backdrop";
     if (onInterrupt) backdrop.addEventListener("click", onInterrupt);
+    // The backdrop catches CLICKS (the interrupt gesture) but must NOT lock scrolling — the user
+    // still wants to read/adjust the page while the AI works. Forward wheel + touch drags to the
+    // page's own scroll region (the app-shell's main pane, else the document). A tap still fires
+    // `click` → interrupt; a wheel or drag just scrolls (owner 2026-07-17).
+    const scrollRegion = () => document.querySelector(".app-shell__main") || document.scrollingElement || document.documentElement;
+    backdrop.addEventListener("wheel", (e) => { scrollRegion().scrollTop += e.deltaY; e.preventDefault(); }, { passive: false });
+    let touchY = null;
+    backdrop.addEventListener("touchstart", (e) => { touchY = e.touches[0] ? e.touches[0].clientY : null; }, { passive: true });
+    backdrop.addEventListener("touchmove", (e) => {
+      if (touchY == null || !e.touches[0]) return;
+      const y = e.touches[0].clientY;
+      scrollRegion().scrollTop += touchY - y; touchY = y; e.preventDefault();
+    }, { passive: false });
     document.body.appendChild(backdrop);
     lamp = document.createElement("div");                // the one traveling frame (+ its shadow = the dim)
     lamp.className = "ai-lamp";

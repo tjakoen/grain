@@ -35,6 +35,25 @@ export const chatBody = (inner = "", surface?: Surface): string =>
 export const narrationLine = (verb: string, desc: string): string =>
   `<div class="console__line"><span class="action-badge">${verb}</span><span class="console__desc">${esc(desc)}</span></div>`;
 
+/** An animated "typing" indicator for a chat bubble that's thinking but hasn't streamed a token yet
+ *  (model load, retrieval) — so a pending bubble is NEVER a blank rectangle. Three pulsing dots,
+ *  announced to assistive tech as "Thinking". Pair with a `pending` grade (thinkingOp below). */
+export const thinkingDots = (): string =>
+  `<span class="chat-thinking" role="status" aria-label="Thinking"><span></span><span></span><span></span></span>`;
+
+/** A row of choice buttons the human picks from. It IS an actionable chat dialog (`chat-message__
+ *  actions` + `.btn` — reused, not reinvented: same clean-affordance grade treatment + online-gating
+ *  the chat-message component already ships), marked `data-choices` so the dispatcher resolves it
+ *  pick-once. Each button is a normal chat.send trigger through the ONE door (data-action/-target),
+ *  carrying its own answer as data-payload-text (the static-payload primitive fireTrigger reads).
+ *  Values default to the label; text is escaped at this single writer. */
+export const choiceGroup = (log: Surface, choices: { label: string; value?: string }[]): string =>
+  `<div class="chat-message__actions" data-choices>` +
+  choices.map((c) =>
+    `<button type="button" class="btn chat-choice" data-action="chat.send" data-target="${esc(log)}"` +
+    ` data-payload-text="${esc(c.value ?? c.label)}">${esc(c.label)}</button>`).join("") +
+  `</div>`;
+
 // ---- op-builders: the exact RenderOps a reasoner emits, so no consumer hand-rolls provenance/commit ----
 
 /** A human's message, committed (clean). Committed on the chat-log target also releases the composer
@@ -81,3 +100,17 @@ export const navigateOp = (target: Surface, href: string): RenderOp => {
     throw new Error(`navigateOp: unsafe href ${JSON.stringify(href)} — must be a same-origin, root-relative path`);
   return { target, op: "navigate", href, provenance: "ai", commit: "committed" };
 };
+
+/** Replace a bubble body with the animated "thinking" dots, pending — the AI is working but hasn't a
+ *  token to show yet. Reuses replaceBodyOp so the caret/settle lifecycle is identical to any stream. */
+export const thinkingOp = (surface: Surface): RenderOp => replaceBodyOp(surface, thinkingDots(), "pending");
+
+/** The AI asks the human to pick: an AI (grain) chat bubble with an optional prompt + a row of choice
+ *  buttons appended to the chat `log`. `commit: "committed"` — the AI's TURN is done (it asked); the
+ *  buttons are the human's control now, and each raises a fresh chat.send with its value when clicked
+ *  (the dispatcher resolves the group on pick). `who` overrides the bubble label. */
+export const choicesOp = (log: Surface, prompt: string, choices: { label: string; value?: string }[], who?: string): RenderOp =>
+  ({ target: log, op: "choices", provenance: "ai", commit: "committed", prompt, choices,
+     // omit the body span entirely when there's no prompt (e.g. the model already spoke the question
+     // in its own bubble) — an empty body would render as a stray blank line above the buttons.
+     html: chatBubble("ai", "grain", (prompt ? chatBody(esc(prompt)) : "") + choiceGroup(log, choices), who) });

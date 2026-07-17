@@ -4,7 +4,7 @@
 // closed ACTIONS vocabulary (so it shows up in the manifest, see manifest-dom.test.ts), an
 // unsafe/external href is rejected, and a same-origin root-relative one is accepted.
 import { test, expect, describe } from "bun:test";
-import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref } from "./contract.ts";
+import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref, isValidChoiceList } from "./contract.ts";
 
 describe("navigate: registered in the closed ACTIONS vocabulary", () => {
   test("is a real action, light depth, accepts the screen kind", () => {
@@ -45,5 +45,22 @@ describe("isSafeNavigateHref: same-origin, root-relative only", () => {
     expect(isSafeNavigateHref(undefined as unknown as string)).toBe(false);
     expect(isSafeNavigateHref(null as unknown as string)).toBe(false);
     expect(isSafeNavigateHref(42 as unknown as string)).toBe(false);
+  });
+});
+
+describe("isValidChoiceList: 1–6 options, each a non-empty label", () => {
+  test("accepts well-formed lists (value optional)", () => {
+    expect(isValidChoiceList([{ label: "A" }])).toBe(true);
+    expect(isValidChoiceList([{ label: "A", value: "go a" }, { label: "B" }])).toBe(true);
+    expect(isValidChoiceList([1, 2, 3, 4, 5, 6].map((n) => ({ label: `opt${n}` })))).toBe(true);
+  });
+  test("rejects empty, oversized, and malformed lists without throwing", () => {
+    expect(isValidChoiceList([])).toBe(false);                                   // must offer at least one
+    expect(isValidChoiceList([1, 2, 3, 4, 5, 6, 7].map((n) => ({ label: `o${n}` })))).toBe(false);  // capped at 6
+    expect(isValidChoiceList([{ label: "  " }])).toBe(false);                    // blank label
+    expect(isValidChoiceList([{ value: "x" } as unknown])).toBe(false);          // missing label
+    expect(isValidChoiceList([{ label: "A", value: 3 as unknown }])).toBe(false);// non-string value
+    expect(isValidChoiceList("nope" as unknown)).toBe(false);
+    expect(isValidChoiceList(null)).toBe(false);
   });
 });

@@ -259,6 +259,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
         if (el && typeof op.html === "string") el.outerHTML = op.html;   // confirmed (clean) fragment
         return;
       case "append":
+      case "choices":                                // an AI bubble with pick-one buttons — rendered like any append (the kit prebuilt op.html); the buttons are normal chat.send triggers
         if (el && typeof op.html === "string") {
           el.insertAdjacentHTML("beforeend", op.html);
           const oy = getComputedStyle(el).overflowY;              // a scrolling log (chat / terminal) stays pinned to newest
@@ -465,10 +466,24 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     const target = targetOf(trig);
     if (!action || !target) return;
     ev.preventDefault();
-    // a control may pull its payload text from an input surface (data-from) — e.g. a Send button
+    // a control may pull its payload text from an input surface (data-from) — e.g. a Send button —
+    // or carry a STATIC answer as data-payload-text (a choice button: the value it submits when
+    // picked). data-from (a live field) wins if both are present.
     const from = trig.getAttribute("data-from");
     const src = from ? find(from) : null;
-    const payload = src && "value" in src ? { text: src.value } : {};
+    const staticText = trig.getAttribute("data-payload-text");
+    const payload = src && "value" in src ? { text: src.value }
+      : staticText !== null ? { text: staticText } : {};
+    // a picked choice RESOLVES its group: mark the chosen one, retire the rest — a decision, not a
+    // re-openable menu (only once; a second click on an already-resolved group does nothing).
+    const group = trig.closest && trig.closest("[data-choices]");
+    if (group && !group.hasAttribute("data-resolved")) {
+      group.setAttribute("data-resolved", "");
+      trig.setAttribute("data-chosen", "");
+      for (const b of group.querySelectorAll("button")) b.disabled = true;
+    } else if (group) {
+      return;                                        // group already answered — ignore stray clicks
+    }
     submit(action, target, payload, trig);
     if (src && "value" in src) src.value = "";
   }

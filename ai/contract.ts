@@ -90,9 +90,19 @@ export interface Intent {
 //          actually move the browser. Both exist because they answer different questions: "is this
 //          verb legal here" (ActionName, surfaced in the manifest) vs "make it happen" (RenderOp,
 //          applied by the dispatcher).
-export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate";
+// `choices` — the AI ASKS and the human ANSWERS through a control: an AI chat bubble carrying a
+// short prompt + a row of buttons. It's the mirror of every other op (which is the AI acting on the
+// human's behalf): here the AI hands the decision back. Kept a first-class RenderOpKind, not a bare
+// `append` of button HTML, for the same reason `navigate` is (below): it names a distinct intent the
+// dispatcher renders + wires uniformly (each button is a normal chat.send trigger through the ONE
+// door — no parallel path), and it's conformance-testable as its own vocabulary word.
+export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices";
 export type Provenance = "user" | "ai" | "system";
 export type Commit = "pending" | "committed";   // grade = commit state (DESIGN-SYSTEM §3)
+
+/** One option in a `choices` op. `label` is the button text; `value` is the text submitted as the
+ *  next chat turn when it's picked (defaults to `label`) — so a choice is just a pre-filled ask. */
+export interface Choice { label: string; value?: string }
 
 export interface RenderOp {
   target: Surface;
@@ -105,9 +115,18 @@ export interface RenderOp {
   click?: boolean;            // spotlight: this is a "click" → pulse the target (else just lift it)
   message?: string;            // human-facing note (flash)
   href?: string;                // navigate: where to (validated — isSafeNavigateHref, below)
+  prompt?: string;             // choices: the question shown above the buttons (optional)
+  choices?: Choice[];          // choices: the options the human picks from (validated — isValidChoiceList)
   provenance: Provenance;
   commit: Commit;
 }
+
+/** A well-formed choice list: 1–6 options, each with a non-empty string label (value optional). The
+ *  cap keeps a chat dialog scannable; the shape guard is the SSOT the dispatcher's own check mirrors. */
+export const isValidChoiceList = (x: unknown): x is Choice[] =>
+  Array.isArray(x) && x.length >= 1 && x.length <= 6 &&
+  x.every((c) => !!c && typeof (c as Choice).label === "string" && (c as Choice).label.trim().length > 0 &&
+    ((c as Choice).value === undefined || typeof (c as Choice).value === "string"));
 
 // ---- navigate's href validator — the SSOT the dispatcher's own guard must never drift from ------
 // Same-origin, ROOT-RELATIVE paths only. Rejects:

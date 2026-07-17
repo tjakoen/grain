@@ -2,8 +2,9 @@
 // consumer's real model composes with (and the stub dogfoods), so pin their contract.
 import { test, expect, describe } from "bun:test";
 import {
-  esc, chatBubble, chatBody, narrationLine,
+  esc, chatBubble, chatBody, narrationLine, thinkingDots, choiceGroup,
   userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp,
+  thinkingOp, choicesOp,
   renderMarkdown,
 } from "./reasoner-kit.ts";
 
@@ -63,5 +64,42 @@ describe("op-builders", () => {
   });
   test("renderMarkdown is re-exported from the kit (same module ai/markdown.ts exports)", () => {
     expect(renderMarkdown("**hi**")).toContain("<strong>hi</strong>");
+  });
+
+  test("thinkingDots is a labelled, animatable indicator", () => {
+    const d = thinkingDots();
+    expect(d).toContain('class="chat-thinking"');
+    expect(d).toContain('aria-label="Thinking"');
+    expect((d.match(/<span><\/span>/g) ?? []).length).toBe(3);   // three dots
+  });
+  test("thinkingOp replaces the bubble body pending, keeping the surface for later ops", () => {
+    const op = thinkingOp("chat-msg:1");
+    expect(op).toMatchObject({ op: "replace", commit: "pending", target: "chat-msg:1" });
+    expect(op.html).toContain("chat-thinking");
+    expect(op.html).toContain('data-surface="chat-msg:1"');
+  });
+
+  test("choiceGroup: each option is a chat.send trigger carrying its own value; reuses the actionable-dialog row", () => {
+    const html = choiceGroup("chat-log", [{ label: "GRAIN", value: "take me to grain" }, { label: "Notes" }]);
+    expect(html).toContain('class="chat-message__actions" data-choices');   // reuses the existing dialog idiom
+    expect(html).toContain('data-action="chat.send"');
+    expect(html).toContain('data-target="chat-log"');
+    expect(html).toContain('data-payload-text="take me to grain"');
+    expect(html).toContain('data-payload-text="Notes"');                     // value defaults to label
+    expect(html).toContain(">GRAIN</button>");
+  });
+  test("choiceGroup escapes both label and value at the single writer", () => {
+    const html = choiceGroup("chat-log", [{ label: `<b>x</b>`, value: `"&<` }]);
+    expect(html).not.toContain("<b>x</b>");
+    expect(html).toContain("&lt;b&gt;x&lt;/b&gt;");
+    expect(html).toContain("&quot;&amp;&lt;");
+  });
+  test("choicesOp: a committed AI bubble (the ask is the AI's finished turn) carrying the prompt + choices", () => {
+    const op = choicesOp("chat-log", "Where to?", [{ label: "Home", value: "go home" }]);
+    expect(op).toMatchObject({ op: "choices", target: "chat-log", commit: "committed", provenance: "ai" });
+    expect(op.choices).toEqual([{ label: "Home", value: "go home" }]);
+    expect(op.html).toContain('data-grade="grain"');       // the ask is AI speech → grain
+    expect(op.html).toContain("Where to?");
+    expect(op.html).toContain('data-payload-text="go home"');
   });
 });

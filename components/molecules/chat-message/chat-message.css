@@ -7,6 +7,12 @@
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-line); border-radius: var(--radius-md);
   font-size: var(--text-sm);
+  /* Break long unbreakable runs (URLs, code identifiers, hashes) INSIDE the bubble. Without this a
+     single long token overflows its own box and pushes the .assistant__log's scrollWidth past its
+     width, so the whole conversation scrolls sideways (owner report: the AI chat scrolls
+     horizontally). `anywhere` also lets the bubble shrink to fit narrow (mobile-sheet) widths. */
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .chat-message[data-role="you"] { align-self: flex-end;   background: var(--color-bg); }
 .chat-message[data-role="ai"]  { align-self: flex-start; background: transparent; }   /* grain via data-grade */

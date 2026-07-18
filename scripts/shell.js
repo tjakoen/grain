@@ -8,6 +8,15 @@
   if (!shell) return;
 
   const mobile = window.matchMedia("(max-width: 768px)");
+  // "Effective mobile" is a CONTAINER question, not a viewport one. The mobile drawer/sheet LAYOUT is
+  // driven by `@container shell-frame (max-width: 768px)` on <body> (app-shell.css), which the
+  // viewport-toggle fires by clamping body's width — WITHOUT changing the real window, so
+  // `mobile.matches` (a viewport media query) stays false and every behaviour gated on it silently
+  // no-ops: the grab bar can't raise the sheet, the mode tabs can't reach the catalog, the rail
+  // hamburger collapses instead of opening the drawer (owner report: "chat + catalog broken when the
+  // viewport is toggled"). Gate on the SAME thing the CSS does — the shell-frame container's
+  // inline-size (= body's width) — so JS and layout agree in both a real narrow window and the toggle.
+  const isMobile = () => mobile.matches || document.body.getBoundingClientRect().width <= 768;
   const KEY = "grain.shell.rail-collapsed";
 
   const setCollapsed = (v) => {
@@ -25,7 +34,7 @@
   // the toggle(s): any control marked data-shell="rail-toggle"
   for (const btn of shell.querySelectorAll('[data-shell="rail-toggle"]')) {
     btn.addEventListener("click", () => {
-      if (mobile.matches) setOpen(shell.getAttribute("data-rail-open") !== "true");
+      if (isMobile()) setOpen(shell.getAttribute("data-rail-open") !== "true");
       else setCollapsed(shell.getAttribute("data-rail-collapsed") !== "true");
     });
   }
@@ -52,7 +61,7 @@
       if (!input) return;                       // no assistant on this page → follow the link
       e.preventDefault();
       shell.removeAttribute("data-aside-hidden");
-      if (mobile.matches) shell.setAttribute("data-aside-open", "true");
+      if (isMobile()) shell.setAttribute("data-aside-open", "true");
       input.focus();
     });
 
@@ -108,12 +117,12 @@
       setAsideMode(b.getAttribute("data-shell-mode"));
       // on mobile the tabs sit INSIDE the grab bar: tapping one with the sheet closed must also
       // RAISE the sheet (otherwise the tap looks swallowed — the pane it opened stays off-screen)
-      if (mobile.matches && !shell.hasAttribute("data-aside-open")) shell.setAttribute("data-aside-open", "");
+      if (isMobile() && !shell.hasAttribute("data-aside-open")) shell.setAttribute("data-aside-open", "");
     });
 
   // mobile: the assistant is a bottom sheet — tap its header (the grab bar) to raise/lower it
   shell.querySelector(".assistant__head")?.addEventListener("click", () => {
-    if (mobile.matches) shell.toggleAttribute("data-aside-open");
+    if (isMobile()) shell.toggleAttribute("data-aside-open");
   });
 
   // The narration feed lives in the docked terminal and STAYS there. During a run the terminal is
@@ -140,7 +149,7 @@
   // activity-bar app links AND the file-tree files — both live under .app-shell__rail now)
   shell.querySelector(".app-shell__scrim")?.addEventListener("click", () => setOpen(false));
   for (const a of shell.querySelectorAll(".app-shell__rail a"))
-    a.addEventListener("click", () => { if (mobile.matches) setOpen(false); });
+    a.addEventListener("click", () => { if (isMobile()) setOpen(false); });
 
   // crossing the breakpoint clears any stuck drawer / sheet state
   mobile.addEventListener?.("change", () => { setOpen(false); shell.removeAttribute("data-aside-open"); });
@@ -161,6 +170,10 @@
       const next = VIEWPORTS[(VIEWPORTS.indexOf(document.body.getAttribute("data-viewport")) + 1) % VIEWPORTS.length];
       if (next) document.body.setAttribute("data-viewport", next); else document.body.removeAttribute("data-viewport");
       if (label) label.textContent = next || "desktop";
+      // Toggling the viewport crosses the layout breakpoint WITHOUT a matchMedia `change` (that fires
+      // off the real window, which didn't move), so clear any stuck drawer/sheet the way the real
+      // breakpoint-cross handler below does — otherwise a sheet opened in one mode lingers in the next.
+      setOpen(false); shell.removeAttribute("data-aside-open");
     });
   }
 

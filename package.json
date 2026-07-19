@@ -11,7 +11,7 @@
   "homepage": "https://tjakoen.github.io/proof",
   "dependencies": {
     "@tjakoen/batch": "github:tjakoen/batch#d13d361",
-    "@tjakoen/grain": "github:tjakoen/grain#f37f7f4",
+    "@tjakoen/grain": "github:tjakoen/grain#1f5f120",
     "@tjakoen/mill": "github:tjakoen/mill#080aaf5"
   },
   "exports": {

@@ -6,6 +6,14 @@
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/mill",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjakoen/grain.git",
+    "directory": "packages/mill"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "dependencies": {
     "@tjakoen/grain": "workspace:*"
   },

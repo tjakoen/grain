@@ -1,6 +1,7 @@
 {
   "name": "@tjakoen/crumb",
   "version": "0.0.0",
+  "private": true,
   "description": "CRUMB — the GRAIN stack's guided-tour / demo-mode / AI-review layer. Tours-as-markdown rendered as a guided projection that never writes (PROOF's twin). SCAFFOLD ONLY — see PLAN.md; build is effort B, gated.",
   "type": "module",
   "license": "Apache-2.0",

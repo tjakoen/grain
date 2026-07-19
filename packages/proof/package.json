@@ -9,6 +9,14 @@
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/proof",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjakoen/grain.git",
+    "directory": "packages/proof"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "dependencies": {
     "@tjakoen/grain": "workspace:*",
     "@tjakoen/mill": "workspace:*"

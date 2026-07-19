@@ -1,34 +1,16 @@
 {
-  "name": "@tjakoen/grain",
-  "version": "0.1.0",
-  "description": "GRAIN — an AI-interaction design system where every surface is operable by both a human and an AI through one shared vocabulary.",
+  "name": "@tjakoen/grain-monorepo",
+  "private": true,
   "type": "module",
+  "description": "GRAIN monorepo — the AI-interaction design-system family (grain, mill, proof, crumb) as one bun workspace. Consumers pin this repo; internal deps resolve via workspace:*.",
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
-  "homepage": "https://tjakoen.github.io/grain",
-  "exports": {
-    "./ai/*": "./ai/*",
-    "./components/*": "./components/*",
-    "./styles/*": "./styles/*",
-    "./scripts/*": "./scripts/*",
-    "./assets/*": "./assets/*",
-    "./fonts/*": "./fonts/*",
-    "./catalog/*": "./catalog/*",
-    "./PLAN.md": "./PLAN.md"
-  },
-  "files": [
-    "ai",
-    "assets",
-    "catalog",
-    "components",
-    "fonts",
-    "scripts",
-    "styles",
-    "PLAN.md"
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "check": "tsc --noEmit",
-    "test": "bun test"
+    "check": "bun run --filter '*' check",
+    "test": "bun run --filter '*' test"
   },
   "devDependencies": {
     "bun-types": "^1.3.14",

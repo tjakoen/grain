@@ -1,0 +1,139 @@
+/* proof/board.css — the kanban layout. Tokens only (grain owns the palette); this file adds
+   only geometry + the status accents keyed off GRAIN's semantic colors. No hardcoded hues. */
+
+.proof-body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-base);
+}
+
+.proof-main {
+  max-width: min(100%, 96rem);
+  margin: 0 auto;
+  padding: var(--space-8, 2rem);
+}
+
+.proof-masthead {
+  font-family: var(--display);
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-1, 0.5rem);
+}
+.proof-lede {
+  color: var(--ink-muted);
+  margin: 0 0 var(--space-8, 2rem);
+}
+
+/* --- the board: four columns, horizontal scroll when narrow --- */
+.proof-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 1fr);
+  gap: var(--space-4, 1rem);
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: var(--space-4, 1rem);
+}
+
+.proof-col {
+  border: var(--hairline, 1px) solid var(--rule);
+  border-radius: var(--radius-md, 6px);
+  background: var(--paper-2, var(--paper));
+  padding: var(--space-4, 1rem);
+  min-width: 0;
+}
+.proof-col__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4, 1rem);
+}
+.proof-col__title {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  margin: 0;
+}
+.proof-col__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+/* a column's left edge carries its status accent — a quiet signal, not a fill */
+.proof-col[data-status="doing"] { border-left: 3px solid var(--color-accent); }
+.proof-col[data-status="done"] { border-left: 3px solid var(--color-success); }
+.proof-col[data-status="blocked"] { border-left: 3px solid var(--color-danger); }
+.proof-col[data-status="todo"] { border-left: 3px solid var(--ink-faint); }
+
+.proof-col__cards { display: flex; flex-direction: column; gap: var(--space-4, 1rem); }
+.proof-col__empty { color: var(--ink-faint); text-align: center; margin: 0; }
+
+/* --- cards (reuses grain .card; adds the plan-specific bits) --- */
+.proof-card { display: block; text-decoration: none; color: inherit; }
+.proof-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1, 0.5rem);
+}
+.proof-card__owner {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+.proof-card .card__title { font-size: var(--text-base); margin: 0 0 var(--space-1, 0.5rem); }
+.proof-card__meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  margin: 0;
+}
+.proof-card__touches {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: var(--space-1, 0.5rem) 0 0;
+  padding: 0;
+}
+.proof-card__chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  border: var(--hairline, 1px) solid var(--line-soft, var(--rule));
+  border-radius: var(--radius-sm, 3px);
+  padding: 0.05rem 0.35rem;
+}
+.proof-card__flag {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin: var(--space-1, 0.5rem) 0 0;
+}
+
+/* --- card detail --- */
+.proof-facts {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 var(--space-8, 2rem);
+  padding: var(--space-4, 1rem);
+  border: var(--hairline, 1px) solid var(--rule);
+  border-radius: var(--radius-md, 6px);
+}
+.proof-facts__row { display: flex; gap: var(--space-4, 1rem); }
+.proof-facts dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  min-width: 7rem;
+}
+.proof-facts dd { margin: 0; font-family: var(--font-mono); font-size: var(--text-sm); }
+
+.proof-back {
+  display: inline-block;
+  margin-bottom: var(--space-4, 1rem);
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}

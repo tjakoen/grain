@@ -1,0 +1,44 @@
+name: Publish packages
+
+# Publishes @tjakoen/{grain,mill,proof} to GitHub Packages when their version changes.
+# Bump a package's version in its package.json and push to main: this publishes the new
+# version and skips any version already on the registry (so ordinary commits are a no-op).
+# crumb is private (scaffold) and is intentionally not published.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@tjakoen'
+      - name: Publish new package versions
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for p in grain mill proof; do
+            v=$(node -p "require('./packages/$p/package.json').version")
+            if npm view "@tjakoen/$p@$v" version >/dev/null 2>&1; then
+              echo "@tjakoen/$p@$v already published — skipping"
+            else
+              echo "Publishing @tjakoen/$p@$v"
+              npm publish -w "@tjakoen/$p"
+            fi
+          done

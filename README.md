@@ -170,6 +170,18 @@ const layer = createInteractionLayer({
 > Pushing the vocabulary down to the consumer is a known next step (see
 > <https://tjakoen.github.io/grain/docs/ai-interface> §1b note). Until then, edit `ai/contract.ts` to add verbs.
 
+### Optional standalone islands (drop-in, no wiring)
+
+Self-contained `<dialog>` mechanisms — one `<script>` plus its stylesheet, driven entirely by
+data-attributes, no composition-root wiring and no AI layer required:
+
+- **`scripts/cmdk.js`** + `styles/cmdk.css` — the ⌘K command palette. Fetches `/search.json`;
+  any `[data-cmdk-open]` element also opens it.
+- **`scripts/lightbox.js`** + `styles/lightbox.css` — the image viewer. `[data-lightbox]` marks a
+  trigger (if it's an `<a href>`, the href is the full image, so it stays a real link with no JS);
+  a `[data-lightbox-group]` ancestor turns its triggers into one gallery with prev/next + a dot rail.
+  Caption comes from `data-lightbox-caption` or the child `<img>` alt.
+
 ---
 
 ## 6. Build your own — a theme + components (consumer guide)

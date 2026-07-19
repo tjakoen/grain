@@ -41,7 +41,8 @@ build it.
   never `data-commit`). `renderGrainDocument` enforces it (`core/grade.ts`). Only the AI grains.
 - **Content sources are package-resolved, never path-reached.** MILL reads a collection's `.md`
   through `dirSource`/`packageDocsSource` (`import.meta.resolve('@pkg/…')`) — never a `../sibling`
-  relative path. Same code in the monorepo (workspaces) and after the split (git dep). Note: the
+  relative path. Same code whether mill resolves as a `workspace:*` package inside the grain
+  monorepo or as the published `@tjakoen/mill` in a consumer. Note: the
   layer docs behind `/grain/docs` + `/batch/docs` were folded into the portfolio in the 2026-07-09
   option-b docs home, so the portfolio's `content.ts` now points those two collections at its own
   `docs/<layer>/` via `dirSource` — MILL's resolution mechanism is unchanged, only the source dir.

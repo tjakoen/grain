@@ -38,7 +38,8 @@ bun cli.ts check   # lint a plans/ folder (what consumers run as `bunx proof che
   `depends`, `touches`, `owner`). `check.ts` enforces it; change the schema only with the loader,
   the checker, the tests, and `PLAN.md` in the same change.
 - **A layer above, never sideways.** PROOF consumes mill/grain/batch via `@tjakoen/*` package
-  specifiers (sha-pinned git deps) — never relative sibling paths, never the reverse direction.
+  specifiers (grain + mill resolve as `workspace:*` in the grain monorepo; batch is an external
+  devDep) — never relative sibling paths, never the reverse direction.
 - **Tests are part of the work.** `tsc` + `bun test` green before "done".
 
 ## Definition of done

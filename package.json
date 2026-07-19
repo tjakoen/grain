@@ -8,7 +8,7 @@
   "homepage": "https://tjakoen.github.io/mill",
   "dependencies": {
     "@tjakoen/batch": "github:tjakoen/batch#d13d361",
-    "@tjakoen/grain": "github:tjakoen/grain#f37f7f4"
+    "@tjakoen/grain": "github:tjakoen/grain#1f5f120"
   },
   "exports": {
     "./serve.ts": "./serve.ts",

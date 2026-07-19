@@ -3,14 +3,56 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@tjakoen/proof",
+      "name": "@tjakoen/grain-monorepo",
+      "devDependencies": {
+        "bun-types": "^1.3.14",
+        "typescript": "^5.8.0",
+      },
+    },
+    "packages/crumb": {
+      "name": "@tjakoen/crumb",
+      "version": "0.0.0",
       "dependencies": {
-        "@tjakoen/batch": "github:tjakoen/batch#d13d361",
-        "@tjakoen/grain": "github:tjakoen/grain#1f5f120",
-        "@tjakoen/mill": "github:tjakoen/mill#080aaf5",
+        "@tjakoen/grain": "workspace:*",
+        "@tjakoen/mill": "workspace:*",
+      },
+      "devDependencies": {
+        "bun-types": "^1.3.14",
+        "typescript": "^5.8.0",
+      },
+    },
+    "packages/grain": {
+      "name": "@tjakoen/grain",
+      "version": "0.1.0",
+      "devDependencies": {
+        "bun-types": "^1.3.14",
+        "typescript": "^5.8.0",
+      },
+    },
+    "packages/mill": {
+      "name": "@tjakoen/mill",
+      "version": "0.1.0",
+      "dependencies": {
+        "@tjakoen/grain": "workspace:*",
+      },
+      "devDependencies": {
+        "bun-types": "^1.3.14",
+        "typescript": "^5.8.0",
+      },
+    },
+    "packages/proof": {
+      "name": "@tjakoen/proof",
+      "version": "0.1.0",
+      "bin": {
+        "proof": "./cli.ts",
+      },
+      "dependencies": {
+        "@tjakoen/grain": "workspace:*",
+        "@tjakoen/mill": "workspace:*",
       },
       "devDependencies": {
         "@playwright/test": "^1.61.1",
+        "@tjakoen/batch": "github:tjakoen/batch#d13d361",
         "bun-types": "^1.3.14",
         "typescript": "^5.8.0",
       },
@@ -21,9 +63,13 @@
 
     "@tjakoen/batch": ["@tjakoen/batch@github:tjakoen/batch#d13d361", {}, "tjakoen-batch-d13d361", "sha512-/gtFCmugE5X1MmQrt8+yu6SYgJsKOGW35L/2NFRKUSwVWDkRKtczpiJJXBHFj1tm1O17e/k0Azm09hR8+c+fpA=="],
 
-    "@tjakoen/grain": ["@tjakoen/grain@github:tjakoen/grain#1f5f120", {}, "tjakoen-grain-1f5f120", "sha512-6ko+BjSjVZymLn70gGrjv7BHZmPz2CjC7cUQhQS7RTG5oCKKZc/p/Ou7+0n1XMWGGnvpMKW1YQqCDWHzaei0AA=="],
+    "@tjakoen/crumb": ["@tjakoen/crumb@workspace:packages/crumb"],
 
-    "@tjakoen/mill": ["@tjakoen/mill@github:tjakoen/mill#080aaf5", { "dependencies": { "@tjakoen/batch": "github:tjakoen/batch#d13d361", "@tjakoen/grain": "github:tjakoen/grain#cba253a" } }, "tjakoen-mill-080aaf5", "sha512-ThVuxcWoe8Rbfbi2YuN/CgwJ9ct2Y5cHdAs/idgBhXwHYMJ8mU20q3pK5elPPo/khJCJwiIi6/mAedG5bWPnZA=="],
+    "@tjakoen/grain": ["@tjakoen/grain@workspace:packages/grain"],
+
+    "@tjakoen/mill": ["@tjakoen/mill@workspace:packages/mill"],
+
+    "@tjakoen/proof": ["@tjakoen/proof@workspace:packages/proof"],
 
     "@types/node": ["@types/node@26.1.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw=="],
 
@@ -38,7 +84,5 @@
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
-
-    "@tjakoen/mill/@tjakoen/grain": ["@tjakoen/grain@github:tjakoen/grain#cba253a", {}, "tjakoen-grain-cba253a", "sha512-DDz6+47gAJI8PkrRR34Vg+GyUjUy6KpNBs540MmZ3kc32y0J4jG4iBLdQ402MKL9PuiFmwdXvVnTr6Trcvml4g=="],
   }
 }

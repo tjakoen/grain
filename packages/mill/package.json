@@ -7,8 +7,7 @@
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/mill",
   "dependencies": {
-    "@tjakoen/batch": "github:tjakoen/batch#d13d361",
-    "@tjakoen/grain": "github:tjakoen/grain#1f5f120"
+    "@tjakoen/grain": "workspace:*"
   },
   "exports": {
     "./serve.ts": "./serve.ts",
@@ -30,8 +29,7 @@
   ],
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "bun test",
-    "deps:refresh": "for p in batch grain; do bun add @tjakoen/$p@github:tjakoen/$p#$(git ls-remote https://github.com/tjakoen/$p.git main | cut -c1-7); done"
+    "test": "bun test"
   },
   "devDependencies": {
     "bun-types": "^1.3.14",

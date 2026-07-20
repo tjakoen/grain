@@ -5,7 +5,31 @@
 // a rect, so every surface kind gets the same treatment by construction. Both the real dispatcher
 // and client-side demos drive this ONE factory (AI-INTERFACE §5c) — never re-implement it.
 // Native ES module, no build. Reduced-motion is handled by ai.css (the glide transition is off).
-export function createSpotlight({ onInterrupt } = {}) {
+//
+// PASSTHROUGH MODE (added for CRUMB, the guided-tour layer). Normally the backdrop is a solid
+// click-catcher: any click while the lamp is on → `onInterrupt` (the "ask the AI to stop"
+// gesture). A guided TOUR needs the opposite for the LIT target — the human must be able to
+// click the highlighted surface to inspect/verify it. Passthrough cuts a hole in the backdrop's
+// click-catch area AT THE LAMP'S GEOMETRY (never per-surface — grain lesson 8), so the pointer
+// falls straight through to the target while everything else still blocks (guarding the tour
+// from stray page clicks). The visual is untouched: the dim is the LAMP's own cutout shadow
+// (a separate, pointer-events:none element), so cutting the transparent backdrop changes only
+// what's clickable, never what's lit.
+
+// The backdrop is a full-viewport fixed element; to make ONE rectangular region click-through
+// we clip it to "everything except that rect" via a polygon with a slit bridging out to the
+// hole and back (the standard overlay-hole technique). Pure geometry → unit-testable without a
+// browser (grain tests DOM behavior with structural fakes; lesson 9: test the motion, not
+// presence). `hole` is the lamp's client rect {left,top,width,height}; returns a clip-path
+// string, or "" for no hole (full-cover backdrop).
+export function backdropClip(hole) {
+  if (!hole) return "";
+  const { left: x, top: y, width: w, height: h } = hole;
+  return `polygon(0px 0px, 100% 0px, 100% 100%, 0px 100%, 0px 0px, ` +
+    `${x}px ${y}px, ${x}px ${y + h}px, ${x + w}px ${y + h}px, ${x + w}px ${y}px, ${x}px ${y}px)`;
+}
+
+export function createSpotlight({ onInterrupt, passthrough = false } = {}) {
   let backdrop = null, lamp = null, labelEl = null, lit = null;
   const PAD = 6;   // breathing room between the surface and the lamp's frame
 
@@ -60,6 +84,10 @@ export function createSpotlight({ onInterrupt } = {}) {
     lamp.style.transform = `translate3d(${r.left - PAD}px, ${r.top - PAD}px, 0)`;
     lamp.style.width = `${r.width + PAD * 2}px`;
     lamp.style.height = `${r.height + PAD * 2}px`;
+    // passthrough: the backdrop's click-catch hole tracks the lamp (same rect), so the lit
+    // target stays clickable as it glides. The hole rides `follow` too — it never lags a scroll.
+    if (passthrough) backdrop.style.clipPath = backdropClip(
+      { left: r.left - PAD, top: r.top - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 });
   }
 
   return {
@@ -101,7 +129,7 @@ export function createSpotlight({ onInterrupt } = {}) {
     pulse(el) { if (!el) return; el.classList.remove("is-click"); void el.offsetWidth; el.classList.add("is-click"); setTimeout(() => el.classList.remove("is-click"), 500); },
     // drop the veil and release the lit surface (the lamp fades out in place)
     off() {
-      if (backdrop) backdrop.classList.remove("is-on");
+      if (backdrop) { backdrop.classList.remove("is-on"); backdrop.style.clipPath = ""; }
       if (lamp) lamp.classList.remove("is-on");
       if (labelEl) labelEl.hidden = true;
       if (lit) { lit.classList.remove("ai-spotlit", "is-click"); lit = null; }

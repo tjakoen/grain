@@ -1,15 +1,21 @@
 // crumb/crumb-live.js — the CRUMB tour CLIENT: drives grain's traveling lamp (in PASSTHROUGH mode)
-// + a <dialog> popover + REAL navigation between steps. Native ES module, no build (grain idiom).
+// + real navigation between steps. Two presentations of the SAME tour data:
+//   - popover  (B2): a floating <dialog> anchored to the lit surface — the quick guided walk.
+//   - frame    (B3): a routed app-shell VARIANT — a fixed top-bar + a combined nav/content sidebar
+//                    + a bordered viewport. NOT an iframe (that would spawn a 2nd OpChannel
+//                    subscriber and break grain's single-door audit model, PLAN.md); the host page
+//                    is the real page, navigated in place, read as "framed". One sidebar component,
+//                    `data-mode="demo|dev"` flipped live — variants as an attribute, never a
+//                    DemoSidebar/DevSidebar split (grain non-negotiable). Native ES module, no build.
 //
-// The design law (PLAN.md): the tour is a PROJECTION. It highlights, explains, and collects a
-// verified mark — it NEVER mutates app state. Step routing is real navigation via the `navigate`
-// idiom (location.assign), not an SPA fake, so tour progress must survive a page load: it lives in
-// sessionStorage and this module RESUMES on every page it's injected into. One lamp is on at a
-// time (a tour runs while the AI is idle), so reusing grain's createSpotlight is safe (lesson 1:
-// use the mechanism, don't reinvent it).
+// The design law (PLAN.md): the tour is a PROJECTION. It highlights, explains, and (dev mode)
+// collects a verified mark — it NEVER mutates app state. Step routing is real navigation via the
+// `navigate` idiom (location.assign), so tour progress must survive a page load: it lives in
+// sessionStorage and this module RESUMES on every page it's injected into. One lamp is on at a time
+// (a tour runs while the AI is idle), so reusing grain's createSpotlight is safe (lesson 1).
 import { createSpotlight } from "/scripts/ai-spotlight.js";
 
-const KEY = "crumb:active";        // sessionStorage: { id, step, mode }  (step -1 = the intro card)
+const KEY = "crumb:active";        // sessionStorage: { id, step, mode, frame }  (step -1 = intro card)
 const cache = new Map();           // id -> Tour (avoid re-fetching across a same-page next/prev)
 
 function getState() { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } }
@@ -25,25 +31,39 @@ async function fetchTour(id) {
   return tour;
 }
 
-// ---- the one lamp (passthrough) + the one popover, created lazily ------------
-let spot = null, pop = null, escBound = false;
+// A tour offers the demo|dev toggle only when it actually carries review content — otherwise the
+// flip would be a no-op switch (a step's review/verify/status is what dev mode adds over demo).
+const hasDevContent = (tour) => tour.steps.some((s) => s.review || s.verify || s.status);
+const surfaceLabel = (s) => (s.surface || "").replace(/^nav:|^note:/, "").replace(/[:/]+/g, " ").trim() || "step";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---- the one lamp (passthrough) ---------------------------------------------
+let spot = null, escBound = false;
 function lamp() { return spot || (spot = createSpotlight({ passthrough: true })); }
+function bindEsc() {
+  if (escBound) return;
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && getState()) { e.preventDefault(); end(); } });
+  escBound = true;
+}
+// light (or clear) the current step's surface — shared by both presentations.
+function lightStep(step, intro) {
+  const surfaceEl = step && step.surface ? document.querySelector(`[data-surface="${step.surface}"]`) : null;
+  if (surfaceEl) { surfaceEl.scrollIntoView({ block: "center", behavior: "smooth" }); lamp().on(""); lamp().move(surfaceEl); }
+  else if (intro) lamp().off();
+  return surfaceEl;
+}
+
+// ================= PRESENTATION 1: the floating popover (B2) ==================
+let pop = null;
 function popover() {
   if (pop) return pop;
   pop = document.createElement("dialog");
   pop.className = "crumb-pop";
   pop.setAttribute("data-mode", "demo");
   document.body.appendChild(pop);
-  if (!escBound) {
-    // non-modal <dialog> doesn't auto-close on Escape — bind it so the tour always releases.
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && getState()) { e.preventDefault(); end(); } });
-    escBound = true;
-  }
+  bindEsc();                       // non-modal <dialog> doesn't auto-close on Escape
   return pop;
 }
-
-// place the card near its surface (below if there's room, else above), clamped to the viewport;
-// centered when there's no surface (the intro / a missing target).
 function placeCard(card, surfaceEl) {
   const w = card.offsetWidth, h = card.offsetHeight, M = 12;
   if (!surfaceEl) {
@@ -59,27 +79,21 @@ function placeCard(card, surfaceEl) {
   card.style.left = `${Math.round(left)}px`;
   card.style.top = `${Math.round(Math.max(M, top))}px`;
 }
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-function renderCard(tour, idx, mode) {
+function renderPopover(tour, idx, mode) {
   const n = tour.steps.length;
   const intro = idx < 0;
   const step = intro ? null : tour.steps[idx];
-  const surfaceEl = step && step.surface ? document.querySelector(`[data-surface="${step.surface}"]`) : null;
-
   const p = popover();
   p.setAttribute("data-mode", mode);
   const dev = mode === "dev";
   const progress = intro ? "" : `<span class="crumb-pop__count">${idx + 1} / ${n}</span>`;
-  const statusChip = step && step.status
+  const statusChip = dev && step && step.status
     ? `<span class="crumb-pop__status" data-status="${esc(step.status)}">${esc(step.status.replace(/-/g, " "))}</span>` : "";
   const body = intro
     ? `<p class="crumb-pop__say">${esc(tour.intro || "Take a quick guided tour.")}</p>`
     : `${dev && step.review ? `<p class="crumb-pop__review">${esc(step.review)}</p>` : ""}` +
       `<p class="crumb-pop__say">${esc(step.say)}</p>` +
-      `${step.verify ? `<p class="crumb-pop__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
-
+      `${dev && step.verify ? `<p class="crumb-pop__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
   const nextLabel = intro ? "Start" : (idx >= n - 1 ? "Finish" : "Next");
   p.innerHTML =
     `<div class="crumb-pop__head">` +
@@ -91,18 +105,102 @@ function renderCard(tour, idx, mode) {
       `${intro ? "" : `<button class="btn" data-variant="soft" data-crumb="prev">Back</button>`}` +
       `<button class="btn" data-crumb="next">${nextLabel}</button>` +
     `</div>`;
-
-  p.querySelector('[data-crumb="end"]').onclick = end;
-  p.querySelector('[data-crumb="next"]').onclick = next;
-  const prevBtn = p.querySelector('[data-crumb="prev"]');
-  if (prevBtn) prevBtn.onclick = prev;
-
+  wireControls(p);
   if (!p.open) p.show();          // non-modal: keeps the lit surface clickable (passthrough)
-  // light the surface AFTER the card exists so we can place the card relative to it
-  if (surfaceEl) { surfaceEl.scrollIntoView({ block: "center", behavior: "smooth" }); lamp().on(""); lamp().move(surfaceEl); }
-  else if (intro) lamp().off();   // intro has no target — no lamp
+  const surfaceEl = lightStep(step, intro);
   requestAnimationFrame(() => placeCard(p, surfaceEl));
   p.querySelector('[data-crumb="next"]').focus({ preventScroll: true });
+}
+
+// ================= PRESENTATION 2: the frame + sidebar (B3) ===================
+// A routed app-shell variant: a fixed top-bar + a combined nav/content sidebar + a bordered
+// viewport. The chrome is fixed overlay (it does not reflow the host's own fixed shell — the
+// frame reads via a border edge, PLAN.md's "not an iframe"). `data-mode` on the root flips the
+// SAME step between demo (say only) and dev (review + status rail + verify).
+let frame = null;
+function frameRoot() {
+  if (frame) return frame;
+  frame = document.createElement("div");
+  frame.className = "crumb-frame";
+  document.body.appendChild(frame);
+  document.body.setAttribute("data-crumb-frame", "");
+  bindEsc();
+  return frame;
+}
+function renderFrame(tour, idx, mode) {
+  const n = tour.steps.length;
+  const intro = idx < 0;
+  const step = intro ? null : tour.steps[idx];
+  const dev = mode === "dev";
+  const showModes = hasDevContent(tour);
+  const f = frameRoot();
+  f.setAttribute("data-mode", mode);
+
+  const modeToggle = showModes
+    ? `<div class="crumb-frame__modes" role="tablist" aria-label="Tour mode">` +
+        `<button class="crumb-frame__mode" role="tab" data-crumb-mode-set="demo" aria-selected="${!dev}">Demo</button>` +
+        `<button class="crumb-frame__mode" role="tab" data-crumb-mode-set="dev" aria-selected="${dev}">Review</button>` +
+      `</div>`
+    : "";
+
+  // the nav rail: every step, with current/visited marks + (dev) a status chip.
+  const rail = tour.steps.map((s, i) => {
+    const cur = i === idx ? " data-current" : "";
+    const done = i < idx ? " data-visited" : "";
+    const chip = dev && s.status
+      ? `<span class="crumb-sidebar__chip" data-status="${esc(s.status)}">${esc(s.status.replace(/-/g, " "))}</span>` : "";
+    return `<li class="crumb-sidebar__step"${cur}${done}>` +
+      `<button class="crumb-sidebar__goto" data-crumb-goto="${i}">` +
+        `<span class="crumb-sidebar__num">${i + 1}</span>` +
+        `<span class="crumb-sidebar__label">${esc(surfaceLabel(s))}</span>${chip}` +
+      `</button></li>`;
+  }).join("");
+
+  // the content pane: the current step (or the intro).
+  const detail = intro
+    ? `<p class="crumb-sidebar__say">${esc(tour.intro || "Take a quick guided tour.")}</p>`
+    : `${dev && step.review ? `<p class="crumb-sidebar__review">${esc(step.review)}</p>` : ""}` +
+      `<p class="crumb-sidebar__say">${esc(step.say)}</p>` +
+      `${dev && step.verify ? `<p class="crumb-sidebar__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
+  const nextLabel = intro ? "Start" : (idx >= n - 1 ? "Finish" : "Next");
+
+  f.innerHTML =
+    `<div class="crumb-frame__edge" aria-hidden="true"></div>` +
+    `<header class="crumb-frame__bar">` +
+      `<span class="crumb-frame__title">${esc(tour.title)}</span>` +
+      `${intro ? "" : `<span class="crumb-frame__count">${idx + 1} / ${n}</span>`}` +
+      `${modeToggle}` +
+      `<button class="crumb-frame__x btn" data-variant="soft" data-crumb="end">Exit tour</button>` +
+    `</header>` +
+    `<aside class="crumb-sidebar" data-mode="${mode}">` +
+      `<nav class="crumb-sidebar__nav" aria-label="Tour steps"><ol class="crumb-sidebar__list">${rail}</ol></nav>` +
+      `<div class="crumb-sidebar__detail">${detail}` +
+        `<div class="crumb-sidebar__foot">` +
+          `${intro ? "" : `<button class="btn" data-variant="soft" data-crumb="prev">Back</button>`}` +
+          `<button class="btn" data-crumb="next">${nextLabel}</button>` +
+        `</div>` +
+      `</div>` +
+    `</aside>`;
+
+  wireControls(f);
+  lightStep(step, intro);
+  const nb = f.querySelector('[data-crumb="next"]');
+  if (nb) nb.focus({ preventScroll: true });
+}
+
+// ---- shared control wiring (both presentations use the same data-crumb verbs) ----
+function wireControls(root) {
+  root.querySelectorAll('[data-crumb="end"]').forEach((b) => (b.onclick = end));
+  root.querySelectorAll('[data-crumb="next"]').forEach((b) => (b.onclick = next));
+  root.querySelectorAll('[data-crumb="prev"]').forEach((b) => (b.onclick = prev));
+  root.querySelectorAll("[data-crumb-goto]").forEach((b) => (b.onclick = () => go(Number(b.getAttribute("data-crumb-goto")))));
+  root.querySelectorAll("[data-crumb-mode-set]").forEach((b) => (b.onclick = () => setMode(b.getAttribute("data-crumb-mode-set"))));
+}
+
+// ---- render dispatch --------------------------------------------------------
+function render(tour, idx, st) {
+  if (st.frame) { if (pop && pop.open) pop.close(); renderFrame(tour, idx, st.mode); }
+  else { teardownFrame(); renderPopover(tour, idx, st.mode); }
 }
 
 // resume from sessionStorage: fetch the tour, navigate to the step's route if needed, else render.
@@ -115,7 +213,7 @@ async function resume() {
   const step = st.step >= 0 ? tour.steps[st.step] : null;
   const need = routeOf(step && step.at ? step.at : (st.step < 0 ? tour.route : location.pathname));
   if (need !== routeOf(location.pathname)) { location.assign(need); return; }   // real nav; resume() re-fires on load
-  renderCard(tour, st.step, st.mode || tour.mode);
+  render(tour, st.step, st);
 }
 
 async function go(step) {
@@ -129,36 +227,55 @@ async function go(step) {
 function next() { const st = getState(); if (st) go(st.step + 1); }
 function prev() { const st = getState(); if (st) go(Math.max(-1, st.step - 1)); }
 
+// the demo|dev flip: same step index, re-render in place (no navigation) — the one-component
+// attribute swap the PLAN calls non-negotiable.
+async function setMode(mode) {
+  const st = getState();
+  if (!st || (mode !== "demo" && mode !== "dev")) return;
+  setState({ ...st, mode });
+  const tour = await fetchTour(st.id);
+  render(tour, st.step, { ...st, mode });
+}
+
+function teardownFrame() {
+  if (frame) { frame.remove(); frame = null; }
+  document.body.removeAttribute("data-crumb-frame");
+}
 function end() {
   setState(null);
   if (spot) spot.off();
   if (pop && pop.open) pop.close();
+  teardownFrame();
 }
 
-// start a tour from its intro card (step -1). `mode` overrides the tour's default when given.
-async function start(id, mode) {
+// start a tour from its intro card (step -1). `opts` = { mode, frame } override the defaults.
+async function start(id, opts = {}) {
   const tour = await fetchTour(id).catch((e) => { console.warn(e); return null; });
   if (!tour) return;
-  setState({ id, step: -1, mode: mode || tour.mode });
+  setState({ id, step: -1, mode: opts.mode || tour.mode, frame: !!opts.frame });
   await resume();
 }
 
 // ---- wiring -----------------------------------------------------------------
-// declarative launcher: any `[data-crumb-start="<id>"]` (optionally `data-crumb-mode`) starts it —
-// no inline JS in the host, the grain way.
+// declarative launcher: any `[data-crumb-start="<id>"]` starts it — no inline JS in the host
+// (the grain way). `data-crumb-mode` picks demo|dev; presence of `data-crumb-frame` = frame mode.
 addEventListener("click", (e) => {
   const t = e.target.closest?.("[data-crumb-start]");
   if (!t) return;
   e.preventDefault();
-  start(t.getAttribute("data-crumb-start"), t.getAttribute("data-crumb-mode") || undefined);
+  start(t.getAttribute("data-crumb-start"), {
+    mode: t.getAttribute("data-crumb-mode") || undefined,
+    frame: t.hasAttribute("data-crumb-frame"),
+  });
 });
-// keep the card glued to its surface through scroll/resize (the lamp already follows on its own)
+// keep the popover glued to its surface through scroll/resize (the lamp follows on its own; the
+// frame chrome is fixed, so only the popover needs repositioning).
 let repos = null;
 addEventListener("scroll", () => { if (pop && pop.open) { clearTimeout(repos); repos = setTimeout(reposition, 60); } }, { passive: true, capture: true });
 addEventListener("resize", reposition, { passive: true });
 function reposition() {
   const st = getState();
-  if (!st || !pop || !pop.open || st.step < 0) return;
+  if (!st || st.frame || !pop || !pop.open || st.step < 0) return;
   const tour = cache.get(st.id);
   const step = tour && tour.steps[st.step];
   const el = step && step.surface ? document.querySelector(`[data-surface="${step.surface}"]`) : null;
@@ -170,4 +287,4 @@ if (document.readyState !== "loading") resume();
 else addEventListener("DOMContentLoaded", resume);
 
 // expose a tiny programmatic API (console / tests / a command palette entry)
-window.crumb = { start, next, prev, end };
+window.crumb = { start, next, prev, end, setMode };

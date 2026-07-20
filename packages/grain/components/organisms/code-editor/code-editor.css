@@ -1,0 +1,111 @@
+/* organisms/code-editor — the interactive tier ABOVE code-block (atoms/code-block). Where
+   code-block is a static, hand-composed <pre> for MILL's blog prose, code-editor is the EDIT
+   surface: a framed panel with a toolbar, a mount slot a real editor (Monaco) is injected into,
+   a validation status strip, a diagnostics list, and a version-history drawer.
+
+   CSS-ONLY, like every grain component — grain ships no JS bundler, so this component bundles NO
+   editor. The consumer lazy-loads its own editor into `.code-editor__mount` (keeping Monaco's
+   weight off every page that isn't editing) and toggles the state data-attrs below. That's the
+   deliberate seam: grain owns the chrome + the monochrome grammar; the app owns the engine.
+
+   Shares code-block's mono/surface tokens on purpose — code in a MILL blog and code in the
+   editor read as ONE system. Signal is grain-monochrome throughout: no hue, states come from
+   weight/opacity/dashed-edge, never colour (DESIGN-SYSTEM §2). */
+
+.code-editor {
+  display: flex; flex-direction: column; min-height: 0;   /* flex child that can shrink for the mount to scroll */
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;                                        /* clip the mount + drawer to the rounded frame */
+  font-family: var(--font-mono);                           /* the editing surface is code — mono in either grade */
+}
+
+/* ---- toolbar: the file identity on the left, actions on the right ------------------------- */
+.code-editor__bar {
+  display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-bg);
+  font-family: var(--font-grain);                          /* chrome is machine-voice; only the code itself is mono */
+  font-size: var(--text-sm);
+}
+.code-editor__title { color: var(--color-fg); font-family: var(--font-mono); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }   /* long paths truncate, never wrap the bar */
+/* a quiet "• unsaved" marker the app shows by flipping data-dirty on the root */
+.code-editor__dirty { color: var(--color-muted); font-size: var(--text-xs); display: none; }
+.code-editor[data-dirty="true"] .code-editor__dirty { display: inline; }
+.code-editor__actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; flex: 0 0 auto; }
+
+/* ---- mount: where the app injects the editor. Empty, it reads as a quiet code surface so the
+   panel never looks broken before the engine loads (progressive: SSR a <pre class="code-block">
+   here and Monaco replaces it). ---------------------------------------------------------------- */
+.code-editor__mount {
+  flex: 1 1 0; min-height: 0;                              /* fills the frame beyond bar+strip; owns the scroll */
+  overflow: auto;
+  background: var(--color-surface);
+  font-family: var(--font-mono); font-size: var(--text-sm); line-height: var(--leading-normal);
+  color: var(--color-fg);
+}
+.code-editor__mount:focus-within { outline: 2px solid var(--color-accent); outline-offset: -2px; }  /* inset — the frame already clips */
+/* a code-block dropped inside the mount (the pre-engine fallback) loses its own frame — the panel
+   is the frame now. */
+.code-editor__mount .code-block { margin: 0; border: 0; border-radius: 0; height: 100%; }
+
+/* ---- status strip: one line under the mount, driven by data-state on the root. Monochrome:
+   the WORD carries the signal (via ::before glyph), invalid adds WEIGHT not colour. ------------ */
+.code-editor__status {
+  flex: 0 0 auto; display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-top: 1px solid var(--color-line);
+  font-family: var(--font-grain); font-size: var(--text-xs); color: var(--color-muted);
+}
+.code-editor__status::before { content: ""; color: var(--color-fg); }
+.code-editor[data-state="validating"] .code-editor__status::before { content: "◐ "; }
+.code-editor[data-state="valid"]      .code-editor__status::before { content: "✓ "; }
+.code-editor[data-state="invalid"]    .code-editor__status::before { content: "✕ "; }
+.code-editor[data-state="saved"]      .code-editor__status::before { content: "✓ "; }
+/* invalid is louder, not redder — heavier ink + weight, mirroring b-select:user-invalid's 2px */
+.code-editor[data-state="invalid"] .code-editor__status { color: var(--color-fg); font-weight: var(--font-weight-medium); }
+.code-editor[data-state="invalid"] { border-width: 2px; }
+
+/* ---- diagnostics: the parse/validate errors, listed under the strip. Hidden until there are
+   any (app sets data-state="invalid" / fills the list). Each row is line:col + message. -------- */
+.code-editor__diagnostics { flex: 0 0 auto; display: none; max-height: 9rem; overflow: auto;
+  border-top: 1px solid var(--color-line); padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono); font-size: var(--text-xs); }
+.code-editor[data-state="invalid"] .code-editor__diagnostics:not(:empty) { display: block; }
+.code-editor__diag { display: flex; gap: var(--space-2); padding: var(--space-1) 0; color: var(--color-fg); }
+.code-editor__diag-loc { color: var(--color-muted); flex: 0 0 auto; }   /* e.g. "12:4" — the click target the app wires to jump the caret */
+.code-editor__diag[data-clickable] { cursor: pointer; }
+.code-editor__diag[data-clickable]:hover .code-editor__diag-loc { color: var(--color-accent); text-decoration: underline; }
+
+/* ---- history drawer: versions of this spec, newest first. Off-canvas to the right, revealed by
+   data-history on the root (the app toggles it from a toolbar button). Each row: author + time +
+   message; restore is a button the app wires (restore = write a NEW version, never mutate). ---- */
+.code-editor__history {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(20rem, 80%);
+  transform: translateX(100%); transition: transform 0.2s ease;
+  background: var(--color-bg); border-left: 1px solid var(--color-line);
+  display: flex; flex-direction: column; overflow: auto;
+  font-family: var(--font-grain); font-size: var(--text-sm);
+}
+.code-editor { position: relative; }                       /* the drawer anchors to the panel */
+.code-editor[data-history="open"] .code-editor__history { transform: translateX(0); }
+.code-editor__history-head { flex: 0 0 auto; display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line);
+  text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--text-xs); color: var(--ink-faint); }
+.code-editor__version { display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line); cursor: pointer; }
+.code-editor__version:hover { background: var(--paper-2); }
+.code-editor__version[data-current] { border-left: 2px solid var(--color-accent); }   /* the live version */
+.code-editor__version-meta { display: flex; gap: var(--space-2); color: var(--color-muted); font-size: var(--text-xs); }
+.code-editor__version-msg { color: var(--color-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) { .code-editor__history { transition: none; } }
+
+/* ---- AI / in-transit: same vocabulary as code-block + the atoms (CONVENTIONS §4). An editor the
+   AI is writing into wears the dashed "terminal" edge (non-text grain). Human editing never
+   triggers it; the catalog grain-flip demonstrates it. ---------------------------------------- */
+.code-editor[data-commit="pending"],
+[data-grade="grain"] .code-editor { border-style: dashed; border-color: var(--ink); }

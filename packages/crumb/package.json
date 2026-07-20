@@ -2,18 +2,29 @@
   "name": "@tjakoen/crumb",
   "version": "0.0.0",
   "private": true,
-  "description": "CRUMB — the GRAIN stack's guided-tour / demo-mode / AI-review layer. Tours-as-markdown rendered as a guided projection that never writes (PROOF's twin). SCAFFOLD ONLY — see PLAN.md; build is effort B, gated.",
+  "description": "CRUMB — the GRAIN stack's guided-tour / demo-mode / AI-review layer. Tours-as-markdown rendered as a guided projection that never writes (PROOF's twin). Effort B in progress: core + routes + the passthrough-lamp tour client (B0-B2) — see PLAN.md.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/crumb",
+  "bin": { "crumb": "./cli.ts" },
+  "exports": {
+    "./core": "./core/index.ts",
+    "./core/*": "./core/*",
+    "./routes.ts": "./routes.ts",
+    "./loader.ts": "./loader.ts",
+    "./check.ts": "./check.ts",
+    "./crumb-live.js": "./crumb-live.js",
+    "./crumb.css": "./crumb.css"
+  },
   "dependencies": {
     "@tjakoen/grain": "workspace:*",
     "@tjakoen/mill": "workspace:*"
   },
   "scripts": {
-    "check": "echo 'crumb: not built yet (scaffold) — see PLAN.md'",
-    "test": "echo 'crumb: no tests yet (scaffold) — see PLAN.md'"
+    "check": "tsc --noEmit",
+    "test": "bun test",
+    "crumb": "bun cli.ts"
   },
   "devDependencies": {
     "bun-types": "^1.3.14",

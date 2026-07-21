@@ -67,3 +67,85 @@ export function splitPrompt(prompt: string): ChatMessage[] {
   const user = prompt.slice(SYSTEM_PREAMBLE.length).trim();
   return [{ role: "system", content: SYSTEM_PREAMBLE }, { role: "user", content: user }];
 }
+
+// ── the STREAMING variant of the chat transport ───────────────────────────────────────────────────
+// makeChatModel above is the REASONER's transport: one composed prompt, one whole-text completion, then
+// parse + validate — streaming buys the strict-JSON core nothing. A conversational surface (the
+// portfolio's "desk") is the opposite: it streams the human-facing reply token by token and must be
+// able to STOP mid-generation (the visitor hits stop; a weak model spins into a repetition loop). That
+// lives HERE, beside the non-streaming adapter, because it is the SAME OpenAI-chat engine — only the
+// `create` shape (stream:true → an async-iterable of deltas) and an `interruptGenerate` differ. Grain
+// owns the plumbing; the loop-guard / accumulation / UI stay in the composing reasoner. This is NOT the
+// `Model` port — a streamed chat reply is the composing reasoner's concern, never the validated-move
+// core's (see model.ts, the port's doc comment).
+
+/** One streamed chunk — the sliver of an OpenAI stream delta we consume (content only). */
+export interface ChatStreamChunk { choices?: Array<{ delta?: { content?: string } }> }
+
+/** Sampling knobs for a streamed completion (all optional — the composing reasoner tunes them; a weak
+ *  model in particular wants penalties or it loops). Grain-cased; mapped to the engine's snake_case in
+ *  the request below so callers never touch the wire shape. */
+export interface ChatStreamOptions {
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+}
+
+/** The streaming `create` request, in the engine's own (OpenAI) shape. Built by `streamChat`, not by
+ *  callers — kept exported only so a fake engine in a test can type the request it captures. */
+export interface ChatStreamRequest {
+  messages: ChatMessage[];
+  stream: true;
+  max_tokens?: number;
+  temperature?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+}
+
+/** A STREAMING OpenAI-chat engine: `create` resolves to an async-iterable of content deltas, and
+ *  generation can be interrupted early. WebLLM's MLCEngine satisfies this exactly (`interruptGenerate`);
+ *  a hosted API would map `interruptGenerate` to aborting the underlying fetch. Structural, like
+ *  `ChatEngine` — grain depends on the SHAPE, never the SDK (§19.2/§19.3). */
+export interface StreamingChatEngine {
+  chat: { completions: { create(req: ChatStreamRequest): Promise<AsyncIterable<ChatStreamChunk>> } };
+  interruptGenerate(): void;
+}
+
+/** Stream a chat completion as CONTENT-only token deltas. The caller drives the async-iterable and
+ *  decides when to stop: BREAKING the `for await` early (a stop button, a loop-guard) unwinds this
+ *  generator's `finally`, which calls `interruptGenerate` — so the caller never touches the engine to
+ *  halt it, it just stops iterating. Empty deltas are skipped, so a consumer only ever sees real text.
+ *  Pure plumbing: accumulation, the repetition loop-guard, and the UI belong to the composing reasoner,
+ *  not here. */
+export async function* streamChat(
+  engine: StreamingChatEngine,
+  messages: ChatMessage[],
+  opts: ChatStreamOptions = {},
+): AsyncIterable<string> {
+  const stream = await engine.chat.completions.create({
+    messages,
+    stream: true,
+    max_tokens: opts.maxTokens,
+    temperature: opts.temperature,
+    top_p: opts.topP,
+    frequency_penalty: opts.frequencyPenalty,
+    presence_penalty: opts.presencePenalty,
+  });
+  let finished = false;
+  try {
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) yield delta;
+    }
+    finished = true;
+  } finally {
+    // Only interrupt on an EARLY exit (a break/throw before the stream ran dry). Interrupting after a
+    // natural finish is a harmless no-op on WebLLM, but a hosted transport might treat a late abort as
+    // an error, so we stay precise. `try/catch` because interruptGenerate can throw if the engine has
+    // already torn the generation down.
+    if (!finished) { try { engine.interruptGenerate(); } catch { /* already stopped */ } }
+  }
+}

@@ -36,7 +36,7 @@ describe("createClientDoor", () => {
   test("observe(doc) re-harvests the live-DOM manifest — the 'read the result' half of the loop", () => {
     const door = createClientDoor(() => {}, { thinkMs: 0 });
     // a structural DomDoc fake (the same shape manifest-dom takes) — no browser needed
-    const el = (attrs: Record<string, string>) => ({ getAttribute: (n: string) => attrs[n] ?? null });
+    const el = (attrs: Record<string, string>) => ({ getAttribute: (n: string) => attrs[n] ?? null, textContent: null });
     const doc = {
       body: el({ "data-screen": "grain" }),
       querySelectorAll: () => [el({ "data-surface": "chat-log" })],

@@ -3,10 +3,12 @@
 // lib.dom), so kind derivation, accepts intersection/inversion, and push-only classification
 // are all testable without a browser. Full DOM behavior is covered by the terminal e2e.
 import { test, expect } from "bun:test";
-import { deriveKind, deriveAccepts, targetLabel, harvestTargets, domManifest, manifestForReasoner, type DomEl } from "./manifest-dom.ts";
+import { deriveKind, deriveAccepts, targetLabel, harvestTargets, harvestReadable, collapseReadable, domManifest, manifestForReasoner, READABLE_CAP, type DomEl } from "./manifest-dom.ts";
 import { actionsForKind } from "./contract.ts";
 
-const el = (attrs: Record<string, string>): DomEl => ({ getAttribute: (n) => attrs[n] ?? null });
+// `text` seeds textContent (the readable state); attrs seed getAttribute. Both default to absent.
+const el = (attrs: Record<string, string>, text: string | null = null): DomEl =>
+  ({ getAttribute: (n) => attrs[n] ?? null, textContent: text });
 
 test("deriveKind: explicit data-kind wins; a registered kind is not push-only", () => {
   expect(deriveKind("item:ITM-1", "item")).toEqual({ kind: "item", pushOnly: false });
@@ -79,8 +81,49 @@ test("domManifest: same shape as the server manifest, marked a live-DOM projecti
   const chat = m.actions.find((a) => a.name === "chat.send")!;
   expect(chat.payload.text).toMatchObject({ type: "string", required: true });
   expect(m.targets[0].id).toBe("chat-log");
-  expect(m.inView).toEqual({ surfaces: ["chat-log"] });
+  // inView carries the addressable surfaces AND the readable-state array (empty: no data-read here)
+  expect(m.inView).toEqual({ surfaces: ["chat-log"], readable: [] });
   expect(m.note).toMatch(/live dom/i);
+});
+
+test("collapseReadable: trims, squeezes whitespace/newlines to single spaces", () => {
+  expect(collapseReadable("  buy   milk\n\n and eggs ")).toBe("buy milk and eggs");
+  expect(collapseReadable(null)).toBe("");
+  expect(collapseReadable("   ")).toBe("");
+});
+
+test("collapseReadable: caps overlong text with a trailing ellipsis", () => {
+  const long = "x".repeat(READABLE_CAP + 50);
+  const out = collapseReadable(long);
+  expect(out.length).toBe(READABLE_CAP);
+  expect(out.endsWith("…")).toBe(true);
+});
+
+test("harvestReadable: only surfaces that opted in with data-read, with their live text", () => {
+  const root = {
+    querySelectorAll: () => [
+      el({ "data-surface": "reflection", "data-read": "" }, "  Noted:  buy milk "),
+      el({ "data-surface": "notepad-body", "data-kind": "notepad", "data-read": "" }, "## Notes\ncall the bank"),
+      el({ "data-surface": "chat-log" }, "unmarked — not harvested"),   // no data-read → skipped
+      el({ "data-surface": "console", "data-read": "" }, "   "),         // marked but empty → skipped
+    ],
+  };
+  const readable = harvestReadable(root);
+  expect(readable).toEqual([
+    { id: "reflection", kind: "reflection", text: "Noted: buy milk" },
+    { id: "notepad-body", kind: "notepad", text: "## Notes call the bank" },
+  ]);
+});
+
+test("manifestForReasoner: renders an 'in view' block for data-read surfaces", () => {
+  const doc = {
+    body: el({ "data-screen": "loop" }),
+    querySelectorAll: () => [
+      el({ "data-surface": "reflection", "data-read": "" }, "Noted: buy milk"),
+    ],
+  };
+  const text = manifestForReasoner(doc);
+  expect(text).toContain('in view: (1)\n- reflection [reflection] "Noted: buy milk"');
 });
 
 test("manifestForReasoner: deterministic, prompt-ready text — same fixed DOM in, same string out", () => {

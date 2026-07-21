@@ -18,6 +18,7 @@ import { buildManifest, type Manifest, type ManifestTarget } from "./manifest.ts
 // ── the sliver of the DOM this module touches (structural, not lib.dom) ───────────────────────
 export interface DomEl {
   getAttribute(name: string): string | null;
+  textContent: string | null;   // read to harvest a surface's current READABLE state (data-read opt-in)
 }
 export interface DomRoot {
   querySelectorAll(selectors: string): Iterable<DomEl>;
@@ -59,6 +60,49 @@ export interface DomManifestTarget extends ManifestTarget {
   pushOnly: boolean;
 }
 
+// ── readable in-view state: the MCP "resources" analog ─────────────────────────────────────────
+// `targets`/`actions` say what a reasoner can ADDRESS and INVOKE; they don't say what a surface
+// currently CONTAINS. `data-read` closes that gap: a surface OPTS IN to exposing its live text —
+// exactly as `data-accepts` opts a target into a verb (AI-INTERFACE §4). The framework harvests
+// it, never authors it, so it stays app-agnostic (grain never knows the content, only that it was
+// flagged) and prompt-economic (only marked surfaces, each capped — not the whole DOM dumped in).
+
+/** One surface's current readable state — the manifest's MCP-resource analog: `id` is its address
+ *  (the uri), `kind` its surface kind, `text` its live, collapsed, capped textContent. */
+export interface ReadableSurface {
+  id: string;
+  kind: string;
+  text: string;
+}
+
+/** Per-surface character cap on harvested text — keeps the observe prompt tight; a marked surface
+ *  is meant to expose a line or a short body, not a whole document. Truncation is signalled with "…". */
+export const READABLE_CAP = 400;
+
+/** Collapse a surface's textContent to one prompt-safe line: trim, squeeze whitespace runs (incl.
+ *  newlines) to single spaces, and cap length with a trailing "…" so a reader knows it was clipped. */
+export function collapseReadable(raw: string | null): string {
+  const text = (raw ?? "").replace(/\s+/g, " ").trim();
+  return text.length > READABLE_CAP ? text.slice(0, READABLE_CAP - 1).trimEnd() + "…" : text;
+}
+
+/** Walk every surface that OPTED IN with `data-read` and harvest its current readable state. Filters
+ *  on the attribute (not just the selector) so it's correct even against a structural fake root; skips
+ *  a marked-but-empty surface (no text = nothing to read). Document order → deterministic. */
+export function harvestReadable(root: DomRoot): ReadableSurface[] {
+  const out: ReadableSurface[] = [];
+  for (const el of root.querySelectorAll("[data-surface]")) {
+    if (el.getAttribute("data-read") === null) continue;   // opt-in only
+    const surface = el.getAttribute("data-surface");
+    if (!surface) continue;
+    const text = collapseReadable(el.textContent);
+    if (!text) continue;
+    const { kind } = deriveKind(surface, el.getAttribute("data-kind"));
+    out.push({ id: surface, kind, text });
+  }
+  return out;
+}
+
 /** Walk every [data-surface] under `root` and derive its manifest target. */
 export function harvestTargets(root: DomRoot): DomManifestTarget[] {
   const out: DomManifestTarget[] = [];
@@ -77,9 +121,11 @@ export function harvestTargets(root: DomRoot): DomManifestTarget[] {
 export function domManifest(doc: DomDoc): Manifest {
   const screen = doc.body?.getAttribute("data-screen") ?? "";
   const targets = harvestTargets(doc);
-  const m = buildManifest(screen, targets, { surfaces: targets.map((t) => t.id) });
+  const readable = harvestReadable(doc);   // current text of every data-read surface (MCP-resources analog)
+  const m = buildManifest(screen, targets, { surfaces: targets.map((t) => t.id), readable });
   m.note = "Client-side projection of the LIVE DOM: every [data-surface] on this page, its kind, " +
-           "and the verbs the registry allows on it. Same shape as the server manifest (AI-INTERFACE §4).";
+           "the verbs the registry allows on it, and — for any surface that opted in with data-read — " +
+           "its current readable state in inView.readable. Same shape as the server manifest (AI-INTERFACE §4).";
   return m;
 }
 
@@ -118,6 +164,17 @@ export function manifestForReasoner(doc: DomDoc): string {
   for (const t of m.targets) {
     const verbs = t.accepts.length ? t.accepts.join(", ") : "(no verb currently targets this)";
     lines.push(`- ${t.id} [${t.kind}] -> ${verbs}`);
+  }
+
+  // IN VIEW: the current readable STATE of every surface that opted in with data-read (the MCP
+  // "resources" analog). Emitted ONLY when something is readable — a page with no marked surface
+  // yields the exact same string as before, so the block never adds noise where there's no state.
+  // This is the "read the result" half of the observe loop: after acting, the reasoner sees not
+  // just what it can do next but what the surfaces now SAY.
+  const readable = (m.inView.readable as ReadableSurface[] | undefined) ?? [];
+  if (readable.length) {
+    lines.push(`in view: (${readable.length})`);
+    for (const r of readable) lines.push(`- ${r.id} [${r.kind}] "${r.text}"`);
   }
   return lines.join("\n");
 }

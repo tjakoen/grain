@@ -37,6 +37,21 @@ jobs:
             if npm view "@tjakoen/$p@$v" version >/dev/null 2>&1; then
               echo "@tjakoen/$p@$v already published — skipping"
             else
+              # Substitute workspace:* deps -> the concrete sibling versions BEFORE publishing.
+              # `npm publish -w` in this runner does not reliably rewrite the workspace: protocol
+              # (crumb@0.1.0 shipped with literal "workspace:*" and was uninstallable), so do it
+              # explicitly — the checkout is ephemeral, so mutating the manifest here is safe.
+              node -e '
+                const fs = require("fs");
+                const ver = (n) => require(`./packages/${n}/package.json`).version;
+                const map = { "@tjakoen/grain": ver("grain"), "@tjakoen/mill": ver("mill"), "@tjakoen/proof": ver("proof") };
+                const f = `packages/${process.argv[1]}/package.json`;
+                const j = JSON.parse(fs.readFileSync(f));
+                for (const k of ["dependencies", "devDependencies"])
+                  for (const d in (j[k] || {}))
+                    if (String(j[k][d]).startsWith("workspace:") && map[d]) j[k][d] = map[d];
+                fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");
+              ' "$p"
               echo "Publishing @tjakoen/$p@$v"
               npm publish -w "@tjakoen/$p"
             fi

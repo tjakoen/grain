@@ -14,7 +14,10 @@ export type Surface = string;                       // e.g. "item:ITM-1", "refle
 // target — are intentionally NOT kinds: `console` (the takeover narration feed), plus the
 // demo-only render targets `plan` / `summary` / `ask-input`. They're addressed by their
 // bare `data-surface` slug and need no entry here. Add a kind only when a verb accepts it.
-export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log";
+// `notepad` is a verb target (note.append / note.replace) — a persisted markdown surface both
+// the AI and the human write into through the one door; the ops land on its inner `notepad-body`
+// push surface (below), the wrapper `notepad` is what gets spotlit when the AI is the actor.
+export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad";
 export const surface = (kind: SurfaceKind, id?: string): Surface => (id ? `${kind}:${id}` : kind);
 export const surfaceKind = (s: Surface): SurfaceKind => (s.split(":")[0] ?? "") as SurfaceKind;
 export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":");
@@ -24,9 +27,13 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //   say.set       — input → AI writes back into a reflection line (grain → settles clean)
 //   say.stream    — button → AI types a line out, token by token, over SSE
 //   chat.send     — composer → your message (clean) + the AI's reply streamed (grain) into a chat log
+//   note.append   — add a markdown entry to the notepad (AI writes grain; a human commit settles clean)
+//   note.replace  — rewrite the whole notepad from one markdown body (same door, same grade rule)
 //   navigate      — a control (or a reasoner's own decision) asks to change screens; see below
 // The full product vocabulary lives at https://tjakoen.github.io/grain/docs/ai-interface.
-export type ActionName = "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send" | "navigate";
+export type ActionName =
+  | "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send"
+  | "note.append" | "note.replace" | "navigate";
 export type Depth = "light" | "heavy";
 
 export interface ActionDef {
@@ -42,6 +49,8 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
   "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"] },   // plays an AI-acting demo
   "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"] },   // user asks the AI to halt (mediated)
   "chat.send":    { name: "chat.send",    depth: "light", accepts: ["chat-log"] }, // send a message; AI replies over SSE
+  "note.append":  { name: "note.append",  depth: "light", accepts: ["notepad"] },  // append one markdown entry to the notepad
+  "note.replace": { name: "note.replace", depth: "light", accepts: ["notepad"] },  // rewrite the notepad from one markdown body
   // ActionName AND a RenderOpKind, deliberately BOTH (see the `navigate` RenderOpKind below for why
   // one alone doesn't cover it): registering it here as a "screen" verb is what makes it show up in
   // `actionsForKind("screen")` — and so in the manifest (manifest.ts/manifest-dom.ts) — as something
@@ -158,6 +167,7 @@ export const PUSH_SURFACES = {
   askInput:      "ask-input",      // demo ask-input field
   demoTaskBadge: "demo-task-badge",// demo task badge
   timeline:      "timeline",       // the interaction TIMELINE feed (unified log, §5g) — `log` ops land here
+  notepadBody:   "notepad-body",   // the notepad's inner content — note.append/replace ops land here (the `notepad` wrapper is the verb target + spotlight surface)
 } as const;
 export type PushSurface = typeof PUSH_SURFACES[keyof typeof PUSH_SURFACES];
 

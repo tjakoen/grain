@@ -181,3 +181,27 @@ test("a concurrent chat mid-run does NOT clear the running turn's stop (per-turn
   await running;
   expect(cancelled).toBe(true);   // the run still saw the stop despite the concurrent chat
 });
+
+// --- note verbs at the door: kind validation + the AI-acting spotlight bracket ---------------
+test("note.append on the notepad kind: validates, the reasoner writes an append to notepad-body", async () => {
+  const { layer, pushed } = makeLayer();
+  const d = await layer.handleIntent(intent({ source: "ai", surface: "notepad", action: "note.append", payload: { text: "hi" } }));
+  expect(d.ok).toBe(true);
+  const appended = ops(pushed).find((o) => o.op === "append" && o.target === "notepad-body");
+  expect(appended).toBeTruthy();
+});
+
+test("note.append on a non-notepad surface: rejected by the closed vocabulary", async () => {
+  const { layer } = makeLayer();
+  const d = await layer.handleIntent(intent({ surface: "item:ITM-1", action: "note.append", payload: { text: "hi" } }));
+  expect(d.ok).toBe(false);
+  expect(d.ops[0]?.op).toBe("flash");
+});
+
+test("an AI note write is bracketed by a spotlight on the notepad surface (AI as actor)", async () => {
+  const { layer, pushed } = makeLayer();
+  await layer.handleIntent(intent({ source: "ai", surface: "notepad", action: "note.append", payload: { text: "hi" } }));
+  const spots = ops(pushed).filter((o) => o.op === "spotlight" && o.target === "notepad");
+  expect(spots.some((o) => o.active === true)).toBe(true);
+  expect(spots.some((o) => o.active === false)).toBe(true);
+});

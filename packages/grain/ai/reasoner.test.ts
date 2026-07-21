@@ -179,3 +179,49 @@ test("navigate: an unsafe/missing href fails the REQUEST (not the dispatcher) â€
   expect(missing.ok).toBe(false);
   expect(missing.ops.some((o) => o.op === "navigate")).toBe(false);
 });
+
+// --- note.append / note.replace: the notepad (DEMO-PLAN piece 2) ---------------------------
+test("note.append (ai): appends a grain entry to notepad-body carrying the markdown source", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(
+    intent({ source: "ai", screen: "notes", surface: "notepad", action: "note.append", payload: { text: "**Big** news" } }),
+    tools,
+  );
+  expect(d.ok).toBe(true);
+  const op = d.ops[0]!;
+  expect(op).toMatchObject({ target: "notepad-body", op: "append", provenance: "ai", commit: "committed" });
+  expect(op.html).toContain('data-grade="grain"');          // AI provenance persists
+  expect(op.html).toContain('data-md="**Big** news"');      // the source, for localStorage round-trip
+  expect(op.html).toContain("<strong>Big</strong>");        // rendered for the eye
+});
+
+test("note.append (user commit): a clean entry, no grade", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(
+    intent({ source: "user", surface: "notepad", action: "note.append", payload: { text: "mine" } }),
+    tools,
+  );
+  expect(d.ops[0]!.provenance).toBe("user");
+  expect(d.ops[0]!.html).not.toContain("data-grade");
+});
+
+test("note.replace: rebuilds the notepad-body wrapper so the surface stays addressable", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(
+    intent({ source: "ai", surface: "notepad", action: "note.replace", payload: { text: "fresh" } }),
+    tools,
+  );
+  const op = d.ops[0]!;
+  expect(op).toMatchObject({ target: "notepad-body", op: "replace" });
+  expect(op.html).toContain('data-surface="notepad-body"');
+});
+
+test("note.append with empty text: rejected with a flash, nothing written (never a blank fact)", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(
+    intent({ source: "ai", surface: "notepad", action: "note.append", payload: { text: "   " } }),
+    tools,
+  );
+  expect(d.ok).toBe(false);
+  expect(d.ops[0]!.op).toBe("flash");
+});

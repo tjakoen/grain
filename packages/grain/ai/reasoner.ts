@@ -10,7 +10,7 @@ import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
 import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref } from "./contract.ts";
 // The reusable reasoner primitives — the stub DOGFOODS them so the exported kit (what a consumer's
 // real model composes with) and the shipped chat markup can never drift apart.
-import { esc, chatBubble, narrationLine, navigateOp } from "./reasoner-kit.ts";
+import { esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp } from "./reasoner-kit.ts";
 
 // The scoped capabilities the reasoner is allowed to use — its tool surface. The
 // real reasoner reaches storage through least-privilege tools exactly like this.
@@ -152,6 +152,38 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         await beat(HOLD_MS);
         const reply = text ? `Noted — “${text}”. I'll fold that into your plan.` : "I'm here — what would you like to plan?";
         return stream(id, reply);
+      }
+
+      // --- note.append / note.replace: the notepad — the AI's memory as a visible, editable
+      //     surface, and the strongest symmetry demo (DEMO-PLAN piece 2). The SAME verbs serve
+      //     both operators through the one door: the AI appends a digest it wrote; a human's
+      //     explicit "commit" rewrites the pad with note.replace. Provenance (intent.source) drives
+      //     the grade — the AI's entry stays grain, the human's settles clean. The op lands on the
+      //     `notepad-body` surface; the client island mirrors the source to localStorage. An empty
+      //     note fails rather than writing a blank fact (lesson #3: never fail silently). ---
+      if (intent.action === "note.append" || intent.action === "note.replace") {
+        const text = String(intent.payload.text ?? "").trim();
+        if (!text) {
+          return {
+            ok: false,
+            reason: "note: empty text",
+            ops: [{ target: intent.surface, op: "flash", message: "Nothing to note.",
+                     provenance: "system", commit: "committed" }],
+          };
+        }
+        const from = intent.source;   // "user" | "ai" — provenance persists onto the entry's grade
+        const op = intent.action === "note.append" ? noteAppendOp(text, from) : noteReplaceOp(text, from);
+        // The AI narrates its own writes (legible run); a human commit needs no narration.
+        if (from === "ai")
+          narrate(intent.action === "note.append" ? "notes" : "rewrites",
+            intent.action === "note.append" ? "adding to the notepad" : "rewriting the notepad");
+        return {
+          ok: true,
+          reply: from === "ai"
+            ? (intent.action === "note.append" ? "Added that to the notepad." : "Rewrote the notepad.")
+            : undefined,
+          ops: [op],
+        };
       }
 
       // --- demo.run: a useful end-to-end scenario the user can WATCH — the AI drafts a

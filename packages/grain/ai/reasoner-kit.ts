@@ -7,10 +7,12 @@
 
 import type { RenderOp, Surface } from "./contract.ts";
 import { PUSH_SURFACES, isSafeNavigateHref } from "./contract.ts";
-// Re-exported so a consumer building on the kit finds settle-time markdown rendering right next
-// to the op-builders it pairs with, without a second import path to remember. Canonical home +
-// tests: ./markdown.ts (kept separate so this file stays about OP shapes, not text rendering).
-export { renderMarkdown } from "./markdown.ts";
+// Imported for the notepad markup helpers below (they render markdown source to sanitized HTML) AND
+// re-exported so a consumer building on the kit finds settle-time markdown rendering right next to
+// the op-builders it pairs with, without a second import path to remember. Canonical home + tests:
+// ./markdown.ts (kept separate so this file stays about OP shapes, not text rendering).
+import { renderMarkdown } from "./markdown.ts";
+export { renderMarkdown };
 
 // ---- markup: the exact fragments the dispatcher's applyOp expects (chat bubbles, console lines) ----
 
@@ -53,6 +55,24 @@ export const choiceGroup = (log: Surface, choices: { label: string; value?: stri
     `<button type="button" class="btn chat-choice" data-action="chat.send" data-target="${esc(log)}"` +
     ` data-payload-text="${esc(c.value ?? c.label)}">${esc(c.label)}</button>`).join("") +
   `</div>`;
+
+// ---- notepad markup: the AI's memory as a visible, editable surface (DEMO-PLAN piece 2) ----------
+// Canonical state is the markdown SOURCE, not this rendered HTML: each entry carries its own source
+// in `data-md` so the client island can reconstitute the whole notepad's markdown (join the entries)
+// and mirror it to localStorage — the DOM is a projection, the source is the truth. renderMarkdown is
+// the SAME sanitizing allowlist the chat uses at settle-time, so an AI (or human) note can never
+// inject markup. An AI entry grades `grain` (provenance persists — DESIGN-SYSTEM §3); a human commit
+// omits the grade (clean ink). These are the SSOT the organism's SSR template and the note ops share.
+
+/** One notepad entry: rendered markdown for the eye, `data-md` (the escaped source) for round-trip. */
+export const notepadEntry = (text: string, provenance: "user" | "ai"): string =>
+  `<div class="notepad__entry"${provenance === "ai" ? ' data-grade="grain"' : ""} data-md="${esc(text)}">` +
+  `${renderMarkdown(text)}</div>`;
+
+/** The notepad's inner content surface — the `note.*` ops' target. Reproduced verbatim by a
+ *  `replace` op (which swaps the element's outerHTML), so its `data-surface` stays addressable. */
+export const notepadBody = (inner = ""): string =>
+  `<div class="notepad__body" data-surface="${PUSH_SURFACES.notepadBody}">${inner}</div>`;
 
 // ---- op-builders: the exact RenderOps a reasoner emits, so no consumer hand-rolls provenance/commit ----
 
@@ -114,3 +134,15 @@ export const choicesOp = (log: Surface, prompt: string, choices: { label: string
      // omit the body span entirely when there's no prompt (e.g. the model already spoke the question
      // in its own bubble) — an empty body would render as a stray blank line above the buttons.
      html: chatBubble("ai", "grain", (prompt ? chatBody(esc(prompt)) : "") + choiceGroup(log, choices), who) });
+
+/** Append one markdown entry to the notepad. A note is a settled fact once made, so `committed`; the
+ *  grade follows provenance (AI → grain, human commit → clean). Lands on the `notepad-body` surface. */
+export const noteAppendOp = (text: string, provenance: "user" | "ai"): RenderOp =>
+  ({ target: PUSH_SURFACES.notepadBody, op: "append", provenance, commit: "committed",
+     html: notepadEntry(text, provenance) });
+
+/** Rewrite the whole notepad from one markdown body. Emits a `replace` (swaps the notepad-body node's
+ *  outerHTML), rebuilding the surface wrapper so it stays addressable for the next note op. */
+export const noteReplaceOp = (text: string, provenance: "user" | "ai"): RenderOp =>
+  ({ target: PUSH_SURFACES.notepadBody, op: "replace", provenance, commit: "committed",
+     html: notepadBody(notepadEntry(text, provenance)) });

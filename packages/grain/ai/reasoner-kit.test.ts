@@ -5,6 +5,7 @@ import {
   esc, chatBubble, chatBody, narrationLine, thinkingDots, choiceGroup,
   userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp,
   thinkingOp, choicesOp,
+  notepadEntry, notepadBody, noteAppendOp, noteReplaceOp,
   renderMarkdown,
 } from "./reasoner-kit.ts";
 
@@ -101,5 +102,33 @@ describe("op-builders", () => {
     expect(op.html).toContain('data-grade="grain"');       // the ask is AI speech → grain
     expect(op.html).toContain("Where to?");
     expect(op.html).toContain('data-payload-text="go home"');
+  });
+});
+
+describe("notepad markup + ops (DEMO-PLAN piece 2)", () => {
+  test("notepadEntry (ai): grain grade, markdown source in data-md, rendered body", () => {
+    const h = notepadEntry("**hi** there", "ai");
+    expect(h).toContain('data-grade="grain"');               // AI provenance persists as grain
+    expect(h).toContain('data-md="**hi** there"');           // the SOURCE, for round-trip to localStorage
+    expect(h).toContain("<strong>hi</strong>");              // the rendered projection for the eye
+  });
+  test("notepadEntry (human commit): clean ink, no grade", () => {
+    expect(notepadEntry("mine", "user")).not.toContain("data-grade");
+  });
+  test("notepadEntry escapes source + render so a note can never inject markup", () => {
+    const h = notepadEntry("<script>x</script>", "ai");
+    expect(h).not.toContain("<script>");                     // neither in data-md nor the body
+  });
+  test("notepadBody carries the notepad-body surface so a replace stays addressable", () => {
+    expect(notepadBody("x")).toContain('data-surface="notepad-body"');
+  });
+  test("noteAppendOp: committed append to notepad-body, grade follows provenance", () => {
+    expect(noteAppendOp("a", "ai")).toMatchObject({ target: "notepad-body", op: "append", provenance: "ai", commit: "committed" });
+    expect(noteAppendOp("a", "user").html).not.toContain("data-grade");
+  });
+  test("noteReplaceOp: rebuilds the body wrapper via a replace op", () => {
+    const op = noteReplaceOp("a", "user");
+    expect(op).toMatchObject({ target: "notepad-body", op: "replace", provenance: "user", commit: "committed" });
+    expect(op.html).toContain('data-surface="notepad-body"');
   });
 });

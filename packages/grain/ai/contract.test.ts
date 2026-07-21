@@ -16,6 +16,20 @@ describe("navigate: registered in the closed ACTIONS vocabulary", () => {
   });
 });
 
+describe("note.append / note.replace: the notepad verbs", () => {
+  test("both are real actions, light depth, accept the notepad kind", () => {
+    expect(isAction("note.append")).toBe(true);
+    expect(isAction("note.replace")).toBe(true);
+    expect(ACTIONS["note.append"]).toMatchObject({ name: "note.append", depth: "light", accepts: ["notepad"] });
+    expect(ACTIONS["note.replace"]).toMatchObject({ name: "note.replace", depth: "light", accepts: ["notepad"] });
+  });
+  test("actionsForKind('notepad') surfaces both — the manifest advertises them on the pad", () => {
+    const acts = actionsForKind("notepad");
+    expect(acts).toContain("note.append");
+    expect(acts).toContain("note.replace");
+  });
+});
+
 describe("isSafeNavigateHref: same-origin, root-relative only", () => {
   test.each([
     ["/", true],

@@ -1,0 +1,55 @@
+/* organisms/notepad — the AI's MEMORY as a visible, editable surface (DEMO-PLAN piece 2). A rail
+   pane with two modes: RENDERED (the notes, read-only, where note.append/note.replace ops land) and
+   SOURCE (a textarea the human edits, then commits through the one door). One toggle flips between
+   them; the canonical state is the markdown SOURCE (a client island mirrors it to localStorage from
+   each entry's data-md — see grain/scripts/notepad.js). Persona-neutral: "the AI", never "the desk".
+   CSS-only structure — compose the markup from notepad.md. AI-authored entries carry data-grade
+   ="grain" (provenance persists, DESIGN-SYSTEM §3); a human commit settles clean. Tokens only.
+   (Loads after side-rail.css in the sorted bundle; mounts inside the rail like any pane.) */
+
+.notepad { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto;
+  font-family: var(--font-smooth); font-size: var(--text-sm); color: var(--color-fg); }
+
+/* header row: the pane title + the source⇄rendered toggle + (in source mode) the Commit control */
+.notepad__head { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line); }
+.notepad__title { font-family: var(--font-grain); font-size: var(--text-xs); text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-faint); margin-right: auto; }
+.notepad__toggle, .notepad__commit { cursor: pointer; font: inherit; font-size: var(--text-xs);
+  color: var(--color-fg); background: transparent; border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm); padding: 2px var(--space-2); }
+.notepad__toggle:hover, .notepad__commit:hover { background: var(--paper-2); }
+.notepad__toggle:focus-visible, .notepad__commit:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* the toggle's label reflects the pane's mode (::before, so it stays right if state is reset externally) */
+.notepad__toggle::before { content: "◑ source"; }
+.notepad[data-mode="source"] .notepad__toggle::before { content: "◐ rendered"; }
+/* Commit only makes sense while editing the source; hidden in rendered mode */
+.notepad__commit { display: none; }
+.notepad[data-mode="source"] .notepad__commit { display: inline-flex; align-items: center; }
+
+/* the two panes share the scroll area; only one shows at a time (driven by data-mode) */
+.notepad__body, .notepad__source { flex: 1 1 0; min-height: 0; overflow: auto; scroll-behavior: smooth;
+  padding: var(--space-3); }
+.notepad[data-mode="source"] .notepad__body { display: none; }
+.notepad:not([data-mode="source"]) .notepad__source { display: none; }
+
+/* RENDERED: the notes. Each entry is one markdown block; AI entries grade grain, human clean. */
+.notepad__body { display: flex; flex-direction: column; gap: var(--space-3); }
+.notepad__body:empty::after,
+.notepad__body:not(:has(.notepad__entry))::after {
+  content: "Nothing noted yet."; color: var(--ink-faint); font-style: italic; }
+.notepad__entry { }
+.notepad__entry[data-grade="grain"] { color: var(--color-grain, var(--color-muted)); }
+.notepad__entry > :first-child { margin-top: 0; }
+.notepad__entry > :last-child { margin-bottom: 0; }
+.notepad__entry a { color: var(--color-accent); text-decoration: none; }
+.notepad__entry a:hover { text-decoration: underline; }
+.notepad__entry code { font-family: var(--font-grain); font-size: 0.9em; }
+
+/* SOURCE: the human's editable markdown. Clean ink (human authorship); mono for source legibility. */
+.notepad__source { display: block; width: 100%; resize: none; box-sizing: border-box;
+  background: var(--color-bg); border: 0; outline: none;
+  color: var(--color-fg); font-family: var(--font-grain); font-size: var(--text-sm); line-height: 1.6; }
+.notepad__source::placeholder { color: var(--ink-faint); }
+
+@media (prefers-reduced-motion: reduce) { .notepad__body, .notepad__source { scroll-behavior: auto; } }

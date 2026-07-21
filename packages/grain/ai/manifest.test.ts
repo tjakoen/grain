@@ -16,13 +16,24 @@ test("buildManifest: actions list matches ACTIONS registry exactly", () => {
   expect(manifestNames).toEqual(registryNames);
 });
 
-test("buildManifest: each action entry has name, depth, accepts", () => {
+test("buildManifest: each action entry has name, depth, accepts, description, payload", () => {
   const m = buildManifest("loop", targets);
   for (const a of m.actions) {
     expect(typeof a.name).toBe("string");
     expect(["light", "heavy"]).toContain(a.depth);
     expect(Array.isArray(a.accepts)).toBe(true);
+    expect(typeof a.description).toBe("string");
+    expect(a.description.length).toBeGreaterThan(0);
+    expect(typeof a.payload).toBe("object");
   }
+});
+
+test("buildManifest: payload schema is carried through from the registry (name → {type,required})", () => {
+  const m = buildManifest("loop", targets);
+  const note = m.actions.find((a) => a.name === "note.append")!;
+  expect(note.payload.text).toMatchObject({ type: "string", required: true, note: "markdown" });
+  const archive = m.actions.find((a) => a.name === "item.archive")!;
+  expect(archive.payload).toEqual({});   // a no-argument verb advertises an empty schema
 });
 
 test("buildManifest: targets are passed through unchanged", () => {

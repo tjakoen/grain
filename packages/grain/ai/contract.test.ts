@@ -30,6 +30,27 @@ describe("note.append / note.replace: the notepad verbs", () => {
   });
 });
 
+describe("payload schema + description: every verb advertises how to call it", () => {
+  test("each ACTIONS entry declares a non-empty description and a payload object", () => {
+    for (const def of Object.values(ACTIONS)) {
+      expect(typeof def.description).toBe("string");
+      expect(def.description.trim().length).toBeGreaterThan(0);
+      expect(typeof def.payload).toBe("object");
+      for (const field of Object.values(def.payload)) {
+        expect(["string", "number", "boolean"]).toContain(field.type);
+        expect(typeof field.required).toBe("boolean");
+      }
+    }
+  });
+  test("text verbs require a text field; navigate requires an href; no-arg verbs are empty", () => {
+    expect(ACTIONS["chat.send"].payload.text).toMatchObject({ type: "string", required: true });
+    expect(ACTIONS["note.append"].payload.text).toMatchObject({ type: "string", required: true });
+    expect(ACTIONS.navigate.payload.href).toMatchObject({ type: "string", required: true });
+    expect(ACTIONS["item.archive"].payload).toEqual({});
+    expect(ACTIONS["say.stream"].payload).toEqual({});
+  });
+});
+
 describe("isSafeNavigateHref: same-origin, root-relative only", () => {
   test.each([
     ["/", true],

@@ -94,6 +94,19 @@ export function domManifest(doc: DomDoc): Manifest {
 export function manifestForReasoner(doc: DomDoc): string {
   const m = domManifest(doc);
   const lines: string[] = [`screen: ${m.screen || "(none)"}`];
+
+  // The MOVE SET: every verb the vocabulary offers, with the payload shape a reasoner needs to
+  // CALL it (field*:type — "*" = required) and a one-line description of what it does. Without
+  // this a model sees which verbs a target accepts (below) but has to guess the payload — the gap
+  // this section closes (AI-INTERFACE §1b). Order follows the ACTIONS registry (buildManifest).
+  lines.push(`actions: (${m.actions.length})`);
+  for (const a of m.actions) {
+    const fields = Object.entries(a.payload)
+      .map(([name, f]) => `${name}${f.required ? "*" : ""}:${f.type}${f.note ? ` (${f.note})` : ""}`);
+    const args = fields.length ? fields.join(", ") : "no args";
+    lines.push(`- ${a.name} [${a.depth}] (${args}) — ${a.description}`);
+  }
+
   if (!m.targets.length) {
     lines.push("targets: (none — this page declares no [data-surface] elements)");
     return lines.join("\n");

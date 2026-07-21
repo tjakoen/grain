@@ -36,26 +36,56 @@ export type ActionName =
   | "note.append" | "note.replace" | "navigate";
 export type Depth = "light" | "heavy";
 
+// ---- Payload schema: the machine-readable INPUT shape a verb expects -------------
+// The registry declares not just WHICH verbs exist and WHERE they apply, but HOW to
+// call each one — the field names, types, and which are required. This is what lets a
+// reasoner (a real model reading the manifest) construct a valid Intent without guessing
+// the payload from prose (the MCP `inputSchema` equivalent; AI-INTERFACE §1b). Kept a
+// tiny closed shape on purpose — a verb's payload is a flat bag of primitives today, so a
+// full JSON-Schema dependency would be more than the contract needs.
+export type PayloadType = "string" | "number" | "boolean";
+export interface PayloadField {
+  type: PayloadType;
+  required: boolean;
+  note?: string;            // a short hint for the reasoner (e.g. "markdown", "root-relative path")
+}
+/** A verb's payload schema: field name → its shape. `{}` = a no-argument verb. */
+export type PayloadSchema = Record<string, PayloadField>;
+
 export interface ActionDef {
   name: ActionName;
   depth: Depth;
   accepts: SurfaceKind[];   // surface KINDS this verb applies to (typed → no stray kinds)
+  description: string;      // one line: what the verb does / when to reach for it — surfaced to the reasoner
+  payload: PayloadSchema;   // the verb's input shape — advertised in the manifest so a model can call it
 }
 
+const REQ = (type: PayloadType, note?: string): PayloadField => ({ type, required: true, note });
+
 export const ACTIONS: Record<ActionName, ActionDef> = {
-  "item.archive": { name: "item.archive", depth: "light", accepts: ["item"] },
-  "say.set":      { name: "say.set",      depth: "light", accepts: ["reflection"] },
-  "say.stream":   { name: "say.stream",   depth: "light", accepts: ["say-stream"] },
-  "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"] },   // plays an AI-acting demo
-  "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"] },   // user asks the AI to halt (mediated)
-  "chat.send":    { name: "chat.send",    depth: "light", accepts: ["chat-log"] }, // send a message; AI replies over SSE
-  "note.append":  { name: "note.append",  depth: "light", accepts: ["notepad"] },  // append one markdown entry to the notepad
-  "note.replace": { name: "note.replace", depth: "light", accepts: ["notepad"] },  // rewrite the notepad from one markdown body
+  "item.archive": { name: "item.archive", depth: "light", accepts: ["item"],
+    description: "Archive an item (stands in for task.complete on the optimistic light path).", payload: {} },
+  "say.set":      { name: "say.set",      depth: "light", accepts: ["reflection"],
+    description: "Write a noted line back into a reflection surface.", payload: { text: REQ("string") } },
+  "say.stream":   { name: "say.stream",   depth: "light", accepts: ["say-stream"],
+    description: "Stream a reflection line out token by token.", payload: {} },
+  "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"],
+    description: "Play a scripted AI-acting demo on the current screen.", payload: {} },
+  "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"],
+    description: "Ask the AI to halt the current run (mediated — never a force-kill).", payload: {} },
+  "chat.send":    { name: "chat.send",    depth: "light", accepts: ["chat-log"],
+    description: "Send a chat message; the AI's reply streams back over SSE.", payload: { text: REQ("string") } },
+  "note.append":  { name: "note.append",  depth: "light", accepts: ["notepad"],
+    description: "Append one markdown entry to the notepad.", payload: { text: REQ("string", "markdown") } },
+  "note.replace": { name: "note.replace", depth: "light", accepts: ["notepad"],
+    description: "Rewrite the whole notepad from one markdown body.", payload: { text: REQ("string", "markdown") } },
   // ActionName AND a RenderOpKind, deliberately BOTH (see the `navigate` RenderOpKind below for why
   // one alone doesn't cover it): registering it here as a "screen" verb is what makes it show up in
   // `actionsForKind("screen")` — and so in the manifest (manifest.ts/manifest-dom.ts) — as something
   // a control (or a reasoner reading the manifest) can see is legal to invoke on the current screen.
-  "navigate":     { name: "navigate",     depth: "light", accepts: ["screen"] },
+  "navigate":     { name: "navigate",     depth: "light", accepts: ["screen"],
+    description: "Change screens — same-origin, root-relative href only (validated at the door).",
+    payload: { href: REQ("string", "root-relative path, e.g. /notes") } },
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);

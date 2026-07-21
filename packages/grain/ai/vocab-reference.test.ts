@@ -12,6 +12,15 @@ test("renders every ACTIONS entry as a row — never hand-copied", async () => {
   for (const name of Object.keys(ACTIONS)) expect(html).toContain(`<code>${name}</code>`);
 });
 
+test("renders each verb's payload schema + description — derived, not hand-copied", async () => {
+  const html = await buildVocabReference(VARIABLES_CSS);
+  // a required text field renders as text*:string; the description column carries the prose
+  expect(html).toContain(`<code>text*:string</code>`);
+  expect(html).toContain(ACTIONS["note.append"].description);
+  // a no-argument verb reads "no args", not a blank cell
+  expect(html).toContain("no args");
+});
+
 test("renders the token slots read from variables.css", async () => {
   const html = await buildVocabReference(VARIABLES_CSS);
   expect(html).toContain("--ink");

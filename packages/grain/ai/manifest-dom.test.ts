@@ -70,6 +70,14 @@ test("domManifest: same shape as the server manifest, marked a live-DOM projecti
   const m = domManifest(doc);
   expect(m.screen).toBe("grain");
   expect(m.actions.length).toBeGreaterThan(0);      // the full verb registry, as the server sends
+  // each advertised action carries its calling contract — description + payload schema
+  for (const a of m.actions) {
+    expect(typeof a.description).toBe("string");
+    expect(a.description.length).toBeGreaterThan(0);
+    expect(typeof a.payload).toBe("object");
+  }
+  const chat = m.actions.find((a) => a.name === "chat.send")!;
+  expect(chat.payload.text).toMatchObject({ type: "string", required: true });
   expect(m.targets[0].id).toBe("chat-log");
   expect(m.inView).toEqual({ surfaces: ["chat-log"] });
   expect(m.note).toMatch(/live dom/i);
@@ -87,13 +95,21 @@ test("manifestForReasoner: deterministic, prompt-ready text — same fixed DOM i
   const first = manifestForReasoner(doc);
   const second = manifestForReasoner(doc);
   expect(first).toBe(second);                        // deterministic
-  expect(first).toBe(
-    "screen: notes\n" +
+
+  // Structure: screen line, then the full MOVE SET (actions with payload shape), then targets.
+  expect(first.startsWith("screen: notes\nactions: (")).toBe(true);
+  // a no-arg verb, a required-text verb, and a noted markdown verb — the payload contract, surfaced
+  expect(first).toContain("- item.archive [light] (no args) — Archive an item");
+  expect(first).toContain("- chat.send [light] (text*:string) — Send a chat message");
+  expect(first).toContain("- note.append [light] (text*:string (markdown)) — Append one markdown entry");
+  expect(first).toContain("- navigate [light] (href*:string (root-relative path, e.g. /notes)) —");
+  // the targets tail is exact and comes after the actions block
+  expect(first.endsWith(
     "targets: (3)\n" +
     "- item:ITM-1 [item] -> item.archive\n" +
     "- chat-log [chat-log] -> chat.send\n" +
     "- console [console] -> (no verb currently targets this)"
-  );
+  )).toBe(true);
 });
 
 test("manifestForReasoner: a screen-kind surface lists navigate among its accepted verbs", () => {
@@ -108,5 +124,7 @@ test("manifestForReasoner: a screen-kind surface lists navigate among its accept
 
 test("manifestForReasoner: no [data-surface] elements — says so plainly, doesn't crash", () => {
   const doc = { body: el({ "data-screen": "empty" }), querySelectorAll: () => [] };
-  expect(manifestForReasoner(doc)).toBe("screen: empty\ntargets: (none — this page declares no [data-surface] elements)");
+  const text = manifestForReasoner(doc);
+  expect(text.startsWith("screen: empty\nactions: (")).toBe(true);   // the move set is always listed
+  expect(text.endsWith("targets: (none — this page declares no [data-surface] elements)")).toBe(true);
 });

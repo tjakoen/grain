@@ -11,7 +11,7 @@
 //     backing runtime array anywhere in the codebase. Hardcoded below, but GUARDED —
 //     see vocab-reference.test.ts, which greps contract.ts / ai-routes.ts's source so
 //     a mismatch fails a test instead of silently drifting.
-import { ACTIONS, type SurfaceKind } from "./contract.ts";
+import { ACTIONS, type ActionDef, type SurfaceKind } from "./contract.ts";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -61,8 +61,16 @@ const table = (head: string[], rows: string[][]) =>
 
 /** The reference page's BODY content (no page shell — the composition root wraps it). */
 export async function buildVocabReference(variablesCssPath: string): Promise<string> {
+  // payload + description are DERIVED from the registry too (never a hand-copied column): a field
+  // renders as name*:type (star = required), so the generated reference shows HOW to call each verb.
+  const payloadCell = (payload: ActionDef["payload"]): string => {
+    const fields = Object.entries(payload)
+      .map(([name, f]) => `<code>${esc(name)}${f.required ? "*" : ""}:${esc(f.type)}</code>${f.note ? ` <span class="muted">(${esc(f.note)})</span>` : ""}`);
+    return fields.length ? fields.join(", ") : `<span class="muted">no args</span>`;
+  };
   const actionRows = Object.values(ACTIONS)
-    .map((a) => [`<code>${esc(a.name)}</code>`, esc(a.depth), a.accepts.map((k) => `<code>${esc(k)}</code>`).join(", ")]);
+    .map((a) => [`<code>${esc(a.name)}</code>`, payloadCell(a.payload),
+      a.accepts.map((k) => `<code>${esc(k)}</code>`).join(", "), esc(a.depth), esc(a.description)]);
   const kindRows = surfaceKindsInUse().map((k) => [`<code>${esc(k)}</code>`]);
   const opRows = RENDER_OP_KINDS.map((o) => [`<code>${esc(o.kind)}</code>`, esc(o.means)]);
   const endpointRows = ENDPOINTS.map((e) => [`<code>${esc(e.method)} ${esc(e.path)}</code>`, esc(e.means)]);
@@ -71,8 +79,8 @@ export async function buildVocabReference(variablesCssPath: string): Promise<str
 
   return `
     <div class="section-head"><span>Actions</span></div>
-    <p class="muted">Generated from <code>grain/ai/contract.ts</code>'s <code>ACTIONS</code> registry — the single source of truth.</p>
-    ${table(["verb", "depth", "accepts (surface kinds)"], actionRows)}
+    <p class="muted">Generated from <code>grain/ai/contract.ts</code>'s <code>ACTIONS</code> registry — the single source of truth. Payload fields marked <code>*</code> are required.</p>
+    ${table(["verb", "payload", "accepts (surface kinds)", "depth", "what it does"], actionRows)}
 
     <div class="section-head"><span>Surface kinds</span></div>
     <p class="muted">Every kind at least one verb above accepts.</p>

@@ -51,6 +51,24 @@ describe("payload schema + description: every verb advertises how to call it", (
   });
 });
 
+describe("hints: MCP-style behaviour annotations for safe choice + retry", () => {
+  test("every verb declares a hints object", () => {
+    for (const def of Object.values(ACTIONS)) expect(typeof def.hints).toBe("object");
+  });
+  test("note.replace is destructive + idempotent; note.append is neither (additive)", () => {
+    expect(ACTIONS["note.replace"].hints).toMatchObject({ destructive: true, idempotent: true });
+    expect(ACTIONS["note.append"].hints.destructive).toBeUndefined();
+    expect(ACTIONS["note.append"].hints.idempotent).toBeUndefined();
+  });
+  test("navigate + desk.stop are read-only (no persisted-state mutation)", () => {
+    expect(ACTIONS.navigate.hints.readOnly).toBe(true);
+    expect(ACTIONS["desk.stop"].hints.readOnly).toBe(true);
+  });
+  test("item.archive is idempotent — a replay is a harmless no-op", () => {
+    expect(ACTIONS["item.archive"].hints.idempotent).toBe(true);
+  });
+});
+
 describe("isSafeNavigateHref: same-origin, root-relative only", () => {
   test.each([
     ["/", true],

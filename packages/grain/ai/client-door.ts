@@ -12,6 +12,7 @@
 import { createInteractionLayer, type InteractionLayer } from "./interaction-layer.ts";
 import { makeStubReasoner, type StubOptions, type Reasoner } from "./reasoner.ts";
 import { createStreamLogSink } from "./timeline-log.ts";
+import { manifestForReasoner, type DomDoc } from "./manifest-dom.ts";
 import { OP_EVENT, type OpChannel, type RenderOp } from "./contract.ts";
 
 export interface ClientDoorOptions extends StubOptions {
@@ -21,15 +22,27 @@ export interface ClientDoorOptions extends StubOptions {
   reasoner?: Reasoner;
 }
 
+/** The client door is a plain InteractionLayer PLUS an observe() step — the "read the result" half
+ *  of an in-browser act → observe → decide loop. Because ops loop back synchronously into the DOM,
+ *  by the time handleIntent resolves the page reflects the change; observe() re-harvests the LIVE
+ *  DOM manifest so a driving reasoner sees the new state without a server round-trip. */
+export interface ClientDoor extends InteractionLayer {
+  /** Re-harvest the live-DOM manifest as prompt-ready text (the same shape `manifestForReasoner`
+   *  emits). The document is a PARAMETER, not the global — so this module needs no DOM lib and
+   *  stays client-safe on the shared build (like `manifest-dom.ts`). In the browser, pass
+   *  `document`; in a test, a structural `DomDoc` fake. */
+  observe(doc: DomDoc): string;
+}
+
 /** Wire the door for the browser: ops loop back synchronously into the given renderer (the
- *  dispatcher's applyOp). Returns the same InteractionLayer interface the server exposes, so the
- *  dispatcher treats both transports identically. */
-export function createClientDoor(applyOp: (op: RenderOp) => void, opts: ClientDoorOptions = {}): InteractionLayer {
+ *  dispatcher's applyOp). Returns a ClientDoor — the same InteractionLayer the server exposes (so
+ *  the dispatcher treats both transports identically) plus observe() for an agentic driver. */
+export function createClientDoor(applyOp: (op: RenderOp) => void, opts: ClientDoorOptions = {}): ClientDoor {
   const { reasoner, ...reasonerOpts } = opts;
   const loopback: OpChannel = {
     push: (_session, event, data) => { if (event === OP_EVENT) applyOp(data as RenderOp); },
   };
-  return createInteractionLayer({
+  const layer = createInteractionLayer({
     reasoner: reasoner ?? makeStubReasoner(reasonerOpts),
     stream: loopback,
     logSink: createStreamLogSink(loopback),   // the timeline works on the client transport too (§5g)
@@ -39,4 +52,5 @@ export function createClientDoor(applyOp: (op: RenderOp) => void, opts: ClientDo
     archiveItem: async () => {},
     renderSurface: async () => "",
   });
+  return { ...layer, observe: (doc) => manifestForReasoner(doc) };
 }

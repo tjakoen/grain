@@ -32,4 +32,18 @@ describe("createClientDoor", () => {
     expect(decision.ok).toBe(false);
     expect(ops.every((o) => o.provenance !== "ai")).toBe(true);
   });
+
+  test("observe(doc) re-harvests the live-DOM manifest — the 'read the result' half of the loop", () => {
+    const door = createClientDoor(() => {}, { thinkMs: 0 });
+    // a structural DomDoc fake (the same shape manifest-dom takes) — no browser needed
+    const el = (attrs: Record<string, string>) => ({ getAttribute: (n: string) => attrs[n] ?? null });
+    const doc = {
+      body: el({ "data-screen": "grain" }),
+      querySelectorAll: () => [el({ "data-surface": "chat-log" })],
+    };
+    const text = door.observe(doc);
+    expect(text).toContain("screen: grain");
+    expect(text).toContain("actions: (");                 // the move set is listed
+    expect(text).toContain("- chat-log [chat-log] -> chat.send");   // and the live target
+  });
 });

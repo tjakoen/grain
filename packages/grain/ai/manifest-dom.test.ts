@@ -103,6 +103,9 @@ test("manifestForReasoner: deterministic, prompt-ready text — same fixed DOM i
   expect(first).toContain("- chat.send [light] (text*:string) — Send a chat message");
   expect(first).toContain("- note.append [light] (text*:string (markdown)) — Append one markdown entry");
   expect(first).toContain("- navigate [light] (href*:string (root-relative path, e.g. /notes)) —");
+  // behaviour hints ride along in braces so the reasoner can retry/choose safely
+  expect(first).toContain("- note.replace [light] (text*:string (markdown)) — Rewrite the whole notepad from one markdown body. {destructive, idempotent}");
+  expect(first).toContain("- navigate [light] (href*:string (root-relative path, e.g. /notes)) — Change screens — same-origin, root-relative href only (validated at the door). {read");
   // the targets tail is exact and comes after the actions block
   expect(first.endsWith(
     "targets: (3)\n" +

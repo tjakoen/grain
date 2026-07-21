@@ -52,40 +52,63 @@ export interface PayloadField {
 /** A verb's payload schema: field name → its shape. `{}` = a no-argument verb. */
 export type PayloadSchema = Record<string, PayloadField>;
 
+// ---- Action hints: the GRAIN analog of MCP's tool annotations ---------------------
+// Safety/behaviour flags a reasoner reads to CHOOSE and RETRY safely — is a verb read-only
+// (changes no persisted state), destructive (overwrites/discards existing content, as opposed
+// to additive), idempotent (same payload → same end state, so a replay is harmless)? All default
+// false/absent; only the flags that actually hold are set. "read-only" means it doesn't mutate
+// persisted app state — navigation and the stop control signal qualify (they change view/run
+// state, not data). These let a local model reason "can I retry this?" without guessing.
+export interface ActionHints {
+  readOnly?: boolean;
+  destructive?: boolean;
+  idempotent?: boolean;
+}
+
 export interface ActionDef {
   name: ActionName;
   depth: Depth;
   accepts: SurfaceKind[];   // surface KINDS this verb applies to (typed → no stray kinds)
   description: string;      // one line: what the verb does / when to reach for it — surfaced to the reasoner
   payload: PayloadSchema;   // the verb's input shape — advertised in the manifest so a model can call it
+  hints: ActionHints;       // behaviour hints (MCP-style) — so a reasoner chooses + retries safely
 }
 
 const REQ = (type: PayloadType, note?: string): PayloadField => ({ type, required: true, note });
 
 export const ACTIONS: Record<ActionName, ActionDef> = {
   "item.archive": { name: "item.archive", depth: "light", accepts: ["item"],
-    description: "Archive an item (stands in for task.complete on the optimistic light path).", payload: {} },
+    description: "Archive an item (stands in for task.complete on the optimistic light path).",
+    payload: {}, hints: { idempotent: true } },   // re-archiving is a harmless no-op
   "say.set":      { name: "say.set",      depth: "light", accepts: ["reflection"],
-    description: "Write a noted line back into a reflection surface.", payload: { text: REQ("string") } },
+    description: "Write a noted line back into a reflection surface.",
+    payload: { text: REQ("string") }, hints: { idempotent: true } },   // same text → same line
   "say.stream":   { name: "say.stream",   depth: "light", accepts: ["say-stream"],
-    description: "Stream a reflection line out token by token.", payload: {} },
+    description: "Stream a reflection line out token by token.",
+    payload: {}, hints: { idempotent: true } },
   "demo.run":     { name: "demo.run",     depth: "heavy", accepts: ["screen"],
-    description: "Play a scripted AI-acting demo on the current screen.", payload: {} },
+    description: "Play a scripted AI-acting demo on the current screen.",
+    payload: {}, hints: { idempotent: true } },   // re-runnable: drives demo surfaces, mutates no real state
   "desk.stop":    { name: "desk.stop",    depth: "light", accepts: ["screen"],
-    description: "Ask the AI to halt the current run (mediated — never a force-kill).", payload: {} },
+    description: "Ask the AI to halt the current run (mediated — never a force-kill).",
+    payload: {}, hints: { readOnly: true, idempotent: true } },   // a control signal, writes no state
   "chat.send":    { name: "chat.send",    depth: "light", accepts: ["chat-log"],
-    description: "Send a chat message; the AI's reply streams back over SSE.", payload: { text: REQ("string") } },
+    description: "Send a chat message; the AI's reply streams back over SSE.",
+    payload: { text: REQ("string") }, hints: {} },   // additive — each send adds a new turn (not idempotent)
   "note.append":  { name: "note.append",  depth: "light", accepts: ["notepad"],
-    description: "Append one markdown entry to the notepad.", payload: { text: REQ("string", "markdown") } },
+    description: "Append one markdown entry to the notepad.",
+    payload: { text: REQ("string", "markdown") }, hints: {} },   // additive — each append adds an entry
   "note.replace": { name: "note.replace", depth: "light", accepts: ["notepad"],
-    description: "Rewrite the whole notepad from one markdown body.", payload: { text: REQ("string", "markdown") } },
+    description: "Rewrite the whole notepad from one markdown body.",
+    payload: { text: REQ("string", "markdown") }, hints: { destructive: true, idempotent: true } },   // discards prior pad
   // ActionName AND a RenderOpKind, deliberately BOTH (see the `navigate` RenderOpKind below for why
   // one alone doesn't cover it): registering it here as a "screen" verb is what makes it show up in
   // `actionsForKind("screen")` — and so in the manifest (manifest.ts/manifest-dom.ts) — as something
   // a control (or a reasoner reading the manifest) can see is legal to invoke on the current screen.
   "navigate":     { name: "navigate",     depth: "light", accepts: ["screen"],
     description: "Change screens — same-origin, root-relative href only (validated at the door).",
-    payload: { href: REQ("string", "root-relative path, e.g. /notes") } },
+    payload: { href: REQ("string", "root-relative path, e.g. /notes") },
+    hints: { readOnly: true, idempotent: true } },   // changes view, not persisted state
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);

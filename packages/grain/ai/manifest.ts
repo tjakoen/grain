@@ -8,7 +8,7 @@
 // registry — never hand-typed — so the manifest provably can't drift from what's on
 // screen or from the allowed vocabulary. See AI-INTERFACE §4 and framework/render/accepts.ts.
 
-import type { ActionName, PayloadSchema } from "./contract.ts";
+import type { ActionName, PayloadSchema, ActionHints } from "./contract.ts";
 import { ACTIONS } from "./contract.ts";
 
 export interface ManifestTarget {
@@ -26,6 +26,7 @@ export interface ManifestAction {
   accepts: string[];
   description: string;
   payload: PayloadSchema;
+  hints: ActionHints;
 }
 
 export interface Manifest {
@@ -44,7 +45,8 @@ export function buildManifest(
   return {
     screen,
     actions: Object.values(ACTIONS).map((a) => ({
-      name: a.name, depth: a.depth, accepts: a.accepts, description: a.description, payload: a.payload,
+      name: a.name, depth: a.depth, accepts: a.accepts,
+      description: a.description, payload: a.payload, hints: a.hints,
     })),
     targets,
     inView,

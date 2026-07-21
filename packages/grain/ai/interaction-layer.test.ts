@@ -62,6 +62,9 @@ test("unknown action is rejected at the door — no write, a flash op", async ()
   expect(decision.ok).toBe(false);
   expect(archived).toEqual([]);
   expect(ops(pushed)[0]!.op).toBe("flash");
+  // the rejection ECHOES the vocabulary so a reasoner can pick a real verb next turn
+  expect(decision.reason).toContain("known verbs");
+  expect(decision.reason).toContain("item.archive");
 });
 
 test("surface kind that doesn't accept the action is rejected", async () => {
@@ -71,6 +74,16 @@ test("surface kind that doesn't accept the action is rejected", async () => {
   expect(decision.ok).toBe(false);
   expect(archived).toEqual([]);
   expect(ops(pushed)[0]!.op).toBe("flash");
+});
+
+test("a wrong-surface rejection echoes the verbs that surface DOES accept — self-correction", async () => {
+  const { layer, pushed } = makeLayer();
+  // item.archive on a reflection surface: rejected, and the door tells the reasoner reflection takes say.set
+  const decision = await layer.handleIntent(intent({ surface: "reflection", action: "item.archive" }));
+
+  expect(decision.ok).toBe(false);
+  expect(decision.reason).toContain("say.set");          // the machine-facing trace names the valid move
+  expect(ops(pushed)[0]!.message).toContain("say.set");  // and so does the human-facing flash
 });
 
 test("failed write rolls back: a flash op, no committed replace", async () => {

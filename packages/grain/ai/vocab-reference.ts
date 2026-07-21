@@ -68,9 +68,14 @@ export async function buildVocabReference(variablesCssPath: string): Promise<str
       .map(([name, f]) => `<code>${esc(name)}${f.required ? "*" : ""}:${esc(f.type)}</code>${f.note ? ` <span class="muted">(${esc(f.note)})</span>` : ""}`);
     return fields.length ? fields.join(", ") : `<span class="muted">no args</span>`;
   };
+  // hints (MCP-style annotations) render as flags; a verb with none reads "—".
+  const hintsCell = (hints: ActionDef["hints"]): string => {
+    const flags = Object.entries(hints).filter(([, v]) => v).map(([k]) => `<code>${esc(k)}</code>`);
+    return flags.length ? flags.join(", ") : `<span class="muted">—</span>`;
+  };
   const actionRows = Object.values(ACTIONS)
     .map((a) => [`<code>${esc(a.name)}</code>`, payloadCell(a.payload),
-      a.accepts.map((k) => `<code>${esc(k)}</code>`).join(", "), esc(a.depth), esc(a.description)]);
+      a.accepts.map((k) => `<code>${esc(k)}</code>`).join(", "), esc(a.depth), hintsCell(a.hints), esc(a.description)]);
   const kindRows = surfaceKindsInUse().map((k) => [`<code>${esc(k)}</code>`]);
   const opRows = RENDER_OP_KINDS.map((o) => [`<code>${esc(o.kind)}</code>`, esc(o.means)]);
   const endpointRows = ENDPOINTS.map((e) => [`<code>${esc(e.method)} ${esc(e.path)}</code>`, esc(e.means)]);
@@ -79,8 +84,8 @@ export async function buildVocabReference(variablesCssPath: string): Promise<str
 
   return `
     <div class="section-head"><span>Actions</span></div>
-    <p class="muted">Generated from <code>grain/ai/contract.ts</code>'s <code>ACTIONS</code> registry — the single source of truth. Payload fields marked <code>*</code> are required.</p>
-    ${table(["verb", "payload", "accepts (surface kinds)", "depth", "what it does"], actionRows)}
+    <p class="muted">Generated from <code>grain/ai/contract.ts</code>'s <code>ACTIONS</code> registry — the single source of truth. Payload fields marked <code>*</code> are required; hints are MCP-style behaviour flags.</p>
+    ${table(["verb", "payload", "accepts (surface kinds)", "depth", "hints", "what it does"], actionRows)}
 
     <div class="section-head"><span>Surface kinds</span></div>
     <p class="muted">Every kind at least one verb above accepts.</p>

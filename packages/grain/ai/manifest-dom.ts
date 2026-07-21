@@ -104,7 +104,10 @@ export function manifestForReasoner(doc: DomDoc): string {
     const fields = Object.entries(a.payload)
       .map(([name, f]) => `${name}${f.required ? "*" : ""}:${f.type}${f.note ? ` (${f.note})` : ""}`);
     const args = fields.length ? fields.join(", ") : "no args";
-    lines.push(`- ${a.name} [${a.depth}] (${args}) — ${a.description}`);
+    // behaviour hints (read-only / destructive / idempotent) so the reasoner chooses + retries safely
+    const flags = Object.entries(a.hints).filter(([, v]) => v).map(([k]) => k);
+    const hints = flags.length ? ` {${flags.join(", ")}}` : "";
+    lines.push(`- ${a.name} [${a.depth}] (${args}) — ${a.description}${hints}`);
   }
 
   if (!m.targets.length) {

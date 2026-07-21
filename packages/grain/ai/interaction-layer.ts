@@ -6,7 +6,7 @@
 
 import type { Reasoner, ReasonTools } from "./reasoner.ts";
 import type { Intent, Decision, Surface, OpChannel, LogSink, Provenance } from "./contract.ts";
-import { ACTIONS, isAction, surfaceKind, OP_EVENT, STOP_ACTION } from "./contract.ts";
+import { ACTIONS, isAction, surfaceKind, actionsForKind, OP_EVENT, STOP_ACTION } from "./contract.ts";
 
 export interface LayerDeps {
   reasoner: Reasoner;
@@ -83,11 +83,21 @@ export function createInteractionLayer(deps: LayerDeps): InteractionLayer {
     let emitted = 0;   // RenderOps the reasoner streams mid-decision (the timeline counts these too)
     let decision: Decision;
     try {
-      // "See if it's possible with the interfaces given" (MVP step 5): a lookup.
+      // "See if it's possible with the interfaces given" (MVP step 5): a lookup. A rejection ECHOES
+      // the moves that WOULD work — the valid verbs the vocabulary offers (unknown action) or the
+      // verbs this surface actually accepts (wrong surface) — so a reasoner reading the Decision can
+      // self-correct on its next turn instead of dead-ending on a bare "no" (AI-INTERFACE §0, the
+      // "surface has physics" direction). The `reason` is the machine-facing trace the model reads;
+      // the `flash` message stays short and human-facing.
       if (!isAction(intent.action)) {
-        decision = reject(intent, `unknown action: ${intent.action}`, "That action isn't available.");
+        const known = Object.keys(ACTIONS).join(", ");
+        decision = reject(intent, `unknown action: ${intent.action}; known verbs: ${known}`,
+          "That action isn't available.");
       } else if (!ACTIONS[intent.action].accepts.includes(surfaceKind(intent.surface))) {
-        decision = reject(intent, `surface ${intent.surface} rejects ${intent.action}`, "Can't do that here.");
+        const valid = actionsForKind(surfaceKind(intent.surface));
+        const accepts = valid.length ? `${intent.surface} accepts: ${valid.join(", ")}` : `${intent.surface} accepts no verbs`;
+        decision = reject(intent, `surface ${intent.surface} rejects ${intent.action}; ${accepts}`,
+          valid.length ? `Can't do that here — this surface takes: ${valid.join(", ")}.` : "Can't do that here.");
       } else {
         const tools: ReasonTools = {
           archiveItem: (id) => archiveItem(id),

@@ -25,7 +25,14 @@ test("buildManifest: each action entry has name, depth, accepts, description, pa
     expect(typeof a.description).toBe("string");
     expect(a.description.length).toBeGreaterThan(0);
     expect(typeof a.payload).toBe("object");
+    expect(typeof a.hints).toBe("object");
   }
+});
+
+test("buildManifest: hints are carried through from the registry", () => {
+  const m = buildManifest("loop", targets);
+  const replace = m.actions.find((a) => a.name === "note.replace")!;
+  expect(replace.hints).toMatchObject({ destructive: true, idempotent: true });
 });
 
 test("buildManifest: payload schema is carried through from the registry (name → {type,required})", () => {

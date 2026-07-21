@@ -19,6 +19,9 @@ test("renders each verb's payload schema + description — derived, not hand-cop
   expect(html).toContain(ACTIONS["note.append"].description);
   // a no-argument verb reads "no args", not a blank cell
   expect(html).toContain("no args");
+  // MCP-style hint flags render too (note.replace is destructive + idempotent)
+  expect(html).toContain(`<code>destructive</code>`);
+  expect(html).toContain(`<code>idempotent</code>`);
 });
 
 test("renders the token slots read from variables.css", async () => {

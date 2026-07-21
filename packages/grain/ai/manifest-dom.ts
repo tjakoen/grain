@@ -138,7 +138,14 @@ export function domManifest(doc: DomDoc): Manifest {
  *  same string out — target order follows `harvestTargets`' DOM walk (document order), never a
  *  Set/Map/Object whose iteration order could vary across engines. Pure — no DOM writes, no I/O. */
 export function manifestForReasoner(doc: DomDoc): string {
-  const m = domManifest(doc);
+  return manifestToText(domManifest(doc));
+}
+
+/** Render a Manifest OBJECT to the same prompt-ready text `manifestForReasoner` emits — split out so a
+ *  reasoner that already holds a Manifest (e.g. built server-side, or reused for validation) can get
+ *  the prompt text WITHOUT a second DOM harvest, and so this stays a pure Manifest→string function
+ *  (DOM-free, one truth two shapes). `manifestForReasoner(doc)` is just `manifestToText(domManifest(doc))`. */
+export function manifestToText(m: Manifest): string {
   const lines: string[] = [`screen: ${m.screen || "(none)"}`];
 
   // The MOVE SET: every verb the vocabulary offers, with the payload shape a reasoner needs to

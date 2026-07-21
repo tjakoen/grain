@@ -1,6 +1,6 @@
 {
   "name": "@tjakoen/grain",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GRAIN — an AI-interaction design system where every surface is operable by both a human and an AI through one shared vocabulary.",
   "type": "module",
   "license": "Apache-2.0",

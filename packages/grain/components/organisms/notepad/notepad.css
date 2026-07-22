@@ -38,7 +38,12 @@
 .notepad__body:empty::after,
 .notepad__body:not(:has(.notepad__entry))::after {
   content: "Nothing noted yet."; color: var(--ink-faint); font-style: italic; }
-.notepad__entry { }
+/* min-width:0 lets the entry shrink below its content's intrinsic width (a flex child won't by
+   default), and overflow-wrap breaks a long unbroken token instead of forcing the whole pane wide —
+   together they stop a long AI line or pasted URL from giving the panel a horizontal scrollbar. */
+.notepad__entry { min-width: 0; overflow-wrap: anywhere; }
+/* a code block is the one thing that shouldn't hard-wrap — let it scroll on its own, capped to width */
+.notepad__entry pre { max-width: 100%; overflow-x: auto; }
 .notepad__entry[data-grade="grain"] { color: var(--color-grain, var(--color-muted)); }
 .notepad__entry > :first-child { margin-top: 0; }
 .notepad__entry > :last-child { margin-bottom: 0; }

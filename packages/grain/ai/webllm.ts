@@ -43,32 +43,45 @@ export interface LoadEngineOptions {
 
 // Narrow shims for the browser globals we probe — grain's tsc has no DOM lib (bun-types only), so we
 // reach them through a typed view of globalThis rather than pulling the whole DOM in.
-interface GpuAdapterSource { requestAdapter(): Promise<unknown> }
-interface ProbeNavigator { gpu?: GpuAdapterSource; deviceMemory?: number }
+interface GpuAdapterLike { limits?: { maxBufferSize?: number } }
+interface GpuAdapterSource { requestAdapter(): Promise<GpuAdapterLike | null> }
+interface ProbeNavigator { gpu?: GpuAdapterSource; deviceMemory?: number; hardwareConcurrency?: number }
 const nav = (): ProbeNavigator | undefined =>
   (globalThis as unknown as { navigator?: ProbeNavigator }).navigator;
 
 /** What a WebGPU/memory probe reports about this device — enough for a caller to both GATE (can a
  *  model run at all?) and TIER (which size fits?). `deviceMemory` is coarse (GB, capped at 8) and
- *  Chrome-only — Firefox/Safari omit it, so `undefined` means "unknown", never "small". */
+ *  Chrome-only — Firefox/Safari omit it, so `undefined` means "unknown", never "small". A tiering
+ *  caller combines these: `deviceMemory` where present, else `cores` + `maxBufferSize`. */
 export interface DeviceCapability {
   /** A WebGPU adapter is present (the hard requirement — no adapter, no model). */
   webgpu: boolean;
   /** `navigator.deviceMemory` when the browser reports it, else undefined. */
   deviceMemory?: number;
+  /** `navigator.hardwareConcurrency` (logical cores) — a device-class signal that survives where
+   *  deviceMemory is absent: Safari omits deviceMemory but reports cores (a Mac is 8+, an iPhone ~6). */
+  cores?: number;
+  /** The WebGPU adapter's `maxBufferSize` limit in bytes — a GPU-capacity signal for TIERING. NOTE:
+   *  Safari CAPS this (~1GB even on an Apple-Silicon Mac that Chrome reports at 4GB), so a raw
+   *  threshold separates device classes only where a browser reports it truthfully; on Safari pair it
+   *  with `cores`. Undefined when there's no adapter or the browser doesn't expose the limit. */
+  maxBufferSize?: number;
 }
 
 /** Probe the device once and report its raw capability. Any throw degrades to `webgpu: false` (a caller
  *  degrades honestly rather than hang). This is the single probe; `webgpuAvailable` and `canRunModel`
- *  are thin readings of it, and a tiering caller maps `deviceMemory` to a model choice itself. */
+ *  are thin readings of it, and a tiering caller maps the fields to a model choice itself. */
 export async function probeDevice(): Promise<DeviceCapability> {
   const n = nav();
   const deviceMemory = typeof n?.deviceMemory === "number" ? n.deviceMemory : undefined;
-  if (!n || !n.gpu || typeof n.gpu.requestAdapter !== "function") return { webgpu: false, deviceMemory };
+  const cores = typeof n?.hardwareConcurrency === "number" ? n.hardwareConcurrency : undefined;
+  if (!n || !n.gpu || typeof n.gpu.requestAdapter !== "function") return { webgpu: false, deviceMemory, cores };
   try {
-    return { webgpu: Boolean(await n.gpu.requestAdapter()), deviceMemory };
+    const adapter = await n.gpu.requestAdapter();
+    const maxBufferSize = typeof adapter?.limits?.maxBufferSize === "number" ? adapter.limits.maxBufferSize : undefined;
+    return { webgpu: Boolean(adapter), deviceMemory, cores, maxBufferSize };
   } catch {
-    return { webgpu: false, deviceMemory };
+    return { webgpu: false, deviceMemory, cores };
   }
 }
 

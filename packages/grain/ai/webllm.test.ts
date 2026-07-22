@@ -46,24 +46,29 @@ test("webgpuAvailable: a throwing requestAdapter degrades to false, not a hang",
   expect(await webgpuAvailable()).toBe(false);
 });
 
-test("probeDevice: reports webgpu true + the raw deviceMemory (for a tiering caller)", async () => {
-  withNavigator({ deviceMemory: 8, gpu: { requestAdapter: async () => ({}) } });
-  expect(await probeDevice()).toEqual({ webgpu: true, deviceMemory: 8 });
+test("probeDevice: reports webgpu + deviceMemory + cores + maxBufferSize (for a tiering caller)", async () => {
+  withNavigator({ deviceMemory: 8, hardwareConcurrency: 8, gpu: { requestAdapter: async () => ({ limits: { maxBufferSize: 4294967292 } }) } });
+  expect(await probeDevice()).toEqual({ webgpu: true, deviceMemory: 8, cores: 8, maxBufferSize: 4294967292 });
 });
 
-test("probeDevice: absent deviceMemory → undefined, never a fabricated number", async () => {
-  withNavigator({ gpu: { requestAdapter: async () => ({}) } });
-  expect(await probeDevice()).toEqual({ webgpu: true, deviceMemory: undefined });
+test("probeDevice: absent deviceMemory → undefined, but cores still read (Safari omits memory, reports cores)", async () => {
+  withNavigator({ hardwareConcurrency: 8, gpu: { requestAdapter: async () => ({ limits: { maxBufferSize: 1073741824 } }) } });
+  expect(await probeDevice()).toEqual({ webgpu: true, deviceMemory: undefined, cores: 8, maxBufferSize: 1073741824 });
 });
 
-test("probeDevice: reports deviceMemory even when WebGPU is absent (a caller still tiers/logs)", async () => {
-  withNavigator({ deviceMemory: 4 });
-  expect(await probeDevice()).toEqual({ webgpu: false, deviceMemory: 4 });
+test("probeDevice: an adapter with no limits.maxBufferSize → undefined, never fabricated", async () => {
+  withNavigator({ hardwareConcurrency: 6, gpu: { requestAdapter: async () => ({}) } });
+  expect(await probeDevice()).toEqual({ webgpu: true, deviceMemory: undefined, cores: 6, maxBufferSize: undefined });
 });
 
-test("probeDevice: a throwing requestAdapter degrades to webgpu:false, keeping deviceMemory", async () => {
-  withNavigator({ deviceMemory: 8, gpu: { requestAdapter: async () => { throw new Error("no device"); } } });
-  expect(await probeDevice()).toEqual({ webgpu: false, deviceMemory: 8 });
+test("probeDevice: reports deviceMemory + cores even when WebGPU is absent (a caller still tiers/logs)", async () => {
+  withNavigator({ deviceMemory: 4, hardwareConcurrency: 4 });
+  expect(await probeDevice()).toEqual({ webgpu: false, deviceMemory: 4, cores: 4 });
+});
+
+test("probeDevice: a throwing requestAdapter degrades to webgpu:false, keeping deviceMemory + cores", async () => {
+  withNavigator({ deviceMemory: 8, hardwareConcurrency: 8, gpu: { requestAdapter: async () => { throw new Error("no device"); } } });
+  expect(await probeDevice()).toEqual({ webgpu: false, deviceMemory: 8, cores: 8 });
 });
 
 test("canRunModel: pure gate — webgpu AND not a known-tiny device", () => {

@@ -48,18 +48,42 @@ interface ProbeNavigator { gpu?: GpuAdapterSource; deviceMemory?: number }
 const nav = (): ProbeNavigator | undefined =>
   (globalThis as unknown as { navigator?: ProbeNavigator }).navigator;
 
-/** Can this browser run a local WebLLM model? WebGPU is required; a known-low `deviceMemory` (when the
- *  browser reports it — Firefox/Safari don't, so absence never blocks) rules out an almost-certain OOM
- *  up front. Any throw counts as unavailable, so a caller can degrade honestly rather than hang. */
-export async function webgpuAvailable(): Promise<boolean> {
+/** What a WebGPU/memory probe reports about this device — enough for a caller to both GATE (can a
+ *  model run at all?) and TIER (which size fits?). `deviceMemory` is coarse (GB, capped at 8) and
+ *  Chrome-only — Firefox/Safari omit it, so `undefined` means "unknown", never "small". */
+export interface DeviceCapability {
+  /** A WebGPU adapter is present (the hard requirement — no adapter, no model). */
+  webgpu: boolean;
+  /** `navigator.deviceMemory` when the browser reports it, else undefined. */
+  deviceMemory?: number;
+}
+
+/** Probe the device once and report its raw capability. Any throw degrades to `webgpu: false` (a caller
+ *  degrades honestly rather than hang). This is the single probe; `webgpuAvailable` and `canRunModel`
+ *  are thin readings of it, and a tiering caller maps `deviceMemory` to a model choice itself. */
+export async function probeDevice(): Promise<DeviceCapability> {
   const n = nav();
-  if (!n || !n.gpu || typeof n.gpu.requestAdapter !== "function") return false;
-  if (typeof n.deviceMemory === "number" && n.deviceMemory < 4) return false;
+  const deviceMemory = typeof n?.deviceMemory === "number" ? n.deviceMemory : undefined;
+  if (!n || !n.gpu || typeof n.gpu.requestAdapter !== "function") return { webgpu: false, deviceMemory };
   try {
-    return Boolean(await n.gpu.requestAdapter());
+    return { webgpu: Boolean(await n.gpu.requestAdapter()), deviceMemory };
   } catch {
-    return false;
+    return { webgpu: false, deviceMemory };
   }
+}
+
+/** Would ANY local WebLLM model load here? WebGPU present AND not a known-tiny device — a `deviceMemory`
+ *  under 4 (when reported) is an almost-certain OOM even for the smallest model. Pure over a probe, so a
+ *  caller can reuse one `probeDevice()` result for both this gate and its own size tiering. */
+export function canRunModel(cap: DeviceCapability): boolean {
+  if (typeof cap.deviceMemory === "number" && cap.deviceMemory < 4) return false;
+  return cap.webgpu;
+}
+
+/** Can this browser run a local WebLLM model? The gate above applied to a fresh probe — kept as the
+ *  one-call convenience the up-front UX check uses. Any throw counts as unavailable. */
+export async function webgpuAvailable(): Promise<boolean> {
+  return canRunModel(await probeDevice());
 }
 
 // The sliver of WebLLM's module surface we call — structural, so there's no SDK import. `CreateMLCEngine`

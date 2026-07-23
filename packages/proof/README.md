@@ -68,9 +68,9 @@ const proofRoutes = createProofRoutes({ plansDir: "./plans", channel /* an OpCha
 // mount proofRoutes(pathname) inside your own request handler; the prefix is configurable
 ```
 
-[PANTRY](../pantry/) mounts it at `/plans`, alongside the framework docs and the component
-catalog. Building your own app instead of running PANTRY? Import `createProofRoutes` the same way
-PANTRY does.
+The portfolio site ([tjakoen.github.io](https://tjakoen.github.io), `src/server.ts`) is the real
+live consumer — it mounts PROOF's routes alongside the framework docs and the component catalog.
+Building your own app instead? Import `createProofRoutes` the same way.
 
 Prefer zero code? `bunx proof serve` boots its own self-contained BATCH+GRAIN server and reads
 `./plans/` from the current directory. Either path, the plans stay in your repo. PROOF only ever
@@ -81,6 +81,11 @@ reads them.
 Not a task manager for humans, v1's board is read-only, humans edit the same files the AI does.
 Not a store, no database, no board state outside the files and git. Not a second plan system, a
 repo that already has plan prose migrates it in, it doesn't run PROOF alongside something else.
+
+## Read next
+
+- **[Docs](https://tjakoen.github.io/proof/docs)** — the full write-up.
+- **[PLAN.md](PLAN.md)** — the canonical plan (design, the schema, build pieces, honest status).
 
 ---
 

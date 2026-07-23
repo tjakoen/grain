@@ -14,12 +14,12 @@ on Bun straight from TypeScript.
 
 ## The packages
 
-| Package | What it is |
-|---|---|
-| [`@tjakoen/grain`](packages/grain) | The AI-interaction design system and its default theme. Every surface is operable by a human or an AI through one shared vocabulary, with the AI's presence shown as a visible signal (grain = AI). |
-| [`@tjakoen/mill`](packages/mill) | Markdown In, Living Layouts. A Markdown to GRAIN-pages CMS: feed it markdown and images, it renders GRAIN pages. |
-| [`@tjakoen/proof`](packages/proof) | The AI plan board. Plans are markdown files and the board is a live projection of them. The files are the source of truth, the board never writes back. |
-| [`@tjakoen/crumb`](packages/crumb) | The guided-tour, demo-mode, and AI-review layer. Tours are markdown, rendered as a guided projection. Published and live — it's the guided-tour frame running on tjakoen.github.io, see its [PLAN](packages/crumb/PLAN.md). |
+| Package | What it is | Docs |
+|---|---|---|
+| [`@tjakoen/grain`](packages/grain) | The AI-interaction design system and its default theme. Every surface is operable by a human or an AI through one shared vocabulary, with the AI's presence shown as a visible signal (grain = AI). | [grain/docs](https://tjakoen.github.io/grain/docs) |
+| [`@tjakoen/mill`](packages/mill) | Markdown In, Living Layouts. A Markdown to GRAIN-pages CMS: feed it markdown and images, it renders GRAIN pages. | [mill/docs](https://tjakoen.github.io/mill/docs) |
+| [`@tjakoen/proof`](packages/proof) | The AI plan board. Plans are markdown files and the board is a live projection of them. The files are the source of truth, the board never writes back. | [proof/docs](https://tjakoen.github.io/proof/docs) |
+| [`@tjakoen/crumb`](packages/crumb) | The guided-tour, demo-mode, and AI-review layer. Tours are markdown, rendered as a guided projection. Published and live — it's the guided-tour frame running on tjakoen.github.io, see its [PLAN](packages/crumb/PLAN.md). | [crumb/docs](https://tjakoen.github.io/crumb/docs) · [live](https://tjakoen.github.io/crumb/) |
 
 The dependency direction runs one way. A substrate (BATCH is the reference one) sits below grain,
 mill builds on grain, proof builds on mill, and crumb builds on grain and mill. grain itself imports

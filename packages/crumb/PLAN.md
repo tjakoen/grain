@@ -7,6 +7,13 @@
 > top-level package (in the grain monorepo: `packages/crumb`, a sibling of `mill`/`proof`, a
 > consumer of `grain` + `mill`), Apache-2.0, mountable. This file is the canonical CRUMB plan.
 >
+> **Update (2026-07-23): built and shipped.** Core, routes, loader, `crumb check`, and
+> `from-timeline` are published as `@tjakoen/crumb@0.1.1` and live on tjakoen.github.io — the
+> "nothing built" line above is now historical, kept for the record rather than rewritten. One
+> drift to flag: the shipped parser reads tour steps from **body headings** in the tour markdown,
+> not the frontmatter-steps schema sketched further down this plan; treat the sketch below as the
+> design intent, `core/schema.ts` as what actually ships.
+>
 > **Sequencing (owner, 2026-07-19): migration-first.** CRUMB is built natively inside the
 > grain-monorepo (`packages/crumb`, `workspace:*` deps) *after* the grain→monorepo cutover, so it
 > never lives a SHA-pinned life. See `grain-monorepo-migration-plan.md`; this doc is effort **B**.

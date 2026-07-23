@@ -12,6 +12,19 @@ frontmatter + images; it renders them as real GRAIN pages by mapping Markdown no
 > content route (`serve.ts`), and the portfolio wiring (`/notes`, `/grain/docs`, `/batch/docs`).
 > What remains (AI-facing outputs, mermaid→SVG, RSS) is tracked in [PLAN.md](PLAN.md).
 
+## Quickstart
+
+```bash
+bun add @tjakoen/mill @tjakoen/grain
+```
+
+```ts
+import { createMillRoutes } from "@tjakoen/mill/serve.ts";
+
+const millRoutes = createMillRoutes({ /* content sources, render adapter */ });
+// mount millRoutes(pathname) inside your own request handler; null = not mine, fall through
+```
+
 ## Where it sits
 
 The **fourth concern**, a layer *above* GRAIN:
@@ -31,6 +44,7 @@ never a build-time re-render (keeps [export-as-projection](https://tjakoen.githu
 
 ## Read next
 
+- **[Docs](https://tjakoen.github.io/mill/docs)** — the full write-up.
 - **[mill/PLAN.md](PLAN.md)** — the canonical plan (design, seams, mapping model, build pieces).
 - **[../tjakoen.github.io/PHILOSOPHY.md](../tjakoen.github.io/PHILOSOPHY.md)** — why content is Markdown and pages are a projection of it.
 - **[../CLAUDE.md](../CLAUDE.md)** — how MILL fits the four concerns.

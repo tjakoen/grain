@@ -1,6 +1,6 @@
 {
   "name": "@tjakoen/proof",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "PROOF — the AI plan board: plans-as-markdown (plans/*.md) rendered as a kanban projection. The files are the source of truth; the board never writes.",
   "type": "module",
   "bin": {
@@ -18,8 +18,8 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@tjakoen/grain": "workspace:*",
-    "@tjakoen/mill": "workspace:*"
+    "@tjakoen/grain": "^0.1.8",
+    "@tjakoen/mill": "^0.1.2"
   },
   "exports": {
     "./routes.ts": "./routes.ts",

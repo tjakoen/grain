@@ -1,6 +1,6 @@
 {
   "name": "@tjakoen/mill",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MILL — Markdown In, Living Layouts: a Markdown → GRAIN-pages CMS.",
   "type": "module",
   "license": "Apache-2.0",
@@ -15,7 +15,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@tjakoen/grain": "workspace:*"
+    "@tjakoen/grain": "^0.1.8"
   },
   "exports": {
     "./serve.ts": "./serve.ts",

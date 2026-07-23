@@ -4,6 +4,7 @@
 // board a pure string builder with no renderer/compose dependency — trivially testable. The only
 // thing that DOES go through a renderer is the card-detail body (MILL, in serve.ts).
 import { escapeHtml } from "@tjakoen/mill/core/engine.ts";
+import { madeWith } from "@tjakoen/grain/scripts/made-with.js";
 import { STATUSES, type PlanStatus } from "./core/types.ts";
 import type { LoadedPlan } from "./loader.ts";
 
@@ -119,6 +120,7 @@ export function boardPage(title: string, body: string, stylesheets: string[]): s
 </head>
 <body class="proof-body" data-grade="smooth">
   <main class="proof-main">${body}</main>
+  ${madeWith()}
 </body>
 </html>`;
 }

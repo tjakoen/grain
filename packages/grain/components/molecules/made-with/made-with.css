@@ -1,0 +1,25 @@
+/* molecules/made-with — the system byline: "made with GRAIN by tjakoen". The one footer
+   line every GRAIN app mounts at the bottom of its shell, so provenance reads the same
+   everywhere. CSS-only (CONVENTIONS §4): consumers emit the markup themselves or import
+   the string helper (scripts/made-with.js) — one source of truth for the content. */
+.made-with {
+  display: block;
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+.made-with a { color: inherit; text-decoration: none; }
+.made-with a:hover,
+.made-with a:focus-visible { color: var(--color-fg); text-decoration: underline; }
+
+/* inside a status-bar (or any inline meta row) it flows as quiet meta-text, not a block —
+   the row's own type treatment wins */
+.made-with[data-inline] {
+  display: inline;
+  padding: 0;
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}

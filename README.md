@@ -19,7 +19,7 @@ on Bun straight from TypeScript.
 | [`@tjakoen/grain`](packages/grain) | The AI-interaction design system and its default theme. Every surface is operable by a human or an AI through one shared vocabulary, with the AI's presence shown as a visible signal (grain = AI). |
 | [`@tjakoen/mill`](packages/mill) | Markdown In, Living Layouts. A Markdown to GRAIN-pages CMS: feed it markdown and images, it renders GRAIN pages. |
 | [`@tjakoen/proof`](packages/proof) | The AI plan board. Plans are markdown files and the board is a live projection of them. The files are the source of truth, the board never writes back. |
-| [`@tjakoen/crumb`](packages/crumb) | The guided-tour, demo-mode, and AI-review layer. Tours are markdown, rendered as a guided projection. Scaffold only for now, see its [PLAN](packages/crumb/PLAN.md). |
+| [`@tjakoen/crumb`](packages/crumb) | The guided-tour, demo-mode, and AI-review layer. Tours are markdown, rendered as a guided projection. Published and live — it's the guided-tour frame running on tjakoen.github.io, see its [PLAN](packages/crumb/PLAN.md). |
 
 The dependency direction runs one way. A substrate (BATCH is the reference one) sits below grain,
 mill builds on grain, proof builds on mill, and crumb builds on grain and mill. grain itself imports
@@ -67,7 +67,7 @@ packages/
   grain/   the AI-interaction design system + default theme
   mill/    the Markdown to GRAIN-pages CMS
   proof/   the AI plan board
-  crumb/   the guided-tour / AI-review layer (scaffold)
+  crumb/   the guided-tour / AI-review layer
 ```
 
 Each package has its own `CLAUDE.md` and `PLAN.md` with its rules and design. Start there when you

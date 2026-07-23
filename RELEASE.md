@@ -4,7 +4,7 @@ This repo is a bun workspace holding `packages/{grain,mill,proof,crumb}`. Intern
 via `workspace:*`; **external consumers install the published packages from GitHub Packages** (a
 single monorepo git-dep cannot expose the sub-packages by their own names — verified 2026-07-19).
 
-`@tjakoen/crumb` is `private` (scaffold) and is **not** published until its build lands.
+`@tjakoen/crumb` is published too (`0.1.1`, alongside grain/mill/proof).
 
 ## One-time auth (publisher)
 
@@ -32,7 +32,7 @@ From the repo root, publish each public package (bun substitutes `workspace:*` �
 version at publish time):
 
 ```bash
-for p in grain mill proof; do (cd packages/$p && bun publish); done
+for p in grain mill proof crumb; do (cd packages/$p && bun publish); done
 ```
 
 Verify a published tarball's `package.json` shows concrete versions (e.g. `@tjakoen/grain`:
@@ -58,13 +58,15 @@ Then replace the old SHA-pinned git-deps with version ranges:
 "@tjakoen/grain": "^0.1.0",
 "@tjakoen/mill":  "^0.1.0",
 "@tjakoen/proof": "^0.1.0",
+"@tjakoen/crumb": "^0.1.0",
 ```
 
 `bun install`, then run each consumer's own gate (pantry: boots + cockpit; portfolio: full gate —
 tsc, bun test, export N/N, verify:export, playwright, visual baselines).
 
-## Retire the standalone repos (Phase 5 — after consumers verify on the published packages)
+## Standalone repos retired (Phase 5 — done 2026-07-19)
 
-Archive `github.com/tjakoen/mill` and `github.com/tjakoen/proof` (README pointer to this monorepo;
-**do not delete** — they hold the pre-merge history). Update `bread`'s `.gitmodules` (drop the mill
-+ proof submodules; grain is now the monorepo) and its lockless-umbrella note.
+The old `github.com/tjakoen/mill` and `github.com/tjakoen/proof` standalone repos have been deleted;
+`packages/mill` and `packages/proof` in this monorepo are the canonical home now, pre-merge history
+included. `bread` no longer carries git submodules at all (that decision was broader than just
+mill/proof), so there's no repin step here.

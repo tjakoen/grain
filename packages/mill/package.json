@@ -1,6 +1,6 @@
 {
   "name": "@tjakoen/mill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MILL — Markdown In, Living Layouts: a Markdown → GRAIN-pages CMS.",
   "type": "module",
   "license": "Apache-2.0",

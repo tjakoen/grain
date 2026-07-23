@@ -26,6 +26,7 @@ import { parseFrontmatter } from "./core/frontmatter.ts";
 import { escapeHtml } from "./core/engine.ts";
 import { assertHumanGrade } from "./core/grade.ts";
 import { renderGrainDocument, type GrainAdapterOptions } from "./adapters/grain/grain-adapter.ts";
+import { madeWith } from "@tjakoen/grain/scripts/made-with.js";
 
 // ---- the content-source port -------------------------------------------------
 // Where the .md files come from. `dirSource` (a folder) covers the consumer's own
@@ -133,7 +134,7 @@ const defaultChrome: PageChrome = ({ title, description, body }) => `<!DOCTYPE h
   <link rel="stylesheet" href="/styles/grain.css">
   <link rel="stylesheet" href="/components.css">
 </head>
-<body><main class="board">${body}</main></body>
+<body><main class="board">${body}</main>${madeWith()}</body>
 </html>`;
 
 // ---- the index listing -----------------------------------------------------------

@@ -18,13 +18,18 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
 const KEY = "crumb:active";        // sessionStorage: { id, step, mode, frame }  (step -1 = intro card)
 const cache = new Map();           // id -> Tour (avoid re-fetching across a same-page next/prev)
 
+// the mount prefix the host serves CRUMB's routes under — must match the `prefix` passed to
+// createCrumbRoutes (routes.ts), default "/crumb". A host that mounts CRUMB elsewhere declares it
+// once via `<html data-crumb-prefix="/...">` so the client fetches tour data from the right place.
+const PREFIX = (document.documentElement.dataset.crumbPrefix || "/crumb").replace(/\/+$/, "");
+
 function getState() { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } }
 function setState(s) { s ? sessionStorage.setItem(KEY, JSON.stringify(s)) : sessionStorage.removeItem(KEY); }
 const routeOf = (p) => (p.replace(/\/+$/, "") || "/");
 
 async function fetchTour(id) {
   if (cache.has(id)) return cache.get(id);
-  const res = await fetch(`/crumb/tours/${id}.json`, { headers: { accept: "application/json" } });
+  const res = await fetch(`${PREFIX}/tours/${id}.json`, { headers: { accept: "application/json" } });
   if (!res.ok) throw new Error(`crumb: tour "${id}" not found (${res.status})`);
   const tour = await res.json();
   cache.set(id, tour);

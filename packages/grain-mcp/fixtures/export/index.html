@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture Home</title>
+</head>
+<body data-screen="welcome">
+  <div class="chat" data-surface="chat-log"></div>
+  <input data-action="chat.send" data-target="chat-log" data-surface="chat-input">
+  <!-- documents the about page's item surface, deliberately with an unresolved placeholder in the
+       PROSE, mirroring the real tjakoen.github.io/dist/mail/index.html gotcha this package's
+       harvester is built to survive: data-surface="item:about-<id>" is NOT a real attribute here. -->
+  <a data-kind="item" data-accepts="item.archive" data-surface="item:about-1" data-bind-href="href">About item</a>
+</body>
+</html>

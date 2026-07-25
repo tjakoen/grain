@@ -1,7 +1,9 @@
-# `field.set` — vocabulary op spec (PROPOSAL)
+# `field.set` — vocabulary op spec (APPROVED)
 
-> **Status: PROPOSAL — not built.** Drafted 2026-07-25 for owner review; nothing lands in code
-> until this is approved. Origin: the portfolio desk capability roadmap, item B1 (contact form
+> **Status: APPROVED 2026-07-25** — owner signed off with all four open questions resolved to the
+> spec defaults (allow overwrite + destructive flag; cap 2000; grain grade in v1 with trusted-input
+> settle; input event dispatched). Drafted 2026-07-25 for owner review.
+> Origin: the portfolio desk capability roadmap, item B1 (contact form
 > prefill — `tjakoen.github.io/nimbalyst-local/plans/desk-ai-capability-roadmap.md`). This is the
 > grain half; the portfolio contact page + desk wiring is a separate, later step.
 
@@ -157,14 +159,12 @@ clear it. Small, honest, and the first time grade-as-signal reaches a form contr
 - No field READING (unless a page opts in via the existing `data-read`).
 - No streaming/typing animation for fills.
 
-## Open questions for the owner
+## Open questions — RESOLVED (owner, 2026-07-25)
 
-1. **Overwrite stance**: keep `destructive: true` and allow overwriting a non-empty field, or have
-   the default reasoner refuse when the field already holds a value (softer, but adds a read of
-   live state to a write path)? Proposal as written: allow + flag destructive.
-2. **`FIELD_VALUE_CAP = 2000`** — right size for a contact message?
-3. **Grain grade on prefill** (§2, trusted-input settle) — in v1, or cut for simplicity?
-4. **`input` event dispatch** — wanted (keeps page validation honest) or too magical?
+1. **Overwrite stance**: allow overwrite + `destructive: true` (as written).
+2. **`FIELD_VALUE_CAP = 2000`**: confirmed.
+3. **Grain grade on prefill**: in v1, trusted-input settle (as written).
+4. **`input` event dispatch**: yes, dispatch it (as written).
 
 ## Rollout (after approval)
 

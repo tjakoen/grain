@@ -84,6 +84,35 @@ test("consumer type → layout registry is honoured", () => {
   expect(html).toContain(`<h1>A Talk</h1>`);
 });
 
+test("##/### headings carry a stable slug id; h1 and h4+ stay bare", () => {
+  const { html } = renderGrainDocument("# Top\n\n## What Is BREAD?\n\n### grain & batch\n\n#### Too Deep");
+  expect(html).toContain(`<h2 id="what-is-bread">What Is BREAD?</h2>`);
+  expect(html).toContain(`<h3 id="grain-batch">grain &amp; batch</h3>`);
+  expect(html).not.toContain(`<h1 id=`);        // the page's h1 belongs to the layout
+  expect(html).toContain(`<h4>Too Deep</h4>`);  // level 4+ too granular to cite
+});
+
+test("a heading that slugs to empty falls through to the bare shape", () => {
+  // "# Top" first so the engine's title-lift doesn't consume the heading under test
+  const { html } = renderGrainDocument("# Top\n\n## !!!");
+  expect(html).toContain(`<h2>!!!</h2>`);
+});
+
+test("headingSurfaces opt-in adds the anchor: data-surface marker (default off)", () => {
+  const md = "# Top\n\n## Deep Section";
+  expect(renderGrainDocument(md).html).not.toContain("data-surface");
+  const { html } = renderGrainDocument(md, { headingSurfaces: true });
+  expect(html).toContain(`<h2 id="deep-section" data-surface="anchor:deep-section">Deep Section</h2>`);
+});
+
+test("a consumer blockOverrides.heading still wins over the built-in id stamping", () => {
+  const { html } = renderDocument("# Top\n\n## Custom", createGrainAdapter({
+    blockOverrides: { heading: (n, ctx) => `<h${n.level} class="own">${ctx.renderInline(n.children)}</h${n.level}>` },
+  }));
+  expect(html).toContain(`<h2 class="own">Custom</h2>`);
+  expect(html).not.toContain(`id="custom"`);
+});
+
 test("table renders as .table inside a .table-scroll wrapper (th/td split)", () => {
   const { html } = renderGrainDocument("| a | b |\n|---|---|\n| c | d |");
   expect(html).toContain(`<div class="table-scroll"><table class="table">`);

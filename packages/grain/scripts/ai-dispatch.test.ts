@@ -41,6 +41,35 @@ test("ai-dispatch.js's markdown regex rules match ai/markdown.ts's verbatim", as
   }
 });
 
+test("the fill value guard in ai-dispatch.js matches contract.ts's isSafeFieldValue verbatim (cap + regex)", async () => {
+  const [dispatch, contract] = await Promise.all([read("./ai-dispatch.js"), read("../ai/contract.ts")]);
+  const dispatchCap = dispatch.match(/const FIELD_VALUE_CAP = (\d+);/)?.[1];
+  const contractCap = contract.match(/const FIELD_VALUE_CAP = (\d+);/)?.[1];
+  expect(dispatchCap).toBeTruthy();
+  expect(contractCap).toBeTruthy();
+  expect(dispatchCap).toBe(contractCap);
+  const dispatchRe = dispatch.match(/const FIELD_VALUE_BAD_CHARS = (\/.*\/);/)?.[1];
+  const contractRe = contract.match(/const FIELD_VALUE_BAD_CHARS = (\/.*\/);/)?.[1];
+  expect(dispatchRe).toBeTruthy();
+  expect(contractRe).toBeTruthy();
+  expect(dispatchRe).toBe(contractRe);
+});
+
+test("fill sets .value + a grain grade and dispatches a bubbling input event; a trusted input settles the grade", async () => {
+  // The IIFE can't be imported (file header) — assert the fill case's contract-critical moves as
+  // source text, the same bar the other guards here hold: value assignment (not innerHTML), the
+  // grain grade, the bubbling input event, and the isTrusted-only settle listener.
+  const dispatch = await read("./ai-dispatch.js");
+  const fillCase = dispatch.match(/case "fill":([\s\S]*?)return;/)?.[1] ?? "";
+  expect(fillCase).toContain('"value" in el');                      // inert on a non-field element
+  expect(fillCase).toContain("SAFE_FIELD_VALUE(op.text)");          // last-line-of-defense re-check
+  expect(fillCase).toContain("el.value = op.text");                 // state, not markup
+  expect(fillCase).toContain('el.setAttribute("data-grade", "grain")');
+  expect(fillCase).toContain('new Event("input", { bubbles: true })');
+  expect(dispatch).toContain("ev.isTrusted");                       // human touch settles AI ink…
+  expect(dispatch).toMatch(/isTrusted\)\s*return/);                 // …synthetic events never do
+});
+
 test("a navigate op with an unsafe href is never assigned to location — asserted on the shared regex", async () => {
   const contract = await read("../ai/contract.ts");
   const src = contract.match(/const SAFE_NAV_HREF = (\/.*\/);/)?.[1];

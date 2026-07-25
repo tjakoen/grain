@@ -218,3 +218,53 @@ test("an AI note write is bracketed by a spotlight on the notepad surface (AI as
   expect(spots.some((o) => o.active === true)).toBe(true);
   expect(spots.some((o) => o.active === false)).toBe(true);
 });
+
+// --- field.set at the door: kind validation, value validation, the fill op (plans/field-set-op.md) ---
+test("field.set on a field kind: validates, the reasoner emits a committed ai fill op", async () => {
+  const { layer, pushed } = makeLayer();
+  const d = await layer.handleIntent(intent({ source: "ai", surface: "field:contact-message",
+    action: "field.set", payload: { value: "Hi TJ — I want to talk about grain." } }));
+  expect(d.ok).toBe(true);
+  const fill = ops(pushed).find((o) => o.op === "fill");
+  expect(fill).toMatchObject({ target: "field:contact-message",
+    text: "Hi TJ — I want to talk about grain.", provenance: "ai", commit: "committed" });
+});
+
+test("field.set on a non-field surface: rejected with the accepts echo (closed vocabulary)", async () => {
+  const { layer } = makeLayer();
+  const d = await layer.handleIntent(intent({ surface: "item:ITM-1", action: "field.set", payload: { value: "hi" } }));
+  expect(d.ok).toBe(false);
+  expect(d.ops[0]?.op).toBe("flash");
+  expect(d.reason).toContain("item:ITM-1 rejects field.set");
+  expect(d.reason).toContain("item.archive");   // the verbs that surface DOES accept, echoed back
+});
+
+test("field.set with an oversized value: rejected, the reason echoes the constraint so a reasoner can shorten", async () => {
+  const { layer, pushed } = makeLayer();
+  const d = await layer.handleIntent(intent({ source: "ai", surface: "field:contact-message",
+    action: "field.set", payload: { value: "x".repeat(2001) } }));
+  expect(d.ok).toBe(false);
+  expect(d.reason).toContain("field.set value rejected");
+  expect(d.reason).toContain("2000");
+  expect(ops(pushed).find((o) => o.op === "fill")).toBeUndefined();   // nothing reached the field
+});
+
+test("field.set with an empty or control-char value: rejected (never a silent blank fill)", async () => {
+  const { layer } = makeLayer();
+  const empty = await layer.handleIntent(intent({ source: "ai", surface: "field:contact-message",
+    action: "field.set", payload: { value: "   " } }));
+  expect(empty.ok).toBe(false);
+  const ctrl = await layer.handleIntent(intent({ source: "ai", surface: "field:contact-message",
+    action: "field.set", payload: { value: "bad\x00byte" } }));
+  expect(ctrl.ok).toBe(false);
+  expect(ctrl.reason).toContain("control characters");
+});
+
+test("an AI field.set is bracketed by a spotlight on the field surface (AI as actor)", async () => {
+  const { layer, pushed } = makeLayer();
+  await layer.handleIntent(intent({ source: "ai", surface: "field:contact-message",
+    action: "field.set", payload: { value: "draft" } }));
+  const spots = ops(pushed).filter((o) => o.op === "spotlight" && o.target === "field:contact-message");
+  expect(spots.some((o) => o.active === true)).toBe(true);
+  expect(spots.some((o) => o.active === false)).toBe(true);
+});

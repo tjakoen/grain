@@ -17,7 +17,11 @@ export type Surface = string;                       // e.g. "item:ITM-1", "refle
 // `notepad` is a verb target (note.append / note.replace) — a persisted markdown surface both
 // the AI and the human write into through the one door; the ops land on its inner `notepad-body`
 // push surface (below), the wrapper `notepad` is what gets spotlit when the AI is the actor.
-export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad";
+// `field` is a registered FORM FIELD (field.set) — text-like only (INPUT of a text-ish type,
+// TEXTAREA); a field is addressable ONLY if the page marked it `data-surface="field:…"`, so
+// refusal on anything else is free (plans/field-set-op.md). The AI prefills; it never submits —
+// structurally: no submit verb exists in the vocabulary.
+export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad" | "field";
 export const surface = (kind: SurfaceKind, id?: string): Surface => (id ? `${kind}:${id}` : kind);
 export const surfaceKind = (s: Surface): SurfaceKind => (s.split(":")[0] ?? "") as SurfaceKind;
 export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":");
@@ -30,10 +34,12 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //   note.append   — add a markdown entry to the notepad (AI writes grain; a human commit settles clean)
 //   note.replace  — rewrite the whole notepad from one markdown body (same door, same grade rule)
 //   navigate      — a control (or a reasoner's own decision) asks to change screens; see below
+//   field.set     — prefill a registered form field with drafted text; the human reviews and
+//                   submits (the AI never submits — no submit verb exists to call)
 // The full product vocabulary lives at https://tjakoen.github.io/grain/docs/ai-interface.
 export type ActionName =
   | "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send"
-  | "note.append" | "note.replace" | "navigate";
+  | "note.append" | "note.replace" | "navigate" | "field.set";
 export type Depth = "light" | "heavy";
 
 // ---- Payload schema: the machine-readable INPUT shape a verb expects -------------
@@ -109,6 +115,10 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
     description: "Change screens — same-origin, root-relative href only (validated at the door).",
     payload: { href: REQ("string", "root-relative path, e.g. /notes") },
     hints: { readOnly: true, idempotent: true } },   // changes view, not persisted state
+  "field.set":    { name: "field.set",    depth: "light", accepts: ["field"],
+    description: "Prefill a registered form field with drafted text — the human reviews and submits; the AI never submits.",
+    payload: { value: REQ("string", "plain text; replaces the field's current value") },
+    hints: { destructive: true, idempotent: true } },   // REPLACES what the field holds (may be human-typed); same value → same end state
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);
@@ -158,7 +168,12 @@ export interface Intent {
 // `append` of button HTML, for the same reason `navigate` is (below): it names a distinct intent the
 // dispatcher renders + wires uniformly (each button is a normal chat.send trigger through the ONE
 // door — no parallel path), and it's conformance-testable as its own vocabulary word.
-export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices";
+// `fill` — atomic whole-value assignment into a registered form field (field.set's effect), matching
+// the verb's payload 1:1 and keeping the op idempotent. A NEW kind on purpose (plans/field-set-op.md):
+// `type`'s INPUT/TEXTAREA branch appends tokens and CLEARS on `done` (composer-submit physics — a
+// prefill must PERSIST for review), and `replace` swaps outerHTML (a field's value is state, not
+// markup — replacing the element would drop listeners and focus). Reuses the existing `text` field.
+export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices" | "fill";
 export type Provenance = "user" | "ai" | "system";
 export type Commit = "pending" | "committed";   // grade = commit state (DESIGN-SYSTEM §3)
 
@@ -202,6 +217,16 @@ export const isValidChoiceList = (x: unknown): x is Choice[] =>
 const SAFE_NAV_HREF = /^\/(?!\/)[^\s\\]*$/;
 export const isSafeNavigateHref = (href: unknown): href is string =>
   typeof href === "string" && SAFE_NAV_HREF.test(href);
+
+// ---- field.set's value validator — the SSOT the dispatcher's own guard must never drift from ----
+// A rejection echoes the constraint in Decision.reason (informative rejections, AI-INTERFACE §0),
+// e.g. "field.set value rejected: over 2000 chars" — so a reasoner can shorten and retry.
+/** Cap on a field.set value — a prefill is a message draft, not a document. */
+export const FIELD_VALUE_CAP = 2000;
+/** Plain text only: no C0 control chars except \n and \t (a textarea needs both). */
+const FIELD_VALUE_BAD_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/;
+export const isSafeFieldValue = (v: unknown): v is string =>
+  typeof v === "string" && v.length <= FIELD_VALUE_CAP && !FIELD_VALUE_BAD_CHARS.test(v);
 
 // ---- The reasoner's verdict ------------------------------------------------------
 export interface Decision {

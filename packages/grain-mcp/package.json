@@ -1,0 +1,41 @@
+{
+  "name": "@tjakoen/grain-mcp",
+  "version": "0.1.0",
+  "description": "GRAIN-MCP — a zero-dependency, hand-rolled MCP stdio server over a grain app's STATIC EXPORT: reads the exported HTML, harvests the door manifest with grain's own pure domManifest, and serves read-only inspection + validation tools (grain_pages, grain_manifest, grain_actions, grain_validate_move) to any MCP client. No browser, no live driving, no npm dependencies beyond the grain workspace.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
+  "homepage": "https://tjakoen.github.io/grain",
+  "bin": { "grain-mcp": "./cli.ts" },
+  "exports": {
+    "./jsonrpc.ts": "./jsonrpc.ts",
+    "./harvest.ts": "./harvest.ts",
+    "./tools.ts": "./tools.ts",
+    "./server.ts": "./server.ts"
+  },
+  "dependencies": {
+    "@tjakoen/grain": "^0.1.10"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "bun test",
+    "grain-mcp": "bun cli.ts"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.14",
+    "typescript": "^5.8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjakoen/grain.git",
+    "directory": "packages/grain-mcp"
+  },
+  "files": [
+    "jsonrpc.ts",
+    "harvest.ts",
+    "tools.ts",
+    "server.ts",
+    "cli.ts",
+    "README.md"
+  ]
+}

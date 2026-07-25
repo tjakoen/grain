@@ -7,10 +7,10 @@
 // PLUMBING, never faked judgment (MVP §"Build Order").
 
 import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
-import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref } from "./contract.ts";
+import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref, isSafeFieldValue, FIELD_VALUE_CAP } from "./contract.ts";
 // The reusable reasoner primitives — the stub DOGFOODS them so the exported kit (what a consumer's
 // real model composes with) and the shipped chat markup can never drift apart.
-import { esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp } from "./reasoner-kit.ts";
+import { esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp, fillOp } from "./reasoner-kit.ts";
 
 // The scoped capabilities the reasoner is allowed to use — its tool surface. The
 // real reasoner reaches storage through least-privilege tools exactly like this.
@@ -131,6 +131,31 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
           };
         }
         return { ok: true, ops: [navigateOp(intent.surface, href)] };
+      }
+
+      // --- field.set: prefill a registered form field with drafted text (plans/field-set-op.md).
+      //     The value is validated HERE (the reject echoes the constraint so a reasoner can shorten
+      //     and retry — informative rejections, AI-INTERFACE §0); the emitted `fill` op persists for
+      //     human review. The AI never submits — no submit verb exists. The door already brackets an
+      //     ai-sourced intent with spotlight ops + timeline entries; nothing extra needed here. ---
+      if (intent.action === "field.set") {
+        const value = intent.payload.value;
+        // Empty rejects too (like an empty note — lesson #3): a prefill with nothing in it is a
+        // silent no-op to the eye; "clear the field" is not a move this verb offers.
+        if (!isSafeFieldValue(value) || !value.trim()) {
+          const why = typeof value !== "string" || !value.trim() ? "value must be non-empty plain text"
+            : value.length > FIELD_VALUE_CAP ? `over ${FIELD_VALUE_CAP} chars`
+            : "control characters not allowed";
+          return {
+            ok: false,
+            reason: `field.set value rejected: ${why}`,
+            ops: [{ target: intent.surface, op: "flash", message: "Couldn't fill that field.",
+                     provenance: "system", commit: "committed" }],
+          };
+        }
+        narrate("fills", `prefilling ${surfaceId(intent.surface) || intent.surface} — yours to review and send`);
+        return { ok: true, reply: "Drafted it into the field — review and send when ready.",
+                 ops: [fillOp(intent.surface, value)] };
       }
 
       // --- chat.send: the assistant conversation. Your message settles CLEAN (human), then

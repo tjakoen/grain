@@ -6,7 +6,7 @@
 // shipped behaviour can never diverge. CLIENT-SAFE (§19.2): pure, no DOM, relative import only.
 
 import type { RenderOp, Surface } from "./contract.ts";
-import { PUSH_SURFACES, isSafeNavigateHref } from "./contract.ts";
+import { PUSH_SURFACES, isSafeNavigateHref, isSafeFieldValue, FIELD_VALUE_CAP } from "./contract.ts";
 // Imported for the notepad markup helpers below (they render markdown source to sanitized HTML) AND
 // re-exported so a consumer building on the kit finds settle-time markdown rendering right next to
 // the op-builders it pairs with, without a second import path to remember. Canonical home + tests:
@@ -119,6 +119,17 @@ export const navigateOp = (target: Surface, href: string): RenderOp => {
   if (!isSafeNavigateHref(href))
     throw new Error(`navigateOp: unsafe href ${JSON.stringify(href)} — must be a same-origin, root-relative path`);
   return { target, op: "navigate", href, provenance: "ai", commit: "committed" };
+};
+
+/** Prefill a registered form field (`field:` surface) with drafted text — the `fill` op. The value
+ *  PERSISTS for human review; the AI never submits (no submit verb exists to call). Throws on an
+ *  unsafe value RIGHT HERE, at the compose point, like navigateOp above (lesson #3/#5 — the
+ *  dispatcher's own guard is defense-in-depth, not the first line). `committed`: the write is
+ *  complete in one op; provenance `ai` drives the spotlight + the grain grade the dispatcher sets. */
+export const fillOp = (target: Surface, value: string): RenderOp => {
+  if (!isSafeFieldValue(value))
+    throw new Error(`fillOp: unsafe value — must be a string ≤ ${FIELD_VALUE_CAP} chars with no control characters`);
+  return { target, op: "fill", text: value, provenance: "ai", commit: "committed" };
 };
 
 /** Replace a bubble body with the animated "thinking" dots, pending — the AI is working but hasn't a

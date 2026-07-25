@@ -4,7 +4,7 @@
 // closed ACTIONS vocabulary (so it shows up in the manifest, see manifest-dom.test.ts), an
 // unsafe/external href is rejected, and a same-origin root-relative one is accepted.
 import { test, expect, describe } from "bun:test";
-import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref, isValidChoiceList } from "./contract.ts";
+import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref, isValidChoiceList, isSafeFieldValue, FIELD_VALUE_CAP } from "./contract.ts";
 
 describe("navigate: registered in the closed ACTIONS vocabulary", () => {
   test("is a real action, light depth, accepts the screen kind", () => {
@@ -98,6 +98,45 @@ describe("isSafeNavigateHref: same-origin, root-relative only", () => {
     expect(isSafeNavigateHref(undefined as unknown as string)).toBe(false);
     expect(isSafeNavigateHref(null as unknown as string)).toBe(false);
     expect(isSafeNavigateHref(42 as unknown as string)).toBe(false);
+  });
+});
+
+describe("field.set: registered in the closed ACTIONS vocabulary (plans/field-set-op.md)", () => {
+  test("is a real action, light depth, accepts the field kind, requires value:string", () => {
+    expect(isAction("field.set")).toBe(true);
+    expect(ACTIONS["field.set"]).toMatchObject({ name: "field.set", depth: "light", accepts: ["field"] });
+    expect(ACTIONS["field.set"].payload.value).toMatchObject({ type: "string", required: true });
+  });
+  test("actionsForKind('field') surfaces it — the manifest advertises it on registered fields", () => {
+    expect(actionsForKind("field")).toContain("field.set");
+  });
+  test("destructive + idempotent — it REPLACES a field's value; same value → same end state", () => {
+    expect(ACTIONS["field.set"].hints).toMatchObject({ destructive: true, idempotent: true });
+  });
+  test("no submit verb exists — the AI-never-submits guarantee is structural", () => {
+    for (const name of Object.keys(ACTIONS)) expect(name).not.toMatch(/submit/i);
+  });
+});
+
+describe("isSafeFieldValue: plain text, capped, no control chars", () => {
+  test("accepts plain text, newlines + tabs (a textarea needs both), and exactly the cap", () => {
+    expect(isSafeFieldValue("Hi TJ — I want to talk about grain.")).toBe(true);
+    expect(isSafeFieldValue("line one\nline two\tindented")).toBe(true);
+    expect(isSafeFieldValue("x".repeat(FIELD_VALUE_CAP))).toBe(true);
+    expect(isSafeFieldValue("")).toBe(true);   // shape-safe; an EMPTY prefill is the reasoner's call to reject
+  });
+  test("rejects over-cap and control characters", () => {
+    expect(isSafeFieldValue("x".repeat(FIELD_VALUE_CAP + 1))).toBe(false);
+    expect(isSafeFieldValue("null\x00byte")).toBe(false);
+    expect(isSafeFieldValue("bell\x07")).toBe(false);
+    expect(isSafeFieldValue("esc\x1b[31m")).toBe(false);
+    expect(isSafeFieldValue("vt\x0b")).toBe(false);
+  });
+  test("rejects non-string values without throwing", () => {
+    expect(isSafeFieldValue(undefined)).toBe(false);
+    expect(isSafeFieldValue(null)).toBe(false);
+    expect(isSafeFieldValue(42)).toBe(false);
+    expect(isSafeFieldValue(["a"])).toBe(false);
   });
 });
 

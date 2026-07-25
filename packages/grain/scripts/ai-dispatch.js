@@ -46,6 +46,15 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // silently diverge (CLAUDE.md lesson #5) — the dispatcher is the LAST line of defense before an
   // actual browser navigation, so it re-checks even though the reasoner already validated.
   const SAFE_NAV_HREF = /^\/(?!\/)[^\s\\]*$/;
+
+  // ---- fill: a field.set value's guard — mirrors ai/contract.ts's isSafeFieldValue EXACTLY -------
+  // Same intentional self-contained copy as SAFE_NAV_HREF above (this file imports no ai/*.ts);
+  // ai-dispatch.test.ts drift-guards the cap + the control-char regex against contract.ts's. The
+  // dispatcher is the LAST line of defense before a value lands in a real form field, so it
+  // re-checks even though the reasoner already validated.
+  const FIELD_VALUE_CAP = 2000;
+  const FIELD_VALUE_BAD_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/;
+  const SAFE_FIELD_VALUE = (v) => typeof v === "string" && v.length <= FIELD_VALUE_CAP && !FIELD_VALUE_BAD_CHARS.test(v);
   // A `navigate` op tears the page down — irreversible, so give any in-flight settle (the
   // spotlight's glide off, a caret's last frame) a beat to read before that happens, instead of a
   // bare synchronous location.assign mid-render. Named per CLAUDE.md lesson #9 (a magic number
@@ -116,7 +125,9 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     el.classList.remove("ai-spotlit", "is-click");
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
       if (savedPlaceholder.has(el)) { el.placeholder = savedPlaceholder.get(el); savedPlaceholder.delete(el); }
-      el.removeAttribute("data-grade");   // drop the forced-clean
+      // drop only the forced-clean "smooth" spotlightOn set — a `fill` op's "grain" (AI ink on a
+      // prefilled field) must SURVIVE the spotlight release, settling only on trusted human input.
+      if (el.getAttribute("data-grade") === "smooth") el.removeAttribute("data-grade");
       el.blur();
     }
     const held = [...pendingTriggers.values()].includes(el);
@@ -299,6 +310,15 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
         // op's own "committed" handling above (clearTrigger) and any spotlight release the
         // reasoner already emitted read first, THEN leave the page.
         setTimeout(() => { location.assign(op.href); }, NAVIGATE_SETTLE_MS);
+        return;
+      case "fill":                                   // AI prefills a form field; value PERSISTS for human review (never a submit)
+        // `"value" in el` keeps the op inert on a non-field element even if a page mislabels a
+        // surface. No focus steal, no submit, no form access — el.value and nothing else.
+        if (el && ("value" in el) && typeof op.text === "string" && SAFE_FIELD_VALUE(op.text)) {
+          el.value = op.text;
+          el.setAttribute("data-grade", "grain");    // AI ink until the human touches it (trusted-input settle below)
+          el.dispatchEvent(new Event("input", { bubbles: true }));   // page validation/counters stay honest
+        }
         return;
       case "log":                                    // one entry into the interaction TIMELINE (§5g)
         if (el && typeof op.html === "string") {
@@ -519,6 +539,17 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // Escape while the AI is acting → interrupt (ask to stop), don't force-kill
   document.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape" && isActing()) { ev.preventDefault(); interrupt(); }
+  });
+
+  // A `fill`ed field wears data-grade="grain" (AI ink) until the human TOUCHES it: the first
+  // TRUSTED input event settles it clean (the human edited — the ink is theirs now). Synthetic
+  // events (including fill's own bubbling `input` above) are not a human touch, so they never
+  // settle it. Delegated once — grain's grade-as-signal reaching a form control (DESIGN-SYSTEM §3).
+  document.addEventListener("input", (ev) => {
+    if (!ev.isTrusted) return;
+    const el = ev.target;
+    if (el && el.getAttribute && el.getAttribute("data-grade") === "grain" && ("value" in el))
+      el.removeAttribute("data-grade");
   });
 
   // Enter in an input with a verb → send its value as payload.text

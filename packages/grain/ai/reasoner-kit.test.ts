@@ -3,7 +3,7 @@
 import { test, expect, describe } from "bun:test";
 import {
   esc, chatBubble, chatBody, narrationLine, thinkingDots, choiceGroup,
-  userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp,
+  userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp, fillOp,
   thinkingOp, choicesOp,
   notepadEntry, notepadBody, noteAppendOp, noteReplaceOp,
   renderMarkdown,
@@ -62,6 +62,14 @@ describe("op-builders", () => {
   test("navigateOp: an unsafe href throws here, at compose time — not later, silently, at the dispatcher", () => {
     expect(() => navigateOp("screen", "javascript:alert(1)")).toThrow();
     expect(() => navigateOp("screen", "https://evil.example")).toThrow();
+  });
+  test("fillOp: a safe value becomes a committed ai fill op — the value persists for human review", () => {
+    expect(fillOp("field:contact-message", "Hi TJ — about grain."))
+      .toMatchObject({ target: "field:contact-message", op: "fill", text: "Hi TJ — about grain.", provenance: "ai", commit: "committed" });
+  });
+  test("fillOp: an unsafe value throws here, at compose time — not later, silently, at the dispatcher", () => {
+    expect(() => fillOp("field:contact-message", "x".repeat(2001))).toThrow();
+    expect(() => fillOp("field:contact-message", "null\x00byte")).toThrow();
   });
   test("renderMarkdown is re-exported from the kit (same module ai/markdown.ts exports)", () => {
     expect(renderMarkdown("**hi**")).toContain("<strong>hi</strong>");

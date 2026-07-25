@@ -33,6 +33,27 @@ describe("createClientDoor", () => {
     expect(ops.every((o) => o.provenance !== "ai")).toBe(true);
   });
 
+  test("field.set works on the client transport: a fill op loops back, committed, ai-provenance", async () => {
+    const ops: RenderOp[] = [];
+    const door = createClientDoor((op) => ops.push(op), { thinkMs: 0 });
+    const decision = await door.handleIntent(intent({ source: "ai", surface: "field:contact-message",
+      action: "field.set", payload: { value: "Hi TJ — about grain." } }));
+    expect(decision.ok).toBe(true);
+    const fill = ops.find((o) => o.op === "fill");
+    expect(fill).toMatchObject({ target: "field:contact-message", text: "Hi TJ — about grain.",
+      provenance: "ai", commit: "committed" });
+  });
+
+  test("a registered field surface shows up in observe() with field.set as its legal move", () => {
+    const door = createClientDoor(() => {}, { thinkMs: 0 });
+    const el = (attrs: Record<string, string>) => ({ getAttribute: (n: string) => attrs[n] ?? null, textContent: null });
+    const doc = {
+      body: el({ "data-screen": "contact" }),
+      querySelectorAll: () => [el({ "data-surface": "field:contact-message" })],
+    };
+    expect(door.observe(doc)).toContain("- field:contact-message [field] -> field.set");
+  });
+
   test("observe(doc) re-harvests the live-DOM manifest — the 'read the result' half of the loop", () => {
     const door = createClientDoor(() => {}, { thinkMs: 0 });
     // a structural DomDoc fake (the same shape manifest-dom takes) — no browser needed

@@ -69,20 +69,37 @@
 /* ============================================================================
    THE FRAME (B3) — a routed app-shell VARIANT: a fixed top-bar + a combined
    nav/content sidebar + a bordered viewport. NOT an iframe (PLAN.md); the host
-   page is the real page, read as "framed" via a border edge. The chrome is
-   fixed overlay — it does not reflow the host's own fixed shell. One sidebar
-   component, `data-mode="demo|dev"` flipped live. Tokens only.
+   page is the real page, read as "framed" via a border edge. The host SHRINKS
+   into the framed viewport (the body rule below) — the chrome wraps AROUND the
+   site, it never covers it. One sidebar component, `data-mode="demo|dev"`
+   flipped live. Tokens only.
    Sits above grain's lamp veil (--z-ai-veil 9000) so the chrome is clickable
    while the lit surface stays reachable through the passthrough hole. */
-.crumb-frame {
+
+/* the shrink: while the frame is up, the body becomes a fixed box inset by the
+   bar + sidebar, so the whole site lives INSIDE the framed viewport instead of
+   running underneath the chrome. The chrome vars live HERE (not on .crumb-frame)
+   because the body needs them for its own inset and the frame root — a body
+   child — inherits them; one definition, no drift. `height/width: auto` beat a
+   host body that sizes itself (e.g. grain's .app-window-backdrop height:100dvh);
+   a shell that fills the body (height:100%) shrinks with it for free. The frame
+   chrome stays position:fixed and the body carries NO transform, so fixed
+   descendants (grain's lamp veil, lightboxes) keep real viewport coordinates. */
+body[data-crumb-frame] {
   --crumb-bar-h: 3rem;
   --crumb-side-w: min(20rem, 82vw);
+  position: fixed;
+  inset: var(--crumb-bar-h) var(--crumb-side-w) 0 0;
+  height: auto; width: auto;
+  overflow: hidden;
+}
+.crumb-frame {
   font-family: var(--font-ui, inherit);
 }
 
-/* the bordered viewport edge — a pure visual frame around the area the host app
-   occupies (inset by the bar + sidebar). pointer-events:none so it never eats a
-   click meant for a lit surface. */
+/* the bordered viewport edge — a pure visual frame around the SHRUNK host box
+   (the same inset the body rule above uses, so it hugs the site exactly).
+   pointer-events:none so it never eats a click meant for a lit surface. */
 .crumb-frame__edge {
   position: fixed; z-index: 9110; pointer-events: none;
   inset: var(--crumb-bar-h) var(--crumb-side-w) 0 0;
@@ -190,9 +207,10 @@
   display: flex; justify-content: flex-end; gap: var(--space-2);
 }
 
-/* narrow screens: the sidebar becomes a bottom sheet; the edge insets from the bottom */
+/* narrow screens: the sidebar becomes a bottom sheet; the host box + edge inset
+   from the bottom instead of the side (same values on both, they stay glued) */
 @media (max-width: 720px) {
-  .crumb-frame { --crumb-side-w: 0px; }
+  body[data-crumb-frame] { --crumb-side-w: 0px; inset: var(--crumb-bar-h) 0 45vh 0; }
   .crumb-frame__edge { inset: var(--crumb-bar-h) 0 45vh 0; }
   .crumb-sidebar {
     inset: auto 0 0 0; width: auto; height: 45vh;

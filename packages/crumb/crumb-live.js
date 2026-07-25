@@ -119,9 +119,10 @@ function renderPopover(tour, idx, mode) {
 
 // ================= PRESENTATION 2: the frame + sidebar (B3) ===================
 // A routed app-shell variant: a fixed top-bar + a combined nav/content sidebar + a bordered
-// viewport. The chrome is fixed overlay (it does not reflow the host's own fixed shell — the
-// frame reads via a border edge, PLAN.md's "not an iframe"). `data-mode` on the root flips the
-// SAME step between demo (say only) and dev (review + status rail + verify).
+// viewport. `data-crumb-frame` on <body> SHRINKS the host into the framed viewport (crumb.css)
+// so the chrome wraps around the site instead of covering it (still not an iframe, PLAN.md).
+// `data-mode` on the root flips the SAME step between demo (say only) and dev (review + status
+// rail + verify).
 let frame = null;
 function frameRoot() {
   if (frame) return frame;

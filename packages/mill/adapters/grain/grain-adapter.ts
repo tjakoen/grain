@@ -20,6 +20,8 @@ import type {
 } from "../../core/types.ts";
 import { renderDocument, escapeHtml } from "../../core/engine.ts";
 import { assertHumanGrade } from "../../core/grade.ts";
+import { inlineText } from "../../core/markdown.ts";
+import { slugifyHeading } from "../../core/slug.ts";
 
 const asArray = (v: Frontmatter[string] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -31,9 +33,23 @@ function defaultResolveLink(href: string): string {
   return href;
 }
 
+// Stable heading ids (core/slug.ts): every rendered ## / ### carries `id="{slug}"` so a
+// section is citable/anchorable out of the box — a consumer's corpus builder or ToC imports
+// the SAME slugifyHeading and the two can't drift. Level 1 (the page's own <h1>, owned by
+// the layout), level 4+ (too granular to be a citable "section"), and a heading whose text
+// slugs to "" (pure punctuation) fall through to the bare heading shape. `surfaces` adds the
+// grain-vocabulary `data-surface="anchor:{slug}"` operable marker (opt-in via
+// options.headingSurfaces — it means something only to an app wired for grain's spotlight).
+const heading = (surfaces: boolean): BlockHandlers["heading"] => (n, ctx) => {
+  const slug = (n.level === 2 || n.level === 3) ? slugifyHeading(inlineText(n.children)) : "";
+  if (!slug) return `<h${n.level}>${ctx.renderInline(n.children)}</h${n.level}>`;
+  const surface = surfaces ? ` data-surface="anchor:${ctx.escape(slug)}"` : "";
+  return `<h${n.level} id="${ctx.escape(slug)}"${surface}>${ctx.renderInline(n.children)}</h${n.level}>`;
+};
+
 // ---- block map (node → GRAIN tag) ------------------------------------------
 const block: BlockHandlers = {
-  heading: (n, ctx) => `<h${n.level}>${ctx.renderInline(n.children)}</h${n.level}>`,
+  heading: heading(false),
   paragraph: (n, ctx) => `<p>${ctx.renderInline(n.children)}</p>`,
   list: (n, ctx) => {
     const tag = n.ordered ? "ol" : "ul";
@@ -100,13 +116,17 @@ export interface GrainAdapterOptions {
   blockOverrides?: Partial<BlockHandlers>;
   /** override individual inline handlers */
   inlineOverrides?: Partial<InlineHandlers>;
+  /** also stamp `data-surface="anchor:{slug}"` on id-carrying headings — grain's spotlight
+   *  resolves travel targets via [data-surface], so a marked heading becomes spotlightable.
+   *  Opt-in: the marker is grain-app vocabulary, not content (default false). */
+  headingSurfaces?: boolean;
 }
 
 export function createGrainAdapter(options: GrainAdapterOptions = {}): RenderAdapter {
   const layouts = options.layouts ?? {};
   const fallback = options.defaultLayout ?? defaultLayout;
   return {
-    block: { ...block, ...options.blockOverrides },
+    block: { ...block, heading: heading(options.headingSurfaces ?? false), ...options.blockOverrides },
     inline: { ...inline, ...options.inlineOverrides },
     layout: (input) => (layouts[input.type] ?? fallback)(input),
     escape: escapeHtml,

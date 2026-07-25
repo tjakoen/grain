@@ -4,4 +4,5 @@ export { parseFrontmatter } from "./frontmatter.ts";
 export type { ParsedFrontmatter } from "./frontmatter.ts";
 export { parseMarkdown, parseInline, inlineText } from "./markdown.ts";
 export { renderDocument, escapeHtml } from "./engine.ts";
+export { slugifyHeading } from "./slug.ts";
 export { assertHumanGrade, findGrainViolation } from "./grade.ts";

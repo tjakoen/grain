@@ -6,8 +6,25 @@
 .tab-bar {
   display: flex; align-items: stretch; min-width: 0; flex: 1 1 auto;
   overflow-x: auto; scrollbar-width: none;
+  /* scroll affordance: fade the far edge so hidden tabs read as "more to scroll"
+     rather than a hard clip. Tabs are flex:none and left-packed, so when the
+     strip is NOT overflowing the faded edge sits over empty space (invisible);
+     it only bites a real tab once the row overflows. */
+  mask-image: linear-gradient(to right, currentColor calc(100% - 1.5rem), transparent);
 }
 .tab-bar::-webkit-scrollbar { display: none; }
+/* Where scroll-driven animation is supported, upgrade to both edges tracking the
+   actual scroll position: right-only at the start, both in the middle, left-only
+   at the end. Unsupported browsers keep the static right fade above. */
+@supports (animation-timeline: scroll()) {
+  .tab-bar { animation: tab-bar-edges linear both; animation-timeline: scroll(self inline); }
+  @keyframes tab-bar-edges {
+    from { mask-image: linear-gradient(to right, currentColor, currentColor calc(100% - 1.5rem), transparent); }
+    50%  { mask-image: linear-gradient(to right, transparent, currentColor 1.5rem, currentColor calc(100% - 1.5rem), transparent); }
+    to   { mask-image: linear-gradient(to right, transparent, currentColor 1.5rem, currentColor); }
+  }
+}
+@media (prefers-reduced-motion: reduce) { .tab-bar { animation: none; } }
 
 /* the close-all affordance — a small TAB-SHAPED cell pinned past the scrollable strip (a sibling
    in the topbar, never a child of .tab-bar), so it never scrolls out of reach no matter how many

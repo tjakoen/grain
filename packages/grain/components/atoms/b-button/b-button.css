@@ -34,6 +34,10 @@
 /* ---- sizes (attribute) ---- */
 .btn[data-size="sm"] { min-height: 0; padding: var(--space-1) var(--space-3); font-size: var(--text-xs); }
 .btn[data-size="lg"] { padding: var(--space-3) var(--space-5); font-size: var(--text-base); }
+/* On a phone the small button's dense min-height:0 lands ~30px - below the touch
+   target floor (DESIGN-SYSTEM §7). Restore a comfortable tap size at the narrow
+   breakpoint without fattening the dense desktop rows. */
+@media (max-width: 768px) { .btn[data-size="sm"] { min-height: 2.5rem; } }
 
 /* ---- variants (attribute). Monochrome: the difference is fill, not hue ---- */
 .btn[data-variant="soft"]    { background: var(--paper-2); }

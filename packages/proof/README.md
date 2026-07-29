@@ -1,4 +1,4 @@
-# 🫧 PROOF — the AI plan board
+# 🫧 PROOF: the AI plan board
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
@@ -29,12 +29,12 @@ board.**
 
 ### `plans/` vs `PLAN.md`
 
-A `plans/` board is **opt-in per project** — across this stack only bread, greenroom, and
+A `plans/` board is **opt-in per project**: across this stack only bread, greenroom, and
 portfolio run one. PROOF itself does not: its own roadmap lives in prose in [`PLAN.md`](PLAN.md).
 The two are distinct and not interchangeable. `PLAN.md` is a narrative roadmap, one file, meant
 to be read top to bottom. `plans/*.md` is PROOF's structured board input: one file per plan,
 frontmatter + checklist, parsed and rendered. A repo with no `plans/` directory is not failing
-the contract, it simply hasn't opted in — `proof check` has nothing to lint there, which is
+the contract, it simply hasn't opted in: `proof check` has nothing to lint there, which is
 expected, not a silent pass to worry about.
 
 ## What's built
@@ -69,7 +69,7 @@ const proofRoutes = createProofRoutes({ plansDir: "./plans", channel /* an OpCha
 ```
 
 The portfolio site ([tjakoen.github.io](https://tjakoen.github.io), `src/server.ts`) is the real
-live consumer — it mounts PROOF's routes alongside the framework docs and the component catalog.
+live consumer: it mounts PROOF's routes alongside the framework docs and the component catalog.
 Building your own app instead? Import `createProofRoutes` the same way.
 
 Prefer zero code? `bunx proof serve` boots its own self-contained BATCH+GRAIN server and reads
@@ -84,8 +84,8 @@ repo that already has plan prose migrates it in, it doesn't run PROOF alongside 
 
 ## Read next
 
-- **[Docs](https://tjakoen.github.io/proof/docs)** — the full write-up.
-- **[PLAN.md](PLAN.md)** — the canonical plan (design, the schema, build pieces, honest status).
+- **[Docs](https://tjakoen.github.io/proof/docs)**: the full write-up.
+- **[PLAN.md](PLAN.md)**: the canonical plan (design, the schema, build pieces, honest status).
 
 ---
 

@@ -8,7 +8,7 @@
 > consumer of `grain` + `mill`), Apache-2.0, mountable. This file is the canonical CRUMB plan.
 >
 > **Update (2026-07-23): built and shipped.** Core, routes, loader, `crumb check`, and
-> `from-timeline` are published as `@tjakoen/crumb@0.1.1` and live on tjakoen.github.io — the
+> `from-timeline` are published as `@tjakoen/crumb@0.1.3` and live on tjakoen.github.io — the
 > "nothing built" line above is now historical, kept for the record rather than rewritten. One
 > drift to flag: the shipped parser reads tour steps from **body headings** in the tour markdown,
 > not the frontmatter-steps schema sketched further down this plan; treat the sketch below as the

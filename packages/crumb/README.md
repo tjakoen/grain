@@ -1,4 +1,4 @@
-# 🍞 CRUMB — the guided-tour / AI-review layer
+# 🍞 CRUMB: the guided-tour / AI-review layer
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](../../LICENSE)
@@ -6,7 +6,7 @@
 
 **Tours as markdown, in. A guided walk, out.** CRUMB is PROOF's twin: where PROOF renders
 *plans-as-markdown* as a board that never writes, CRUMB renders **tours-as-markdown** as a guided
-projection that never writes. Published as `@tjakoen/crumb` and live — it's the guided-tour frame
+projection that never writes. Published as `@tjakoen/crumb` and live: it's the guided-tour frame
 running on tjakoen.github.io today.
 
 ## What's built
@@ -33,9 +33,9 @@ const crumbRoutes = createCrumbRoutes({ toursDir: "./tours" });
 
 ## Read next
 
-- **[Docs](https://tjakoen.github.io/crumb/docs)** — the full write-up.
-- **[Live](https://tjakoen.github.io/crumb/)** — the guided tour running in production.
-- **[PLAN.md](PLAN.md)** — the canonical plan (design, build pieces, what's left).
+- **[Docs](https://tjakoen.github.io/crumb/docs)**: the full write-up.
+- **[Live](https://tjakoen.github.io/crumb/)**: the guided tour running in production.
+- **[PLAN.md](PLAN.md)**: the canonical plan (design, build pieces, what's left).
 
 ---
 🤖 **Built with Claude, and every tour is a projection, never a fork.** I decided what "reviewed"

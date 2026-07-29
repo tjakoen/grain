@@ -1,4 +1,4 @@
-# 🌾 GRAIN — usage
+# 🌾 GRAIN: usage
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
@@ -31,22 +31,22 @@ and how to wire it.
   interaction is a source-tagged Intent → an interaction log is a server-side drop-in) · the design
   system works with no AI · a **client-side door** (the same vocabulary runs on static hosts, no
   server) · re-skin by token override · machine-readable (SEO/AEO) · **built on the modern web
-  platform** (native View Transitions, `<dialog>`, `<details>`, `:has()`, `color-mix()` — not
+  platform** (native View Transitions, `<dialog>`, `<details>`, `:has()`, `color-mix()`, not
   framework JS).
 
 ---
 
-## 0. Two layers — the AI interface is optional
+## 0. Two layers: the AI interface is optional
 
 GRAIN is **two things, one-directional**:
 
-- **The design system** (always usable) — the `b-*` atoms, the **default theme**
+- **The design system** (always usable): the `b-*` atoms, the **default theme**
   (`styles/variables.css` = tokens + `@font-face`, `styles/global.css` = base/skin,
   `fonts/` = the Redaction grades), and the **grade-as-signal** mechanism
   (`styles/grain.css`: the `--type-font` atom, `data-grade` / `.field` / `data-commit`
   rules, caret, settle). Grade is useful with **no AI at all**: draft vs. saved,
   focus/editing, in-transit vs. committed. It depends on nothing in `ai/`.
-- **The AI-interaction layer** (opt-in) — `ai/*` (the door, contract, reasoner boundary,
+- **The AI-interaction layer** (opt-in): `ai/*` (the door, contract, reasoner boundary,
   manifest, accepts), the dispatcher island `scripts/ai-dispatch.js`, and its styling
   `ai/ai.css` (the "AI is acting" spotlight). This layer *uses* the design system
   (sets `data-grade` by provenance); the design system never reaches back into it.
@@ -59,23 +59,23 @@ a no-AI consumer simply drops `grain/ai` from its style roots.)
 
 ---
 
-## 1. The substrate contract — what a host must provide
+## 1. The substrate contract: what a host must provide
 
 GRAIN is portable to any host that supplies three things:
 
-1. **An `OpChannel`** — `push(session, event, data)` (`ai/contract.ts`). How render ops
+1. **An `OpChannel`**: `push(session, event, data)` (`ai/contract.ts`). How render ops
    reach a client. BATCH = SSE; a WebSocket hub would do. GRAIN imports the *interface*
    from its own contract, never the implementation. *(Future, additive: a durable
-   sibling — a per-actor turn-status store — lets a reconnecting client reflect a
+   sibling, a per-actor turn-status store, lets a reconnecting client reflect a
    still-running turn. It sits beside this port; the component conventions don't change.
    See <https://tjakoen.github.io/grain/docs/ai-interface> §5d.)*
 2. **A renderer that understands the binding vocabulary** below (§3). BATCH's
    composition engine implements it; another substrate must too.
-3. **A filesystem** (`ai/accepts.ts` reads component files to harvest the manifest) —
+3. **A filesystem** (`ai/accepts.ts` reads component files to harvest the manifest):
    any JS runtime, not substrate-specific.
 
 Everything else (the scoped write capability, "render a surface to HTML") is **injected**
-by the composition root — GRAIN names no concrete dependency.
+by the composition root: GRAIN names no concrete dependency.
 
 ---
 
@@ -85,7 +85,7 @@ Put these on your components/markup; GRAIN's island + door act on them:
 
 | Attribute | On | Means |
 |---|---|---|
-| `data-surface="kind:id"` | any region | its **address** — what render ops target (built with `surface(kind, id)`) |
+| `data-surface="kind:id"` | any region | its **address**: what render ops target (built with `surface(kind, id)`) |
 | `data-action="verb"` | a control | clicking it (or Enter in an input) becomes `POST /intent` with that verb |
 | `data-target="surface"` | a control | the surface the action affects (defaults to the nearest `data-surface`) |
 | `data-kind` + `data-accepts="v1 v2"` | a component root | harvested into the AI manifest (what verbs this kind accepts) |
@@ -93,13 +93,13 @@ Put these on your components/markup; GRAIN's island + door act on them:
 | `data-commit="pending"` | any ancestor | in-transit / not-yet-committed → reads grain |
 
 The verbs themselves live in the closed registry (`ai/contract.ts`: `ActionName` /
-`SurfaceKind` / `ACTIONS`) — the single source of truth.
+`SurfaceKind` / `ACTIONS`): the single source of truth.
 
 **State invariant (what keeps it from getting fidgety).** UI state is **declarative
-attributes** components wear — the dispatcher acts on attributes, never component names,
+attributes** components wear: the dispatcher acts on attributes, never component names,
 so any component participates with no bespoke JS. Transient state (`data-commit="pending"`
 / `ai-spotlit`) follows one rule: **every optimistic "pending" is cleared by a
-server-sent terminal op** — a `committed` op, a `flash` (rollback), a `remove`, or a
+server-sent terminal op**: a `committed` op, a `flash` (rollback), a `remove`, or a
 `type {done}`. Backstops cover the rest: a held control is also released when the AI
 turn ends (`spotlight active:false`), re-triggering the same surface clears the old
 holder first, and a 20s timeout releases a stuck spotlight. Net: the server is the
@@ -120,7 +120,7 @@ that lives in markup rather than code.
 | `<slot-tag prop-as="default" prop-attr-X="prop" prop-text="prop">` | the **polymorphic** element: become `as`; set attrs/text from config props |
 | `each="path"` | **repeat** the component once per array item (item = the scope) |
 | `data="path"` | **scope** a child component to a sub-slice |
-| `<b-button>` … (hyphenated tag) | a **component** — expanded server-side; may self-close |
+| `<b-button>` … (hyphenated tag) | a **component**: expanded server-side; may self-close |
 
 Example (GRAIN's text atom):
 ```html
@@ -129,17 +129,17 @@ Example (GRAIN's text atom):
 
 ---
 
-## 4. The token slots (GRAIN's default theme — override to re-skin)
+## 4. The token slots (GRAIN's default theme: override to re-skin)
 
 GRAIN ships a **default theme** in `styles/variables.css` (the *Sourdough* look:
 monochrome paper/ink + self-hosted Redaction grades). The mechanism (`styles/grain.css`)
 and atoms read these token *slots*, so a consumer re-skins by **overriding the slots** in
-its own sheet (linked after GRAIN's) — no component changes:
+its own sheet (linked after GRAIN's), no component changes:
 
 - **fonts:** `--type-font` (the inherited switch), `--font-grain`, `--font-smooth`, `--font-accent`
 - **ink/paper:** `--ink`, `--paper`, `--color-fg`, `--color-muted`, `--line-soft`
 - **scale:** `--space-1..8`, `--text-sm`, `--border`, `--radius-sm`, `--radius-md`
-- **AI spotlight:** `--ai-veil` (the "AI is acting" backdrop — three on-theme picks:
+- **AI spotlight:** `--ai-veil` (the "AI is acting" backdrop, three on-theme picks:
   `color-mix(in srgb, var(--ink) 22%, transparent)` dim · `color-mix(in srgb, var(--paper) 70%, transparent)` wash ·
   `transparent` lift) and `--ai-focus-move` (how slowly the spotlight glides between
   surfaces). Both set once in the theme so every page behaves identically.
@@ -172,27 +172,27 @@ const layer = createInteractionLayer({
 
 ### Optional standalone islands (drop-in, no wiring)
 
-Self-contained `<dialog>` mechanisms — one `<script>` plus its stylesheet, driven entirely by
+Self-contained `<dialog>` mechanisms: one `<script>` plus its stylesheet, driven entirely by
 data-attributes, no composition-root wiring and no AI layer required:
 
-- **`scripts/cmdk.js`** + `styles/cmdk.css` — the ⌘K command palette. Fetches `/search.json`;
+- **`scripts/cmdk.js`** + `styles/cmdk.css`: the ⌘K command palette. Fetches `/search.json`;
   any `[data-cmdk-open]` element also opens it.
-- **`scripts/lightbox.js`** + `styles/lightbox.css` — the image viewer. `[data-lightbox]` marks a
+- **`scripts/lightbox.js`** + `styles/lightbox.css`: the image viewer. `[data-lightbox]` marks a
   trigger (if it's an `<a href>`, the href is the full image, so it stays a real link with no JS);
   a `[data-lightbox-group]` ancestor turns its triggers into one gallery with prev/next + a dot rail.
   Caption comes from `data-lightbox-caption` or the child `<img>` alt.
 
 ---
 
-## 6. Build your own — a theme + components (consumer guide)
+## 6. Build your own: a theme + components (consumer guide)
 
-GRAIN is meant to be **consumed, not forked.** Two independent extension points — and they
+GRAIN is meant to be **consumed, not forked.** Two independent extension points, and they
 compose: **one token override re-skins your components and GRAIN's together.** The decider for
 *where* something lives is one question: **"would another product on GRAIN want this?"** Yes →
 it's reusable design, contribute it to `grain/`. No → it's yours, keep it in your app. This repo
 is the worked example: `project/` and `tjakoen.github.io/` are two consumers doing exactly the below.
 
-### A · A theme (re-skin) — override token slots, never components
+### A · A theme (re-skin): override token slots, never components
 
 1. Write a stylesheet that redefines the §4 token slots (`--paper`, `--ink`, `--font-*`,
    `--space-*`, `--radius-*`, `--ai-veil`, …). **Touch no component CSS.**
@@ -205,20 +205,20 @@ is the worked example: `project/` and `tjakoen.github.io/` are two consumers doi
 ```
 
 To make it **switchable at runtime** (light/dark or multiple flavours), scope the block to an
-attribute and flip it on `<html>` — `[data-theme="mine"] { … }` / `[data-color-scheme="dark"] { … }`.
-Wire the two theming scripts once at the composition root: `scripts/theme.js` (deferred — the
+attribute and flip it on `<html>`: `[data-theme="mine"] { … }` / `[data-color-scheme="dark"] { … }`.
+Wire the two theming scripts once at the composition root: `scripts/theme.js` (deferred: the
 declarative controls + localStorage persistence) and `scripts/theme-boot.js` **render-blocking in
 `<head>`** (pre-sets the saved attributes before first paint; without it every navigation flashes
-the default theme). Inject them on *every* page shell — including any page that builds its own
-`<html>` outside the page server — or that page silently ignores the saved theme.
+the default theme). Inject them on *every* page shell (including any page that builds its own
+`<html>` outside the page server), or that page silently ignores the saved theme.
 Grade-as-signal is load-bearing: keep `--font-grain` visibly distinct from `--font-smooth` in
 every theme, and verify it still reads in dark.
 
-### B · A component — author in the binding vocabulary
+### B · A component: author in the binding vocabulary
 
 1. Create your own **component-root dir** (e.g. `myapp/components/`). Drop a component:
    `mywidget/mywidget.html` + `mywidget.css` (+ `mywidget.md` for the catalog). One **root
-   class**, variants as **attributes** (`[data-variant]`), and **read token slots** — so it
+   class**, variants as **attributes** (`[data-variant]`), and **read token slots**, so it
    inherits any theme + dark mode for free. Author the markup in the §3 vocabulary
    (`data-field` / `data-bind-*` / `each` / `<slot-tag>`).
 2. Register the dir at your **composition root** so the host composes `<mywidget>` and bundles
@@ -227,12 +227,12 @@ every theme, and verify it still reads in dark.
    passes its dir to `createRenderer` / the style bundle / `createCatalog`). It then appears
    in `/catalog` automatically.
 
-### C · Make it AI-operable (optional — the payoff)
+### C · Make it AI-operable (optional: the payoff)
 
 Add the §2 conventions and the shared dispatcher drives it with **no bespoke JS**:
 `data-surface="kind:id"` (its address), `data-kind` + `data-accepts="verb"` (harvested into the
 manifest), a `data-action="verb"` trigger, and express AI-mode off `data-commit`/`data-grade`.
-Register the verb in the vocabulary (`ai/contract.ts` — see the §5 rough-edge note). That's the
+Register the verb in the vocabulary (`ai/contract.ts`, see the §5 rough-edge note). That's the
 whole path: a themed, catalogued, AI-operable component without editing GRAIN.
 
 ---

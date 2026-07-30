@@ -8,7 +8,7 @@ and operable by both a human and an AI through one shared vocabulary, with the A
 presence shown as a visible signal (*grain = AI*). It runs on a **substrate** (BATCH is
 the reference one) but imports nothing from it.
 
-- **The beliefs behind it:** [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md)
+- **The beliefs behind it:** [PHILOSOPHY.md](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/PHILOSOPHY.md)
 - **Overview / why:** [GRAIN](https://tjakoen.github.io/grain/docs/grain)
 - **The full contract** (intent envelope, render ops, manifest, the AI-acts protocol,
   the two write paths): [AI-INTERFACE](https://tjakoen.github.io/grain/docs/ai-interface)

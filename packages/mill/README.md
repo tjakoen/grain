@@ -46,8 +46,8 @@ never a build-time re-render (keeps [export-as-projection](https://tjakoen.githu
 
 - **[Docs](https://tjakoen.github.io/mill/docs)**: the full write-up.
 - **[mill/PLAN.md](PLAN.md)**: the canonical plan (design, seams, mapping model, build pieces).
-- **[../tjakoen.github.io/PHILOSOPHY.md](../tjakoen.github.io/PHILOSOPHY.md)**: why content is Markdown and pages are a projection of it.
-- **[../CLAUDE.md](../CLAUDE.md)**: how MILL fits the four concerns.
+- **[PHILOSOPHY.md](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/PHILOSOPHY.md)**: why content is Markdown and pages are a projection of it.
+- **[../../CLAUDE.md](../../CLAUDE.md)**: how MILL fits the four concerns.
 
 ---
 

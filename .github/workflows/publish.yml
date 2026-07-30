@@ -17,8 +17,8 @@ name: Publish packages
 #     (Same shape as the committed `_authToken=${GITHUB_TOKEN}` that used to 401 every cold
 #     install — an empty auth value overriding a working default.) See actions/setup-node#1551.
 #  2. Set NODE_AUTH_TOKEN at all, empty or otherwise.
-#  3. Run on npm older than 11.5.1, which predates OIDC support. Node 24 ships a new enough npm,
-#     but the explicit upgrade keeps this true regardless of what the runner image changes to.
+#  3. Run on npm older than 11.5.1, which predates OIDC support. Node 24 ships exactly 11.5.1,
+#     so the pinned upgrade below buys headroom rather than merely meeting the floor.
 #
 # --provenance is passed explicitly: the docs say public-repo provenance is automatic, but it has
 # been reported not to fire without the flag, and passing it makes the failure loud rather than
@@ -51,7 +51,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24 # trusted publishing needs Node >= 22.14
-      - run: npm install -g npm@latest # trusted publishing needs npm >= 11.5.1
+      # Pinned to the 11.x line, NOT @latest. Trusted publishing needs npm >= 11.5.1, and node 24
+      # ships exactly 11.5.1 — no headroom. But `npm@latest` is a moving target with its own
+      # engine floor: npm 12 requires node ^24.15.0, so @latest already EBADENGINEs on a node
+      # 24.7 runner. npm 11.x needs only node >=22.9.0, so this cannot outrun the node pin.
+      - run: npm install -g npm@11
       - name: Publish new package versions
         run: |
           set -euo pipefail

@@ -31,7 +31,7 @@ The GRAIN docs are canonically homed in the portfolio repo (`tjakoen.github.io/d
 via MILL. The SSOT for what's operable is **`ai/contract.ts`** (`SurfaceKind`, `ActionName`, `ACTIONS`,
 `RenderOp`). The published docs home for the whole stack is <https://tjakoen.github.io>.
 
-**What's next for grain lives in [`../ROADMAP.md`](../ROADMAP.md) — Track A** (finish the modality,
+**What's next for grain lives in [ROADMAP.md](https://github.com/tjakoen/bread/blob/main/ROADMAP.md) — Track A** (finish the modality,
 then wire the live model at M★). Read it before starting substantive grain work; it's the canonical
 cross-layer execution plan and this file stays canonical for grain's rules.
 

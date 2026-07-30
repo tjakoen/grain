@@ -7,7 +7,7 @@
 > and is designed as a **reusable, open-source** tool. The **portfolio** is its first consumer
 > (`/notes`, `/grain/docs`, `/batch/docs` render live through MILL). This file is the **canonical
 > MILL plan**; `tjakoen.github.io/PLAN.md` holds the *consumer* view and points here. The cross-layer
-> sequencing (MILL is Track C) lives in [`../ROADMAP.md`](../ROADMAP.md).
+> sequencing (MILL is Track C) lives in [ROADMAP.md](https://github.com/tjakoen/bread/blob/main/ROADMAP.md).
 
 ## Positioning (decision, 2026-07-03)
 

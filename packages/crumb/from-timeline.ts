@@ -132,7 +132,7 @@ export function toTourMarkdown(tour: Tour): string {
     `mode: ${tour.mode}`,
     `id: ${tour.id}`,
     `title: ${dq(tour.title)}`,
-    `route: ${tour.route}`,
+    `route: ${tour.route ?? ""}`,   // null → an empty declaration, which reparses back to null
     "---",
   ].join("\n");
 

@@ -39,7 +39,12 @@ export interface Tour {
   id: string;          // = the filename stem; the stable address
   mode: TourMode;
   title: string;
-  route: string;       // the entry route the tour opens on
+  /** the entry route the tour opens on (its intro / step -1 card); an ABSOLUTE pathname
+   *  ("/", "/notes") for a root-mounted multi-page host. null = no navigable entry route — a
+   *  declared-empty, absent, or non-absolute (relative-looking) value all degrade to this, so a
+   *  host with nothing sensible to navigate to (e.g. a hash-router SPA under one pathname) never
+   *  gets forced off its own page; the client renders the intro in place instead. */
+  route: string | null;
   intro: string;       // the body prose before the first `## <surface>` heading
   steps: Step[];
 }

@@ -59,3 +59,27 @@ test("a tour with no steps is flagged", () => {
   const { errors } = parseTour(`---\nmode: demo\n---\njust intro\n`, "empty");
   expect(errors.some((e) => e.field === "steps")).toBe(true);
 });
+
+test("an absent route parses to null, silently — no navigable entry, not an error", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\n---\n## screen\nx\n`, "t");
+  expect(tour.route).toBeNull();
+  expect(errors.some((e) => e.field === "route")).toBe(false);
+});
+
+test("an empty declared route also parses to null, silently", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\nroute:\n---\n## screen\nx\n`, "t");
+  expect(tour.route).toBeNull();
+  expect(errors.some((e) => e.field === "route")).toBe(false);
+});
+
+test("a relative (non-absolute) declared route degrades to null and is reported", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\nroute: notes\n---\n## screen\nx\n`, "t");
+  expect(tour.route).toBeNull();
+  expect(errors.some((e) => e.field === "route")).toBe(true);
+});
+
+test("an absolute declared route is kept exactly as-is (root-mounted multi-page hosts, unchanged)", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\nroute: /notes\n---\n## screen\nx\n`, "t");
+  expect(tour.route).toBe("/notes");
+  expect(errors.some((e) => e.field === "route")).toBe(false);
+});

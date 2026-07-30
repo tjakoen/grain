@@ -26,6 +26,13 @@ const PREFIX = (document.documentElement.dataset.crumbPrefix || "/crumb").replac
 function getState() { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } }
 function setState(s) { s ? sessionStorage.setItem(KEY, JSON.stringify(s)) : sessionStorage.removeItem(KEY); }
 const routeOf = (p) => (p.replace(/\/+$/, "") || "/");
+// A relative or absent route/at is not a navigable pathname — a host with nothing sensible to
+// go to (a hash-router SPA under one project-page subpath, say) declares no route at all, and
+// this is the ONE gate that decides whether resume() is allowed to call location.assign. Trust
+// is server-side only up to a point: routes.ts/core/schema.ts already coerce a non-absolute
+// `route`/`at` to null, but a host can also hand-author tour JSON directly (routes.ts is optional
+// plumbing, not mandatory), so the client re-checks rather than assuming it always got clean data.
+const isRoutable = (p) => typeof p === "string" && p.startsWith("/");
 
 async function fetchTour(id) {
   if (cache.has(id)) return cache.get(id);
@@ -217,8 +224,17 @@ async function resume() {
   try { tour = await fetchTour(st.id); } catch (e) { console.warn(e); setState(null); return; }
   if (st.step >= tour.steps.length) { end(); return; }
   const step = st.step >= 0 ? tour.steps[st.step] : null;
-  const need = routeOf(step && step.at ? step.at : (st.step < 0 ? tour.route : location.pathname));
-  if (need !== routeOf(location.pathname)) { location.assign(need); return; }   // real nav; resume() re-fires on load
+  // step.at wins when the step names one; the intro (step -1) falls back to the tour's entry
+  // route; any other step with no `at` has nothing to navigate to (stay put — that's the
+  // documented "global surface" contract, not new behavior). isRoutable is what makes a relative
+  // or absent value a no-op instead of a broken navigation (the fix: this used to fall through to
+  // tour.route unconditionally, so Back from step 0 to the intro card forced a pathname navigation
+  // even on a host — a hash-router SPA under a project-page subpath — with no sensible target).
+  const target = step && step.at ? step.at : (st.step < 0 ? tour.route : null);
+  if (isRoutable(target)) {
+    const need = routeOf(target);
+    if (need !== routeOf(location.pathname)) { location.assign(need); return; }   // real nav; resume() re-fires on load
+  }
   render(tour, st.step, st);
 }
 

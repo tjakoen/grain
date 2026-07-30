@@ -6,7 +6,7 @@
 > It is its **own top-level project** (a sibling of `mill/`, above `batch/` + `grain/`, a consumer
 > of `mill/`) and is designed as a **reusable, open-source** tool (Apache-2.0, per the per-repo
 > licensing decision). This file is the **canonical PROOF plan**; the cross-layer sequencing is
-> Track E in [`../ROADMAP.md`](../ROADMAP.md). A companion blog note is drafted at
+> Track E in [ROADMAP.md](https://github.com/tjakoen/bread/blob/main/ROADMAP.md). A companion blog note is drafted at
 > [`../tjakoen.github.io/notes/where-were-we.md`](../tjakoen.github.io/notes/where-were-we.md).
 
 > **Direction update (2026-07-08): PROOF is a mountable layer, not a server.** The standalone

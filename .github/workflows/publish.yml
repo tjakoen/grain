@@ -76,7 +76,15 @@ jobs:
                     if (String(j[k][d]).startsWith("workspace:") && map[d]) j[k][d] = map[d];
                 fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");
               ' "$p"
-              echo "Publishing @tjakoen/$p@$v"
-              npm publish -w "@tjakoen/$p" "$reg" --access public --provenance
+              # npm tags a publish `latest` by DEFAULT, prerelease or not — so publishing
+              # 0.1.5-rc.0 without --tag would hand it to everyone running a bare
+              # `npm install @tjakoen/crumb`. Route any prerelease to a tag named after its
+              # own identifier (0.1.5-rc.0 -> "rc") so `latest` only ever moves on a real release.
+              tag=latest
+              case "$v" in
+                *-*) id=${v#*-}; id=${id%%.*}; tag=${id:-next} ;;
+              esac
+              echo "Publishing @tjakoen/$p@$v under dist-tag '$tag'"
+              npm publish -w "@tjakoen/$p" "$reg" --access public --provenance --tag "$tag"
             fi
           done

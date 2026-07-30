@@ -4,12 +4,29 @@ name: Publish packages
 # changes. Bump a package's version in its package.json and push to main: this publishes the new
 # version and skips any version already on the registry (so ordinary commits are a no-op).
 #
-# Needs an NPM_TOKEN repo secret: a granular npmjs token with read+write on @tjakoen/* and
-# "Bypass 2FA" ticked (the account's 2FA is a passkey, so there is no OTP to supply).
+# Auth is npm TRUSTED PUBLISHING (OIDC) — there is NO token anywhere in this workflow. npm trusts
+# this specific repo + workflow filename, and that trust is configured PER PACKAGE, so all four
+# need it set at npmjs.com/package/@tjakoen/<name>/access. Renaming this file breaks all four at
+# once until each publisher config is updated to match.
 #
-# Every npm call passes --@tjakoen:registry explicitly. A scope mapping in an ambient .npmrc
-# beats both publishConfig and --registry, so without it a stray mapping silently retargets
-# this job at another registry (and `npm view` then reports that registry's versions).
+# Three things this job must NOT do, each of which silently disables the OIDC exchange:
+#
+#  1. Set `registry-url` on setup-node. It writes an .npmrc line
+#     `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`; with no token set that expands to
+#     EMPTY, npm reads it as "auth is already configured" and never performs the token exchange.
+#     (Same shape as the committed `_authToken=${GITHUB_TOKEN}` that used to 401 every cold
+#     install — an empty auth value overriding a working default.) See actions/setup-node#1551.
+#  2. Set NODE_AUTH_TOKEN at all, empty or otherwise.
+#  3. Run on npm older than 11.5.1, which predates OIDC support. Node 24 ships a new enough npm,
+#     but the explicit upgrade keeps this true regardless of what the runner image changes to.
+#
+# --provenance is passed explicitly: the docs say public-repo provenance is automatic, but it has
+# been reported not to fire without the flag, and passing it makes the failure loud rather than
+# a silently unsigned package.
+#
+# --@tjakoen:registry is belt-and-braces. Nothing writes an .npmrc here now, but a scope mapping
+# beats both publishConfig and --registry, so pinning it keeps a future added step from
+# retargeting this job (and `npm view` from reporting another registry's versions).
 #
 # The loop order is the dependency order — grain, then mill, then proof and crumb.
 
@@ -20,6 +37,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # OIDC token for trusted publishing
 
 concurrency:
   group: publish
@@ -32,12 +50,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
-          scope: '@tjakoen'
+          node-version: 24 # trusted publishing needs Node >= 22.14
+      - run: npm install -g npm@latest # trusted publishing needs npm >= 11.5.1
       - name: Publish new package versions
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
           reg=--@tjakoen:registry=https://registry.npmjs.org
@@ -62,6 +77,6 @@ jobs:
                 fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");
               ' "$p"
               echo "Publishing @tjakoen/$p@$v"
-              npm publish -w "@tjakoen/$p" "$reg" --access public
+              npm publish -w "@tjakoen/$p" "$reg" --access public --provenance
             fi
           done

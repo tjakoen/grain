@@ -20,20 +20,46 @@ and install with no credentials at all. Two rules keep it that way:
   the user's own valid token, so every install 401s on a cold cache — invisible locally, fatal on a
   new machine.
 
-## One-time auth (publisher)
+## How releases are published: CI, via trusted publishing
 
-Publishing needs an npmjs **granular access token** with *Read and write* on `@tjakoen/*`. npmjs
-requires 2FA to publish and this account's second factor is a **passkey**, so there is no OTP to
-type and `--otp` cannot work: tick **Bypass 2FA** on the token instead.
+**Normal releases need no token and no local publish.** Bump a package's version, push to `main`,
+and `.github/workflows/publish.yml` publishes it. Auth is npm **trusted publishing** (OIDC): npm
+trusts that specific repo + workflow filename, so there is no long-lived credential to store,
+rotate, or leak, and each published tarball carries a **provenance attestation** linking it to the
+commit that built it.
+
+That trust is configured **per package**, in the npmjs web UI — there is no CLI for it. For each of
+`@tjakoen/{grain,mill,proof,crumb}`, go to `npmjs.com/package/@tjakoen/<name>/access` → *Trusted
+publisher* and set:
+
+| Field | Value |
+|---|---|
+| Publisher | GitHub Actions |
+| Organization / user | `tjakoen` |
+| Repository | `grain` |
+| Workflow filename | `publish.yml` |
+| Environment | *(leave blank)* |
+
+**Renaming `publish.yml` breaks all four** until each config is updated to match. `@tjakoen/batch`
+is configured the same way against its own repo.
+
+Three things silently disable the OIDC exchange, so do not reintroduce them: `registry-url` on
+`setup-node` (it writes an `_authToken=` line that expands to empty, which npm reads as "auth is
+handled" and skips the exchange — [actions/setup-node#1551](https://github.com/actions/setup-node/issues/1551)),
+`NODE_AUTH_TOKEN` in the job env, and an npm older than 11.5.1.
+
+## Publishing by hand (fallback only)
+
+If CI is unavailable, an npmjs **granular access token** with *Read and write* on `@tjakoen/*`
+still works. npmjs requires 2FA to publish and this account's second factor is a **passkey**, so
+there is no OTP to type and `--otp` cannot work: tick **Bypass 2FA** on the token.
 
 ```bash
 export NPM_TOKEN=npm_xxx
 npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"   # in ~/.npmrc, NOT committed
 ```
 
-## Publish
-
-From the repo root. Pass `--@tjakoen:registry` **explicitly on every call** — if any ambient
+From the repo root, then. Pass `--@tjakoen:registry` **explicitly on every call** — if any ambient
 `~/.npmrc` still maps the scope to GitHub Packages, the mapping wins and the publish targets the
 wrong registry, failing with a misleading "cannot publish over 0.1.12" (because that version exists
 *there*). Reads lie the same way: `npm view` reports the mapped registry's versions.
@@ -44,8 +70,8 @@ for p in grain mill proof crumb; do (cd packages/$p && npm publish "$reg" --acce
 ```
 
 **Publish in dependency order** — grain → mill → proof/crumb (batch, in its own repo, is
-independent). A just-published version can 404 on a CDN edge for a few minutes; the authoritative
-check is an anonymous tarball download, not `npm view`:
+independent; the CI loop already runs in this order). A just-published version can 404 on a CDN
+edge for a few minutes; the authoritative check is an anonymous tarball download, not `npm view`:
 
 ```bash
 url=$(npm view "$reg" @tjakoen/grain dist.tarball)

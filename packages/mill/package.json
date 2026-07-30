@@ -12,7 +12,8 @@
     "directory": "packages/mill"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "dependencies": {
     "@tjakoen/grain": "^0.1.8"

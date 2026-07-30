@@ -225,7 +225,7 @@ retrieval port and models live with the consumer).
      synced to `#main` via `bun update`, zero copied files.** Do **not** wire these against a literal
      `../grain/docs` relative path — that would break on the split and reintroduce the copy problem.
      Portfolio-owned content (`/notes`) still reads from the portfolio repo's own content dir. See
-     [`../SPLIT-PLAN.md`](../SPLIT-PLAN.md) § "Layer docs travel inside the package".
+     [`SPLIT-PLAN.md`](https://github.com/tjakoen/bread/blob/main/docs/history/SPLIT-PLAN.md) § "Layer docs travel inside the package".
 4b. **AI-facing outputs** (see section above) — meta/OG + JSON-LD emission, `llms.txt`,
    `knowledge.json`, `data-surface` addresses on rendered content. Ships with the adapter, after
    the minimal proof-of-value (pieces 1–4) renders `/notes` live.

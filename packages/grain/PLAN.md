@@ -5,7 +5,7 @@
 > (`/ai/manifest`), grade-as-signal, and the SSE dispatcher island. This file is GRAIN's **roadmap**:
 > planned/deferred features, one line each. It is an *index*, **not** a second source of truth — the AI
 > contract lives in [AI-INTERFACE](https://tjakoen.github.io/grain/docs/ai-interface), the build rules in
-> [CONVENTIONS](https://tjakoen.github.io/batch/docs/conventions), the beliefs in [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md). When a
+> [CONVENTIONS](https://tjakoen.github.io/batch/docs/conventions), the beliefs in [`PHILOSOPHY.md`](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/PHILOSOPHY.md). When a
 > feature is built, follow the CLAUDE.md alignment table (contract → reasoner → tests → docs).
 
 ## Planned

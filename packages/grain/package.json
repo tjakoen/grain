@@ -12,7 +12,8 @@
     "directory": "packages/grain"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "exports": {
     "./ai/*": "./ai/*",

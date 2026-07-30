@@ -15,11 +15,12 @@
     "directory": "packages/proof"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "dependencies": {
     "@tjakoen/grain": "^0.1.8",
-    "@tjakoen/mill": "^0.1.2"
+    "@tjakoen/mill": "^0.2.0"
   },
   "exports": {
     "./routes.ts": "./routes.ts",

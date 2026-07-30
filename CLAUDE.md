@@ -75,5 +75,5 @@ badge and footer and the flagship note, not commit metadata.
 ## Docs / structure
 
 `packages/{grain,mill,proof,crumb}`, each with its own `CLAUDE.md` + `PLAN.md`. Consuming a layer in
-another app: see the README (GitHub Packages + `.npmrc` scope) and
+another app: see the README (published on npmjs — a version range, no `.npmrc`, no token) and
 [how to consume a layer](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/batch/CONSUME-AS-GIT-DEPS.md).

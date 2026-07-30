@@ -1,68 +1,86 @@
 # Releasing the GRAIN monorepo
 
 This repo is a bun workspace holding `packages/{grain,mill,proof,crumb}`. Internal deps resolve
-via `workspace:*`; **external consumers install the published packages from GitHub Packages** (a
-single monorepo git-dep cannot expose the sub-packages by their own names — verified 2026-07-19).
+via `workspace:*`; **external consumers install the published packages from the public npm
+registry** (a single monorepo git-dep cannot expose the sub-packages by their own names — verified
+2026-07-19).
 
-`@tjakoen/crumb` is published too (`0.1.1`, alongside grain/mill/proof).
+Published as of 2026-07-30: `@tjakoen/grain` 0.1.12, `@tjakoen/mill` 0.2.0, `@tjakoen/proof` 0.1.2,
+`@tjakoen/crumb` 0.1.4. All install anonymously.
+
+## Registry: npmjs, not GitHub Packages (changed 2026-07-30)
+
+These packages used to live on GitHub Packages, whose npm registry demands an auth token **even for
+public packages** — every consumer had to mint a PAT before running anything. They are on npmjs now
+and install with no credentials at all. Two rules keep it that way:
+
+- **Never commit an `.npmrc` that maps the scope.** A scope mapping outranks both
+  `publishConfig.registry` and `--registry`, so it silently retargets publishes and reads.
+- **Never commit `_authToken=${GITHUB_TOKEN}`.** Unset, it resolves to an empty string and overrides
+  the user's own valid token, so every install 401s on a cold cache — invisible locally, fatal on a
+  new machine.
 
 ## One-time auth (publisher)
 
-Publishing to GitHub Packages needs a token with the **`write:packages`** scope (the default
-`gh` CLI token does not have it). Either:
+Publishing needs an npmjs **granular access token** with *Read and write* on `@tjakoen/*`. npmjs
+requires 2FA to publish and this account's second factor is a **passkey**, so there is no OTP to
+type and `--otp` cannot work: tick **Bypass 2FA** on the token instead.
 
 ```bash
-gh auth refresh -s write:packages          # adds the scope to your gh token (browser flow)
-# …or create a classic PAT with write:packages and export it:
-export GITHUB_TOKEN=ghp_xxx
+export NPM_TOKEN=npm_xxx
+npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"   # in ~/.npmrc, NOT committed
 ```
-
-Point the `@tjakoen` scope's auth at GitHub Packages (in `~/.npmrc`, NOT committed):
-
-```
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
-
-Registry routing itself is already set per-package via `publishConfig.registry`, so no
-`@tjakoen:registry` line is required to publish.
 
 ## Publish
 
-From the repo root, publish each public package (bun substitutes `workspace:*` → the concrete
-version at publish time):
+From the repo root. Pass `--@tjakoen:registry` **explicitly on every call** — if any ambient
+`~/.npmrc` still maps the scope to GitHub Packages, the mapping wins and the publish targets the
+wrong registry, failing with a misleading "cannot publish over 0.1.12" (because that version exists
+*there*). Reads lie the same way: `npm view` reports the mapped registry's versions.
 
 ```bash
-for p in grain mill proof crumb; do (cd packages/$p && bun publish); done
+reg=--@tjakoen:registry=https://registry.npmjs.org
+for p in grain mill proof crumb; do (cd packages/$p && npm publish "$reg" --access public); done
+```
+
+**Publish in dependency order** — grain → mill → proof/crumb (batch, in its own repo, is
+independent). A just-published version can 404 on a CDN edge for a few minutes; the authoritative
+check is an anonymous tarball download, not `npm view`:
+
+```bash
+url=$(npm view "$reg" @tjakoen/grain dist.tarball)
+HOME=$(mktemp -d) curl -fsSL "$url" -o /dev/null && echo "downloads anonymously"
 ```
 
 Verify a published tarball's `package.json` shows concrete versions (e.g. `@tjakoen/grain`:
-`0.1.0`, not `workspace:*`). Bump versions before re-publishing the same version number.
+`0.1.12`, not `workspace:*`). Bump versions before re-publishing the same version number.
 
-## Consumer setup (pantry, portfolio, bread) — Phase 4 cutover
+CI does this automatically: `.github/workflows/publish.yml` publishes any package whose version is
+new on every push to `main`, using the `NPM_TOKEN` repo secret.
 
-Each consumer repo needs an `.npmrc` routing the scope + auth:
+## Consumer setup
 
-```
-@tjakoen:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
-
-Then replace the old SHA-pinned git-deps with version ranges:
+Replace SHA-pinned git-deps with version ranges, and delete the repo's `.npmrc` entirely:
 
 ```jsonc
 // before
 "@tjakoen/grain": "github:tjakoen/grain#<sha>",
-"@tjakoen/mill":  "github:tjakoen/mill#<sha>",
-"@tjakoen/proof": "github:tjakoen/proof#<sha>",
 // after
-"@tjakoen/grain": "^0.1.0",
-"@tjakoen/mill":  "^0.1.0",
-"@tjakoen/proof": "^0.1.0",
-"@tjakoen/crumb": "^0.1.0",
+"@tjakoen/grain": "^0.1.12",
+"@tjakoen/mill":  "^0.2.0",
+"@tjakoen/proof": "^0.1.2",
+"@tjakoen/crumb": "^0.1.4",
 ```
 
-`bun install`, then run each consumer's own gate (pantry: boots + cockpit; portfolio: full gate —
-tsc, bun test, export N/N, verify:export, playwright, visual baselines).
+`bun install`, then run each consumer's own gate. A plain "fresh clone" test proves nothing — the
+shared bun cache masks a broken install. Test it properly:
+
+```bash
+rm -rf ~/.bun/install/cache/@tjakoen && HOME=$(mktemp -d) bun install && bun run check
+```
+
+Consumers carrying a committed lockfile must **regenerate** it: the old entries pin
+`npm.pkg.github.com` tarball URLs, and a `--frozen-lockfile` CI job will keep resolving there.
 
 ## Standalone repos retired (Phase 5 — done 2026-07-19)
 

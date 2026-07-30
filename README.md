@@ -28,24 +28,24 @@ nothing from the substrate except one port.
 ## Using a layer in your own app
 
 Inside this repo the packages resolve as workspaces (`workspace:*`). A separate app installs the
-published versions from GitHub Packages:
+published versions from the public npm registry:
 
 ```json
 {
   "dependencies": {
-    "@tjakoen/grain": "^0.1.0",
-    "@tjakoen/mill": "^0.1.0",
-    "@tjakoen/proof": "^0.1.0"
+    "@tjakoen/grain": "^0.1.12",
+    "@tjakoen/mill": "^0.2.0",
+    "@tjakoen/proof": "^0.1.2",
+    "@tjakoen/crumb": "^0.1.4"
   }
 }
 ```
 
-with an `.npmrc` that points the scope at GitHub Packages (the auth token lives in your environment,
-never in the repo):
-
-```
-@tjakoen:registry=https://npm.pkg.github.com
-```
+That is the whole setup. **No `.npmrc`, no token** — the `@tjakoen` scope resolves from npmjs by
+default, so `bun install` works on a fresh machine with nothing configured. (These packages lived on
+GitHub Packages until 2026-07-30, which required every consumer to mint a `read:packages` PAT before
+installing anything; that is no longer the case. Never commit an `.npmrc` that maps the scope — a
+mapping overrides the default and drags the token requirement back.)
 
 The full write-up, including why a single monorepo git dependency cannot expose the sub-packages by
 name, is in [how to consume a layer](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/batch/CONSUME-AS-GIT-DEPS.md).

@@ -6,7 +6,9 @@
   "license": "Apache-2.0",
   "author": "Tjakoen Stolk <tjakoen.s@gmail.com> (https://tjakoen.github.io)",
   "homepage": "https://tjakoen.github.io/crumb",
-  "bin": { "crumb": "./cli.ts" },
+  "bin": {
+    "crumb": "./cli.ts"
+  },
   "exports": {
     "./core": "./core/index.ts",
     "./core/*": "./core/*",
@@ -18,7 +20,7 @@
   },
   "dependencies": {
     "@tjakoen/grain": "^0.1.8",
-    "@tjakoen/mill": "^0.1.2"
+    "@tjakoen/mill": "^0.2.0"
   },
   "scripts": {
     "check": "tsc --noEmit",
@@ -30,7 +32,8 @@
     "typescript": "^5.8.0"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "repository": {
     "type": "git",

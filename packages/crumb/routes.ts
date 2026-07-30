@@ -17,7 +17,7 @@ export interface CrumbRoutesDeps {
 export type CrumbRequestHandler = (pathname: string) => Promise<Response | null>;
 
 /** A tour summary for the manifest (what a launcher lists) — the steps stay off the wire here. */
-export interface TourSummary { id: string; title: string; mode: Tour["mode"]; route: string; steps: number; }
+export interface TourSummary { id: string; title: string; mode: Tour["mode"]; route: string | null; steps: number; }
 
 export function createCrumbRoutes(deps: CrumbRoutesDeps): CrumbRequestHandler {
   const prefix = deps.prefix ?? "/crumb";

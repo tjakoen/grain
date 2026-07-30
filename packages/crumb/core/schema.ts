@@ -87,7 +87,17 @@ export function parseTour(raw: string, id: string): ParsedTour {
   if (declaredId !== undefined && declaredId !== id)
     errors.push({ field: "id", message: `frontmatter id "${declaredId}" != filename "${id}"; using the filename` });
 
-  const route = (asString(data.route) ?? "/").trim() || "/";
+  // `route` must be an ABSOLUTE pathname to be a navigable entry point (crumb-live location.assign
+  // target). Absent/empty is the common, silent "this tour has no entry navigation" case (no error
+  // — it's a valid, meaningful declaration, not a defect). A non-empty value that isn't absolute
+  // (missing the leading "/") is almost certainly an author typo, so it's reported AND still
+  // degrades to null rather than becoming a broken relative navigation.
+  const routeRaw = (asString(data.route) ?? "").trim();
+  let route: string | null = null;
+  if (routeRaw) {
+    if (routeRaw.startsWith("/")) route = routeRaw;
+    else errors.push({ field: "route", message: `"${routeRaw}" is not an absolute pathname (must start with "/"); this tour has no navigable entry route` });
+  }
   const { intro, blocks } = splitBody(body);
   const steps = blocks.map((b, i) => toStep(b, i, errors));
   if (steps.length === 0) errors.push({ field: "steps", message: "no `## <surface>` steps — a tour needs at least one" });

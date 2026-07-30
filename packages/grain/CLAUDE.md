@@ -19,7 +19,7 @@ the grade-as-signal mechanism) — usable with no AI at all — and the **option
 
 ## Start here (reading order)
 
-1. [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md) — the *why* beneath the whole stack.
+1. [`PHILOSOPHY.md`](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/PHILOSOPHY.md) — the *why* beneath the whole stack.
 2. [CONVENTIONS](https://tjakoen.github.io/batch/docs/conventions) — the **build standard** (layering,
    components, tokens, the action vocabulary, the 3-tier testing bar). The rulebook.
 3. [GRAIN](https://tjakoen.github.io/grain/docs/grain) — the design system + AI layer overview.

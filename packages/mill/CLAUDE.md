@@ -23,8 +23,8 @@ build it.
 
 1. [`PLAN.md`](PLAN.md): the canonical MILL plan (design, seams, mapping model, build pieces). This
    is the source of truth; read it first.
-2. [`../tjakoen.github.io/PHILOSOPHY.md`](../tjakoen.github.io/PHILOSOPHY.md): the *why* beneath the whole stack.
-3. Whole-repo doc map: [`../DOCS.md`](../DOCS.md).
+2. [`PHILOSOPHY.md`](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/PHILOSOPHY.md): the *why* beneath the whole stack.
+3. Whole-repo doc map: [`DOCS.md`](https://github.com/tjakoen/bread/blob/main/DOCS.md).
 
 ## Non-negotiables
 

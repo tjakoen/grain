@@ -181,6 +181,10 @@ data-attributes, no composition-root wiring and no AI layer required:
   trigger (if it's an `<a href>`, the href is the full image, so it stays a real link with no JS);
   a `[data-lightbox-group]` ancestor turns its triggers into one gallery with prev/next + a dot rail.
   Caption comes from `data-lightbox-caption` or the child `<img>` alt.
+- **`scripts/drawer.js`** + the `drawer` organism: the modal side panel. `[data-drawer-open="id"]`
+  opens, `[data-drawer-close]` (the scrim carries it) closes, and the script owns the modal
+  obligations — focus into the panel, Tab trapped, the rest of the page `inert`, focus returned to
+  the opener. Open/closed is the plain `hidden` attribute, so a server can ship it either way.
 
 ---
 

@@ -29,6 +29,40 @@
 .side-rail__brand > b-icon { color: var(--color-accent); }
 .side-rail__spacer { flex: 1 1 auto; }
 
+/* ---- OPTIONAL: a section heading between runs of items — for a rail with more destinations
+   than a flat list reads well as. Not a `__group` (that's a collapsible <details>); this only
+   separates. Indented past the gutter so it aligns with the LABELS, not the glyph column. ---- */
+.side-rail__label {
+  padding: var(--space-4) 0 var(--space-1) calc(var(--rail-icon-col, 2.5rem) + var(--space-2));
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--color-muted); white-space: nowrap;
+}
+
+/* ---- OPTIONAL: the foot — a mark plus two lines of identity, pinned under the spacer. Grain
+   ships the SHAPE only; who it names (an account, a workspace, "signed out") is the consumer's,
+   like the topbar's presence label. Same two-column grid as the brand, so the mark lands in the
+   gutter and the text lines up with every label above it. ---- */
+.side-rail__foot {
+  display: grid; grid-template-columns: var(--rail-icon-col, 2.5rem) 1fr;
+  align-items: center; column-gap: var(--space-2);
+  margin-top: var(--space-2); padding-top: var(--space-3);
+  border-top: 1px solid var(--color-line); white-space: nowrap;
+}
+.side-rail__avatar {
+  width: 1.75rem; height: 1.75rem; border-radius: 50%; justify-self: center;
+  display: grid; place-items: center;
+  background: var(--color-accent-soft); color: var(--color-accent);
+  font-size: var(--text-xs); font-weight: var(--font-weight-semibold);
+}
+.side-rail__foot > b-icon, .side-rail__foot > .icon { justify-self: center; }
+/* min-width:0 lets the ellipsis below actually fire — a grid item's default `auto` minimum
+   would let a long account name push the rail wider instead of truncating. */
+.side-rail__who { min-width: 0; font-size: var(--text-xs); color: var(--color-muted); line-height: 1.2; }
+.side-rail__who strong {
+  display: block; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--text-sm); font-weight: var(--font-weight-semibold); color: var(--color-fg);
+}
+
 /* ---- grouped nav — a collapsible section for nested navigation (e.g. a BREAD group over
    BATCH / GRAIN / MILL). Native <details>/<summary>, no JS: the summary IS a nav-item, the
    sub-items indent under it. Open/closed is the browser's; a rotating chevron shows state. ---- */
@@ -53,3 +87,9 @@
 [data-rail-collapsed="true"] .side-rail__brand { grid-template-columns: var(--rail-icon-col, 2.5rem); }
 [data-rail-collapsed="true"] .side-rail__group > summary .nav-item__chev { display: none; }
 [data-rail-collapsed="true"] .side-rail__sub .nav-item { padding-left: 0; }
+/* the optional pieces collapse the same way: text goes, glyphs stay. A section label is ONLY
+   text, so it goes entirely; the foot keeps its mark (the one thing still legible at 3.25rem). */
+[data-rail-collapsed="true"] .side-rail__label { display: none; }
+[data-rail-collapsed="true"] .side-rail__who { display: none; }
+[data-rail-collapsed="true"] .nav-item__count { display: none; }
+[data-rail-collapsed="true"] .side-rail__foot { grid-template-columns: var(--rail-icon-col, 2.5rem); }

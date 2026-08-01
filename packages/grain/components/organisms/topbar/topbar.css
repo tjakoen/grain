@@ -6,3 +6,33 @@
    brand/presence text. See topbar.md. */
 .topbar-ctl { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; padding: 0 var(--space-4); }
 .presence { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--color-muted); font-size: var(--text-sm); }
+
+/* ---- the LEFT slot: WHERE you are (a breadcrumb trail, a record title). Pairs with
+   `.topbar-ctl`'s `margin-left: auto` with no change to it — put both in the region and the
+   crumbs sit left, the controls right. `min-width: 0` so a long trail truncates instead of
+   pushing the control cluster off the bar. ---- */
+.topbar-crumbs {
+  display: flex; align-items: center; gap: var(--space-2); min-width: 0;
+  padding: 0 var(--space-4); font-size: var(--text-sm); color: var(--color-muted);
+}
+.topbar-crumbs strong { color: var(--color-fg); font-weight: var(--font-weight-semibold); }
+.topbar-crumbs a { color: var(--color-muted); }
+.topbar-crumbs a:hover { color: var(--color-fg); }
+
+/* ---- a search / filter box for the bar. GRAIN SHIPS THE BOX AND NOTHING ELSE: whether typing
+   in it filters rows on the page, queries a server, or opens a palette is the consumer's, wired
+   to the input. That split is deliberate — a component that LOOKS like it searches but ships no
+   search is a contract that fails silently (CLAUDE.md lesson 3), so the promise here is only
+   "an input that belongs in a topbar". ---- */
+.topbar-search { position: relative; flex: 1 1 auto; max-width: 22rem; align-self: center; }
+.topbar-search input {
+  width: 100%; font: inherit; font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3) var(--space-2) 1.9rem;
+  border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  background: var(--color-bg); color: var(--color-fg);
+}
+.topbar-search input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.topbar-search::before {
+  content: "⌕"; position: absolute; left: var(--space-2); top: 50%; transform: translateY(-50%);
+  color: var(--color-muted); pointer-events: none;
+}

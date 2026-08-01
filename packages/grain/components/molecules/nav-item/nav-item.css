@@ -17,3 +17,15 @@
   color: var(--color-fg); background: var(--color-bg); border-color: var(--color-line);
 }
 .nav-item__label { font-size: var(--text-base); }
+/* OPTIONAL trailing count — "how much is in there" beside the label, in the grid's trailing
+   column (the same slot the group chevron uses; an item never carries both). Tabular figures so
+   the column can't jitter as the number changes, and it follows the item's own state rather than
+   staying muted under an active row. The collapsed rail hides it with the labels (side-rail.css,
+   which owns every collapsed rule so there's one place to read them). */
+.nav-item__count {
+  font-size: var(--text-sm); color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.nav-item:hover .nav-item__count,
+.nav-item[aria-current="page"] .nav-item__count,
+.nav-item[data-active="true"] .nav-item__count { color: var(--color-fg); }

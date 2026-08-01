@@ -4,6 +4,9 @@ A content data table — MILL maps Markdown pipe tables (`| a | b |` + `|---|---
 Ruled and monochrome, not zebra-striped; the `.table-scroll` wrapper keeps wide tables
 scrolling inside their own box. CSS-only: composed by MILL or written by hand.
 
+For a **list of records** — a workspace app's rows you scan and open, with a sticky header
+and whole-row links — reach for `data-table` instead. This one is for reading.
+
 ## Table
 ```html
 <div class="table-scroll">

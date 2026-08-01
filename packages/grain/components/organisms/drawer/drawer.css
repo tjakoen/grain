@@ -1,0 +1,59 @@
+/* organisms/drawer — a modal side panel: a scrim over the page plus a column that slides in
+   from the edge. Where a lightbox (styles/lightbox.css) centers one thing to LOOK at, a drawer
+   docks a place to WORK — a create/edit form, a record's detail, a preview — beside the list you
+   opened it from, so the context behind it stays visible.
+
+   CSS-only (no `.html`); the behavior is `grain/scripts/drawer.js` (open/close, Escape, scrim
+   click, focus). The visible/hidden state is the plain `hidden` attribute, so a server can ship
+   an open drawer and a page with no JS at all still renders a closed one instead of an overlay
+   stuck across the screen. */
+.drawer[hidden] { display: none; }
+.drawer { position: fixed; inset: 0; z-index: 60; }
+
+/* the scrim: ink receding, the same mechanism as the AI veil — never a raw rgba (tokens only) */
+.drawer__backdrop {
+  position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--ink) 32%, transparent);
+  animation: drawer-fade 0.15s ease;
+}
+
+/* The panel is `min(28rem, 100vw)` — a fixed comfortable column that becomes full-bleed rather
+   than overflowing once the viewport is narrower than it. It's a flex column so a long form
+   scrolls in the BODY while the head stays put; without that the head scrolls away and there's
+   no close button on screen. */
+.drawer__panel {
+  position: absolute; inset-block: 0; inset-inline-end: 0;
+  width: min(28rem, 100vw);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--color-surface);
+  border-inline-start: 1px solid var(--color-line);
+  box-shadow: -12px 0 40px color-mix(in srgb, var(--ink) 22%, transparent);
+  animation: drawer-slide 0.18s ease;
+}
+@keyframes drawer-fade { from { opacity: 0; } }
+@keyframes drawer-slide { from { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .drawer__backdrop, .drawer__panel { animation: none; }
+}
+
+/* the head aligns with the shell's topbar (same height token) so an open drawer reads as part
+   of the same chrome rather than a slab laid over it */
+.drawer__head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  flex: none; min-height: var(--editor-header-h, 2.9rem); padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--color-line);
+}
+.drawer__head h2 { margin: 0; font-size: var(--text-lg); font-weight: var(--font-weight-semibold); }
+.drawer__body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-5); }
+
+/* ---- OPT-IN: `data-side="start"` docks the drawer to the leading edge instead (a filter or
+   navigation panel, where the trailing edge is the working one). Only the anchoring and the
+   direction of the slide change. ---- */
+.drawer[data-side="start"] .drawer__panel {
+  inset-inline: 0 auto;
+  border-inline-start: none;
+  border-inline-end: 1px solid var(--color-line);
+  box-shadow: 12px 0 40px color-mix(in srgb, var(--ink) 22%, transparent);
+  animation-name: drawer-slide-start;
+}
+@keyframes drawer-slide-start { from { transform: translateX(-100%); } }

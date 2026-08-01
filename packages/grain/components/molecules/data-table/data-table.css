@@ -1,0 +1,47 @@
+/* molecules/data-table — a DENSE table of records: the list view of a workspace app (rows you
+   scan, sort and open), as opposed to the `table` molecule, which is a CONTENT table (MILL maps
+   Markdown pipe tables to it, prose padding, first column flush left). Two components on purpose,
+   not one variant: they differ in header treatment, density, rules and affordance, and reaching
+   for the wrong one should be a decision, not an accident. See table.md.
+
+   Monochrome and ruled, never zebra-striped (DESIGN-SYSTEM §2). CSS-only: nothing data-binds it —
+   the rows are the consumer's, rendered server-side or by an island. */
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+
+/* The header STICKS to the top of the scroll container — which is the container's job, not this
+   file's: `position: sticky` resolves against the nearest scrollable ancestor, so in an app-shell
+   that's `.app-shell__main` and it works, while in a page that scrolls on <body> it simply never
+   engages. That's the parent-context requirement stated in data-table.md; it's opaque (its own
+   background) so rows can't show through as they pass under it. */
+.data-table thead th {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; font-size: var(--text-xs); font-weight: var(--font-weight-semibold);
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-line);
+}
+.data-table tbody td {
+  padding: var(--space-3) var(--space-4); vertical-align: middle;
+  color: var(--color-fg); border-bottom: 1px solid var(--color-line);
+}
+/* the last rule would double up with the border of whatever box wraps the table */
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table tbody tr:hover td { background: var(--color-bg); }
+
+/* A whole row can be the link to its record. Grain shows the AFFORDANCE only (the cursor); the
+   navigation is the consumer's — `data-href` is a plain markup hint, not a vocabulary verb, and
+   nothing in grain reads it. Keep a real <a> in the row too: a pointer cursor is not a link, and
+   a row that only works on click is unreachable by keyboard. */
+.data-table tbody tr[data-href] { cursor: pointer; }
+.data-table td a { color: var(--color-fg); font-weight: var(--font-weight-semibold); text-decoration: none; }
+.data-table td a:hover { color: var(--color-accent); }
+/* the quiet second line in a cell — an email under a name, a description under a title */
+.data-table__sub { color: var(--color-muted); font-weight: var(--font-weight-regular); }
+/* the empty state is a row, not a replacement for the table: the header stays, so the columns
+   still say what WOULD be here once there's data. */
+.data-table__empty td { color: var(--color-muted); text-align: center; padding: var(--space-6); }
+
+/* AI / in-transit: dashed terminal edge (the non-text grain idiom, same as `table` and the atoms) */
+.data-table[data-commit="pending"],
+[data-grade="grain"] .data-table { border: 1px dashed var(--ink); }

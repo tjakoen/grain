@@ -66,7 +66,8 @@ export function dirSource(dir: string): ContentSource {
  * anchor file (e.g. "@tjakoen/grain/docs/GRAIN.md"). Bun verifies the anchor exists, so a
  * missing/renamed package fails loudly at wiring time, not with an empty page. NEVER
  * replace this with a `../grain/docs` relative path — that breaks on the repo split
- * (see ../SPLIT-PLAN.md § "Layer docs travel inside the package").
+ * (see https://github.com/tjakoen/bread/blob/main/docs/history/SPLIT-PLAN.md
+ * § "Layer docs travel inside the package").
  */
 export function packageDocsSource(anchor: string): ContentSource {
   return dirSource(dirname(fileURLToPath(import.meta.resolve(anchor))));

@@ -37,6 +37,14 @@ test("fragments move opacity and transform only, never layout", () => {
   expect(frag![1]).not.toMatch(/display|height|margin|padding/);
 });
 
+test("the bar stacks above the slides, or a link in it is visible and dead", () => {
+  // the bar is the first child and a slide is inset:0 with z-index auto, so the slide wins the
+  // paint order and swallows the clicks. It looks fine, because slides are transparent.
+  const bar = css.match(/\.presentation__bar\s*\{([^}]*)\}/);
+  expect(bar).not.toBeNull();
+  expect(bar![1]).toMatch(/z-index:\s*[1-9]/);
+});
+
 test("speaker notes never render on the slide itself", () => {
   expect(css).toMatch(/\.presentation__slide \.slide-notes\s*\{\s*display:\s*none/);
 });

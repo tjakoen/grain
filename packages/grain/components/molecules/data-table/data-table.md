@@ -23,13 +23,13 @@ the rows; nothing breaks, but you don't get what the demo shows.
 <table class="data-table">
   <thead><tr><th>Name</th><th>Code</th><th>Owner</th></tr></thead>
   <tbody>
-    <tr data-href="/clients/acme">
-      <td><a href="/clients/acme">Acme Advisory</a><br><span class="data-table__sub">since 2021</span></td>
+    <tr data-href="#acme">
+      <td><a href="#acme">Acme Advisory</a><br><span class="data-table__sub">since 2021</span></td>
       <td>acme</td>
       <td><span class="data-table__sub">jane@acme.test</span></td>
     </tr>
-    <tr data-href="/clients/borden">
-      <td><a href="/clients/borden">Borden &amp; Co</a></td>
+    <tr data-href="#borden">
+      <td><a href="#borden">Borden &amp; Co</a></td>
       <td>borden</td>
       <td><span class="data-table__sub">ops@borden.test</span></td>
     </tr>

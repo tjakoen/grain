@@ -1,0 +1,265 @@
+/* grain/components/organisms/presentation: the PRESENTATION organism.
+ *
+ * A deck: full-bleed slides, staged fragments, a fit-to-box pass, an overview grid, present mode,
+ * a speaker-notes strip, a synced presenter window, and a print sheet. It knows nothing about any
+ * particular talk: the app owns the slides and every figure on them.
+ *
+ * Sizing is one number. `--u0` is derived from the deck's own box with container query units, and
+ * `--u` is that times `--fit`, the shrink factor the script computes per slide. Every size below is
+ * a multiple of `--u`, so a slide that is too tall scales as one piece instead of reflowing.
+ *
+ * Behaviour: grain/scripts/presentation.js. Opt a deck in with `data-deck` on the root; without
+ * the script the markup still renders whichever slide carries `data-current`, which is what the
+ * static export and a print run get.
+ */
+
+.presentation {
+  container-type: size;
+  /* tuned for a deck that owns the whole window. A deck docked in a pane can raise this. */
+  --u0: min(0.86cqw, 1.44cqh);
+  --fit: 1;
+  --u: calc(var(--u0) * var(--fit));
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+
+.presentation[data-present] {
+  position: fixed; inset: 0; z-index: var(--z-presentation, 8000);
+  height: 100dvh;
+}
+
+
+.presentation__slide {
+  position: absolute; inset: 0;
+  display: none;
+  flex-direction: column; justify-content: center;
+  
+  padding: calc(var(--u) * 8) calc(var(--u) * 9) calc(var(--u) * 8);
+  box-sizing: border-box; overflow: hidden;
+  
+  --u: calc(var(--u0) * var(--fit, 1));
+}
+.presentation__slide[data-current] { display: flex; }
+
+
+.presentation__body { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+.presentation__slide[data-align="top"] { justify-content: flex-start; }
+.presentation__slide[data-align="center"] { align-items: center; text-align: center; }
+.presentation__slide[data-align="center"] .presentation__body { align-items: center; text-align: center; }
+
+
+
+.presentation .slide-eyebrow {
+  font-size: calc(var(--u) * 1.55); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--color-muted); margin: 0 0 calc(var(--u) * 3);
+}
+.presentation .slide-head {
+  font-size: calc(var(--u) * 6.2); line-height: var(--leading-tight); letter-spacing: -0.015em;
+  font-weight: var(--font-weight-regular); margin: 0; max-width: 20ch;
+}
+.presentation .slide-head[data-size="sm"] { font-size: calc(var(--u) * 4.4); max-width: 26ch; }
+.presentation .slide-head[data-size="xl"] { font-size: calc(var(--u) * 8.4); max-width: 15ch; }
+.presentation .slide-lede {
+  font-size: calc(var(--u) * 2.5); line-height: 1.45; color: var(--color-muted);
+  max-width: 46ch; margin: calc(var(--u) * 4) 0 0;
+}
+.presentation .slide-lede[data-tone="loud"] { color: var(--color-fg); }
+.presentation .slide-rule { border: 0; border-top: var(--rule); margin: calc(var(--u) * 3.5) 0 0;
+  max-width: calc(var(--u) * 60); }
+.presentation .slide-sig { font-size: calc(var(--u) * 1.9); color: var(--color-muted); margin: calc(var(--u) * 3) 0 0; }
+.presentation .slide-sig b { color: var(--color-fg); font-weight: var(--font-weight-regular); }
+
+
+.presentation .quote { font-size: calc(var(--u) * 6.6); line-height: 1.15; letter-spacing: -0.01em;
+  max-width: 22ch; margin: 0; text-wrap: balance; }
+.presentation .quote-mark { display: block; font-size: calc(var(--u) * 2); color: var(--color-muted);
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: calc(var(--u) * 3); }
+
+
+.presentation .beats { list-style: none; margin: calc(var(--u) * 4) 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: calc(var(--u) * 2.4); }
+.presentation .beats li { font-size: calc(var(--u) * 3.4); line-height: 1.25; max-width: 30ch; }
+.presentation .beats[data-size="sm"] li { font-size: calc(var(--u) * 2.6); }
+
+.presentation .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+
+
+.presentation__slide[data-current] { animation: pres-in 0.34s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.presentation[data-dir="back"] .presentation__slide[data-current] { animation-name: pres-in-back; }
+@keyframes pres-in      { from { opacity: 0; transform: translateX(calc(var(--u) * 2.2)); } }
+@keyframes pres-in-back { from { opacity: 0; transform: translateX(calc(var(--u) * -2.2)); } }
+
+
+/* No type swap on arrival. An earlier build faded and re-faced every landing slide for a third of
+   a second, and from the back of a room that reads as a rendering glitch rather than a signal. The
+   script still sets [data-settling] on arrival, so a consumer that wants the effect can style it.
+   Deliberate grain, on [data-grade="grain"], is untouched and is the honest signal. */
+
+.presentation__slide [data-grade="grain"] { --type-font: var(--font-grain); }
+
+
+
+.presentation .frag { opacity: 0; transition: opacity 0.32s ease, transform 0.32s ease; }
+.presentation .frag.is-on { opacity: 1; transform: none; }
+.presentation .frag[data-frag="rise"], .presentation .frag:not([data-frag]) { transform: translateY(calc(var(--u) * 0.9)); }
+.presentation .frag[data-frag="fade"] { transform: none; }
+.presentation .frag[data-frag="grow"] { transform: scaleX(0.82); transform-origin: left center; }
+.presentation .frag[data-frag="dim"].is-on { opacity: 0.55; }
+
+
+.presentation [data-draw] {
+  stroke-dasharray: var(--draw-len, 1000);
+  stroke-dashoffset: var(--draw-len, 1000);
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.presentation [data-draw].is-drawn { stroke-dashoffset: 0; }
+
+.presentation [data-lit] { opacity: 0; transition: opacity 0.4s ease 0.35s; }
+.presentation [data-lit].is-drawn { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .presentation__slide[data-current] { animation: none; }
+  .presentation .frag, .presentation [data-draw], .presentation [data-lit] { transition: none; }
+  .presentation .frag { transform: none; }
+}
+
+
+
+.presentation__dots {
+  position: absolute; left: calc(var(--u) * 11.7); bottom: calc(var(--u) * 3.4);
+  display: flex; gap: calc(var(--u) * 0.85); align-items: center;
+}
+.presentation__dot {
+  width: calc(var(--u) * 0.62); height: calc(var(--u) * 0.62); border-radius: 50%;
+  background: var(--ink-faint); border: 0; padding: 0; cursor: pointer;
+  transition: transform 0.24s ease, background 0.24s ease;
+}
+.presentation__dot[data-seen] { background: var(--color-muted); }
+.presentation__dot[data-now] { background: var(--color-accent); transform: scale(1.9); }
+.presentation__dot:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+
+
+.presentation__bar {
+  position: absolute; left: calc(var(--u) * 11.7); right: calc(var(--u) * 11.7); top: calc(var(--u) * 3);
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: calc(var(--u) * 3); min-width: 0;
+}
+.presentation__meta, .presentation__hint, .presentation__legend {
+  margin: 0; font-size: calc(var(--u) * 1.4); color: var(--ink-faint);
+  display: flex; gap: calc(var(--u) * 2.2); align-items: baseline; min-width: 0;
+}
+.presentation__hint { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.presentation__legend { justify-content: flex-end; flex-wrap: wrap; row-gap: calc(var(--u) * 0.6); }
+
+.presentation__meta { flex: 0 0 auto; }
+.presentation__hint kbd { font-family: var(--font-mono); font-size: 0.95em; }
+.presentation__legend b, .presentation__meta b { font-weight: var(--font-weight-regular); color: var(--color-muted); }
+.presentation__meta a { color: inherit; text-decoration: none; }
+.presentation__meta a:hover { color: var(--color-muted); text-decoration: underline; }
+
+.presentation__controls {
+  position: absolute; right: calc(var(--u) * 11.7); bottom: calc(var(--u) * 2.4);
+  display: flex; align-items: center; gap: calc(var(--u) * 0.8);
+}
+.presentation__ctl {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4); padding: 0 calc(var(--u) * 1.1);
+  background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm);
+  color: var(--color-muted); font: inherit; font-size: calc(var(--u) * 1.5); line-height: 1; cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+.presentation__ctl:hover { border-color: var(--hairline); color: var(--color-fg); background: var(--paper-2); }
+.presentation__ctl:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.presentation__ctl[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+.presentation__ctl:disabled { opacity: 0.3; cursor: default; }
+.presentation__ctl[data-wide] { font-family: var(--font-mono); font-size: calc(var(--u) * 1.35);
+  letter-spacing: 0.04em; border-color: transparent; }
+.presentation__ctl[data-wide]:hover { background: transparent; border-color: transparent; }
+
+
+.presentation[data-present] .presentation__hint { display: none; }
+
+
+[data-present-toggle] .on-present { display: none; }
+.presentation[data-present] [data-present-toggle] .off-present { display: none; }
+.presentation[data-present] [data-present-toggle] .on-present { display: inline; }
+
+
+.presentation__grid {
+  position: absolute; inset: 0; overflow: auto; padding: calc(var(--u) * 4);
+  display: none; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 22), 1fr));
+  gap: calc(var(--u) * 2); background: var(--color-bg); align-content: start;
+}
+.presentation[data-view="grid"] .presentation__slide { display: none; }
+.presentation[data-view="grid"] .presentation__grid { display: grid; }
+.presentation__cell {
+  border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  padding: calc(var(--u) * 1.8); text-align: left; background: transparent;
+  font: inherit; color: inherit; cursor: pointer; transition: border-color 0.2s ease;
+}
+.presentation__cell:hover { border-color: var(--hairline); }
+.presentation__cell[data-now] { border-color: var(--color-accent); }
+.presentation__n { font-family: var(--font-mono); font-size: calc(var(--u) * 1.3); color: var(--color-muted); }
+.presentation__t { font-size: calc(var(--u) * 1.7); margin-top: calc(var(--u) * 0.8); line-height: 1.25; }
+
+
+
+.presentation__notes {
+  position: absolute; left: 0; right: 0; bottom: 0; display: none;
+  background: var(--panel); border-top: 1px solid var(--color-line);
+  padding: calc(var(--u) * 2) calc(var(--u) * 11.7); max-height: 32cqh; overflow: auto;
+}
+.presentation[data-notes] .presentation__notes { display: block; }
+.presentation__notes li { font-size: calc(var(--u) * 1.7); line-height: 1.5; color: var(--color-muted); }
+.presentation__slide .slide-notes { display: none; }   
+
+
+.presenter { display: none; }
+[data-mode="presenter"] .presenter {
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr;
+  align-content: start; gap: 1.5rem; padding: 1.5rem; min-height: 100dvh;
+  box-sizing: border-box; font-size: 1rem;
+}
+.presenter__now { grid-column: 1 / -1; display: flex; justify-content: space-between;
+  align-items: baseline; border-bottom: var(--rule); padding-bottom: 0.75rem; }
+.presenter__clock { font-family: var(--font-mono); font-size: 2.6rem; }
+.presenter__clock[data-over] { color: var(--color-accent); }
+.presenter__pos { font-family: var(--font-mono); color: var(--color-muted); }
+.presenter__title { font-size: 1.8rem; margin: 0 0 0.75rem; }
+.presenter__notes li { font-size: 1.15rem; line-height: 1.55; margin-bottom: 0.55rem; }
+.presenter__next h3 { font-size: 0.95rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--color-muted); margin: 0 0 0.5rem; }
+.presenter__next p { color: var(--color-muted); }
+.presenter__hint { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: var(--ink-faint);
+  letter-spacing: 0.08em; text-transform: uppercase; }
+
+
+
+@media print {
+  .presentation {
+    position: static; height: auto; overflow: visible; container-type: normal;
+    --u0: min(1.05vw, 1.75vh);
+  }
+  .presentation__dots, .presentation__meta, .presentation__hint, .presentation__legend,
+  .presentation__notes, .presentation__grid, .presentation__controls, .presentation__bar { display: none !important; }
+  .presentation__slide {
+    display: flex !important; position: relative; inset: auto;
+    width: 100%; height: 100vh; box-sizing: border-box;
+    
+    padding: calc(var(--u) * 7) calc(var(--u) * 9);
+    page-break-after: always; break-after: page; animation: none !important;
+  }
+  .presentation__slide:last-of-type { page-break-after: auto; break-after: auto; }
+  .presentation .frag { opacity: 1 !important; transform: none !important; }
+  .presentation [data-draw] { stroke-dashoffset: 0 !important; }
+  .presentation [data-lit] { opacity: 1 !important; }
+  
+  body::before { display: none !important; }
+}

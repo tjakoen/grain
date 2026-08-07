@@ -39,7 +39,7 @@ fails silently, so the promise here is only "an input that belongs in a topbar".
 
 ```html
 <header class="app-shell__topbar">
-  <span class="topbar-crumbs"><a href="/tickets">Tickets</a> / <strong>Annual Review</strong></span>
+  <span class="topbar-crumbs"><a href="#tickets">Tickets</a> / <strong>Annual Review</strong></span>
   <div class="topbar-search"><input type="search" placeholder="Filter…" aria-label="Filter"></div>
   <div class="topbar-ctl">
     <button class="icon-btn" data-variant="ghost" data-toggle-scheme aria-label="Toggle light / dark">◐</button>

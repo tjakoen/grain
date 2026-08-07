@@ -57,6 +57,16 @@ test("the presenter window is the same page, synced, and never shown to the room
   expect(js).toMatch(/postMessage\(\{ type: "key"/);
 });
 
+test("the D key defers to grain's theme control, so it persists like the button", () => {
+  // flipping data-color-scheme here as well looks identical and forgets the choice the moment
+  // you leave the deck, which is how the key and the button came to disagree
+  const block = js.slice(js.indexOf('case "d"'), js.indexOf('case "."'));
+  expect(block).toMatch(/querySelector\("\[data-toggle-scheme\]"\)/);
+  expect(block).toMatch(/ctl\.click\(\)/);
+  // the standalone fallback stays, for a deck on a page with no theme island
+  expect(block).toMatch(/root\.dataset\.colorScheme = dark \? "light" : "dark"/);
+});
+
 test("typing in a field never moves the deck", () => {
   expect(js).toMatch(/INPUT\|TEXTAREA\|SELECT/);
   expect(js).toMatch(/isContentEditable/);

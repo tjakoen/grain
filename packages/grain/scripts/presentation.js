@@ -203,6 +203,13 @@
         case "p": window.open(`${location.pathname}?presenter=1`, "grain-presenter", "width=1100,height=760"); break;
         case "f": togglePresent(); break;
         case "d": {
+          // Hand this to grain's theme control when the page has one, so the key and the button
+          // agree and the choice persists like every other scheme switch on the site. Flipping the
+          // attribute here as well would look identical on screen and quietly forget the choice.
+          const ctl = document.querySelector("[data-toggle-scheme]");
+          if (ctl) { ctl.click(); break; }
+          // standalone deck, no theme island on the page: flip it ourselves and accept that it
+          // lasts as long as the tab does.
           const root = document.documentElement;
           const dark = root.dataset.colorScheme
             ? root.dataset.colorScheme === "dark"

@@ -150,6 +150,11 @@
   position: absolute; left: calc(var(--u) * 11.7); right: calc(var(--u) * 11.7); top: calc(var(--u) * 3);
   display: flex; justify-content: space-between; align-items: baseline;
   gap: calc(var(--u) * 3); min-width: 0;
+  /* the bar is the FIRST child and a slide is inset:0, so without this the current slide paints
+     over the bar and eats its clicks. It still looked fine, because a slide is transparent: the
+     link was visible and dead. The dots and controls escape it only by sitting after the slides
+     in the DOM. */
+  z-index: 1;
 }
 .presentation__meta, .presentation__hint, .presentation__legend {
   margin: 0; font-size: calc(var(--u) * 1.4); color: var(--ink-faint);

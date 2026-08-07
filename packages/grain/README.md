@@ -181,6 +181,11 @@ data-attributes, no composition-root wiring and no AI layer required:
   trigger (if it's an `<a href>`, the href is the full image, so it stays a real link with no JS);
   a `[data-lightbox-group]` ancestor turns its triggers into one gallery with prev/next + a dot rail.
   Caption comes from `data-lightbox-caption` or the child `<img>` alt.
+- **`scripts/presentation.js`** + the `presentation` organism: a deck. Slides, staged fragments, a
+  fit-to-box pass so a dense slide scales instead of overflowing, an overview grid, present mode, a
+  synced presenter window, and a print sheet. Opt in with `data-deck`. It owns which slide is up and
+  how far into it you are, and nothing else: an app hangs its own figures off one event,
+  `presentation:slide`.
 - **`scripts/drawer.js`** + the `drawer` organism: the modal side panel. `[data-drawer-open="id"]`
   opens, `[data-drawer-close]` (the scrim carries it) closes, and the script owns the modal
   obligations — focus into the panel, Tab trapped, the rest of the page `inert`, focus returned to

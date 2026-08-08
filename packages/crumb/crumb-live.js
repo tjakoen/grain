@@ -304,9 +304,37 @@ function reposition() {
   placeCard(pop, el);
 }
 
-// resume on load (the module is injected on every app page)
-if (document.readyState !== "loading") resume();
-else addEventListener("DOMContentLoaded", resume);
+// ---- the linkable tour: `?crumb=<id>` (+ `crumb-mode`, `crumb-frame`) --------
+// The declarative launcher needs a control that already sits on the page, which is right for the
+// demo tour (the dock's Tour button) and useless for a REVIEW tour: a dev tour is written for one
+// change, handed to one person, once. That handoff is a link — in a handoff note, a PR comment, a
+// message — so a tour has to be startable from a URL. The param names mirror the attribute
+// vocabulary (`crumb`, `crumb-mode`, `crumb-frame`) rather than inventing a second set, and the
+// `crumb-` prefix keeps them out of a host's own query namespace.
+//
+// The param is CONSUMED before the tour starts. A tour navigates for real (location.assign), and a
+// param left in the URL would re-fire on the next page and reset the tour to its intro card at
+// every step. Stripping it first makes the link a one-shot trigger, which is what a link is.
+function fromUrl() {
+  const q = new URLSearchParams(location.search);
+  const id = q.get("crumb");
+  if (!id) return null;
+  const opts = { mode: q.get("crumb-mode") || undefined, frame: q.has("crumb-frame") };
+  for (const k of ["crumb", "crumb-mode", "crumb-frame"]) q.delete(k);
+  const qs = q.toString();
+  history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
+  return { id, opts };
+}
+
+// resume on load (the module is injected on every app page). A link WINS over a tour already in
+// sessionStorage: the tour's own navigation never carries the param, so a param that is present is
+// always a fresh deliberate click, and honouring the click beats silently resuming something else.
+function boot() {
+  const link = fromUrl();
+  return link ? start(link.id, link.opts) : resume();
+}
+if (document.readyState !== "loading") boot();
+else addEventListener("DOMContentLoaded", boot);
 
 // expose a tiny programmatic API (console / tests / a command palette entry)
 window.crumb = { start, next, prev, end, setMode };

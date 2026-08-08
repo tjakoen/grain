@@ -2,7 +2,7 @@
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](../../LICENSE)
-[![Status](https://img.shields.io/badge/status-published_0.1.6-brightgreen)](PLAN.md)
+[![Status](https://img.shields.io/badge/status-published_0.1.7-brightgreen)](PLAN.md)
 
 **Tours as markdown, in. A guided walk, out.** CRUMB is PROOF's twin: where PROOF renders
 *plans-as-markdown* as a board that never writes, CRUMB renders **tours-as-markdown** as a guided

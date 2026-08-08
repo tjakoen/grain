@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 // crumb/cli.ts — the CRUMB command line. `crumb check [dir]` lints a tours/ folder (the piece
 // consumers wire as `bunx crumb check`). `serve`/`init` are later pieces (PLAN.md B2/B5).
 import { checkDir } from "./check.ts";

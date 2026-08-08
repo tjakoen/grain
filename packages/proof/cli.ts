@@ -3,35 +3,40 @@
 //   proof serve [dir] [--port N]   boot the standalone board (a viewer of last resort; a BATCH
 //                                  host like PANTRY mounts createProofRoutes instead)
 //   proof check [dir]              lint the plans folder (CI-able; exits nonzero on an error)
+//   proof verify [dir] [--base R]  hold the plans against what actually changed (CI-able)
 //   proof init  [dir]             scaffold PROOF into a project (plans/ + contract + hooks)
 // `dir` defaults to ./plans (serve/check) or . (init), relative to the caller's cwd. Assets
 // resolve relative to this module, so the tool runs from any project via `bunx proof`.
 import { isAbsolute, join } from "node:path";
 import { serveProof } from "./serve.ts";
 import { runCheck, formatReport } from "./check.ts";
+import { runVerify, formatVerifyReport } from "./verify.ts";
 import { runInit } from "./init.ts";
 
 const abs = (dir: string) => (isAbsolute(dir) ? dir : join(process.cwd(), dir));
 
-interface Args { cmd: string; dir: string | null; port: number; force: boolean }
+interface Args { cmd: string; dir: string | null; port: number; force: boolean; base: string | null }
 
 function parseArgs(argv: string[]): Args {
   const [cmd = "serve", ...rest] = argv;
   let dir: string | null = null;
   let port = 4321;
   let force = false;
+  let base: string | null = null;
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (a === "--port" || a === "-p") { port = Number(rest[++i]); continue; }
     if (a.startsWith("--port=")) { port = Number(a.slice("--port=".length)); continue; }
+    if (a === "--base" || a === "-b") { base = rest[++i] ?? null; continue; }
+    if (a.startsWith("--base=")) { base = a.slice("--base=".length); continue; }
     if (a === "--force" || a === "-f") { force = true; continue; }
     if (!a.startsWith("-")) dir = a;
   }
-  return { cmd, dir, port, force };
+  return { cmd, dir, port, force, base };
 }
 
 async function main() {
-  const { cmd, dir, port, force } = parseArgs(Bun.argv.slice(2));
+  const { cmd, dir, port, force, base } = parseArgs(Bun.argv.slice(2));
 
   if (cmd === "serve") {
     const plansDir = abs(dir ?? "plans");
@@ -48,6 +53,13 @@ async function main() {
     process.exit(report.ok ? 0 : 1);   // nonzero on an error → fails CI
   }
 
+  if (cmd === "verify") {
+    const plansDir = abs(dir ?? "plans");
+    const report = await runVerify(plansDir, base ? { base } : {});
+    console.log(formatVerifyReport(report));
+    process.exit(report.ok ? 0 : 1);   // nonzero on an error → fails CI, same contract as check
+  }
+
   if (cmd === "init") {
     const targetDir = abs(dir ?? ".");
     const result = await runInit(targetDir, { force });
@@ -57,7 +69,7 @@ async function main() {
     return;
   }
 
-  console.error(`proof: unknown command "${cmd}"\nusage: proof <serve|check|init> [dir] [--port N] [--force]`);
+  console.error(`proof: unknown command "${cmd}"\nusage: proof <serve|check|verify|init> [dir] [--port N] [--base REF] [--force]`);
   process.exit(1);
 }
 

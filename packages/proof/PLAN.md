@@ -124,6 +124,18 @@ which kills the efficiency the whole thing claims.
    README contract + session-start/pre-commit hook scripts; prints the one manual wiring step,
    never edits a host's files). `proof <serve|check|init>`. `init`→`check` roundtrip verified clean
    (README.md is excluded from plans at the loader). This piece is what makes it portable.
+4b. **`proof verify`: the board held against reality.** ✅ (2026-08-08) — `core/verify.ts`
+   (`verifyAgainstDiff`, pure) + `verify.ts` (`runVerify`, `formatVerifyReport`, an injectable
+   `GitReader` so the suite never shells out). `check` asks whether the board is well *formed*;
+   `verify` asks whether it is *true*. Three findings against `touches`: a changed file no `doing`
+   plan claims, a tick **the diff itself added** with nothing changed under that plan, a plan closed
+   over a diff that never entered its blast radius. `--base REF` swaps the working tree for a whole
+   branch. Only the unbacked tick exits nonzero — scope growth and an untouched done both have
+   honest explanations, and a gate that cries wolf gets muted. A plan it cannot judge (no `touches`,
+   or every entry pointing out of the repo) is reported as unverifiable, never passed silently.
+   This is the "source changed but no `doing` plan touched" idea from the hook set above, built as a
+   command first: a command can be run by CI, a hook, or a person, and the hook can call it.
+   24 tests. First real run flagged a genuine gap in the portfolio plan that commissioned it.
 5. **Dogfood: migrate this repo.** ROADMAP tracks become `plans/*.md` files; ROADMAP.md shrinks to
    the frame + milestone + a pointer. **Owner gate before migrating** — ROADMAP is load-bearing
    and parallel sessions read it.

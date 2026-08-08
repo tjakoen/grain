@@ -13,8 +13,8 @@ update this file in the same change.
 PROOF turns plans-as-markdown into a kanban projection: each `plans/*.md` file (frontmatter +
 prose + a task checklist) is one plan, and the board *renders* them — never the other way around.
 It is a **mountable layer** (`createProofRoutes` in `routes.ts`) above MILL
-(`batch → grain → mill → proof`), plus a CLI (`proof check` lints a plans folder, `proof init`
-scaffolds one, `proof serve` runs a standalone board).
+(`batch → grain → mill → proof`), plus a CLI (`proof check` lints a plans folder, `proof verify` holds it
+against what actually changed, `proof init` scaffolds one, `proof serve` runs a standalone board).
 
 ## Start here (reading order)
 
@@ -28,6 +28,7 @@ scaffolds one, `proof serve` runs a standalone board).
 bun run check      # tsc --noEmit (must stay green)
 bun test           # unit + integration
 bun cli.ts check   # lint a plans/ folder (what consumers run as `bunx proof check`)
+bun cli.ts verify  # hold the plans against the git diff (--base REF for a whole branch)
 ```
 
 ## Non-negotiables

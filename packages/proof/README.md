@@ -48,6 +48,13 @@ expected, not a silent pass to worry about.
   by design, v1 never posts an intent back.
 - **`proof check`**: a deterministic lint, schema validity, dangling `depends`, a `done` plan with
   unticked tasks, a `doing` plan gone stale with no activity. Exits nonzero, so it's CI-able.
+- **`proof verify`**: the same exit contract, pointed at reality. `check` asks whether the board is
+  well *formed*; `verify` asks whether it is *true*. It reads the git diff and holds it against
+  `touches`: a changed file no in-progress plan claims, a tick the diff itself added with nothing
+  changed under that plan, a plan closed over a diff that never entered its own blast radius.
+  `--base` swaps the working tree for a whole branch. Only the unbacked tick fails; the rest warn,
+  because a gate that cries wolf gets muted. A plan it *cannot* judge (no `touches`, or all of them
+  pointing out of the repo) is reported as unverifiable rather than passed.
 - **`proof init`**: scaffolds `plans/` plus a contract section for the host's own CLAUDE.md,
   non-invasive, it never edits a host's existing files.
 

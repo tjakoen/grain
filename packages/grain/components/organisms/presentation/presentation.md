@@ -12,7 +12,7 @@ per-page wiring.
 
 ## Markup
 
-```html
+```html flat
 <div class="presentation" data-present data-deck data-hash data-minutes="20" data-channel="my-talk">
 
   <div class="presentation__bar">
@@ -52,7 +52,9 @@ presenter window.
 
 The catalog renders this example flat rather than live, and that is the honest thing to do: a deck
 sizes itself from its own box with `container-type: size` and lays its slides out absolutely, so
-one dropped into a catalog panel collapses to nothing. Read the code, or open a real deck.
+one dropped into a catalog panel collapses to nothing, and `data-present` puts it `position: fixed`
+over the whole catalog page. That is what the `flat` tag on the fence above asks for. Read the
+code, or open a real deck.
 
 **Opt in with `data-deck`.** Without the script the markup still renders whichever slide carries
 `data-current`, which is what a static export and a print run get.

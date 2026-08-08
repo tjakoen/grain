@@ -163,6 +163,12 @@ a `devDependency`**, never a runtime dep. Internal deps (`grain`, `mill`) are `w
   path would have scaffolded tours the board cannot see. A review tour is a filename prefix,
   `review-<slug>.md`, unless the loader is deliberately taught to recurse. Found by the portfolio's
   first real dev tour rather than by a test, which is the honest version of how it surfaced.
+- **B4c — the dev-mode contract, enforced** (built 2026-08-08). `crumb check` now fails a `dev` tour
+  whose step carries neither `review` nor `status`: a review step that reviews nothing renders as a
+  blank card in the one mode that was supposed to carry the substance. The parser cannot refuse it,
+  since both fields are legitimately optional for a `demo` tour, so the lint is where it is caught.
+  `verify` is deliberately not required, because plenty of steps are a look rather than a do. This
+  also gave `check.ts` its first tests; it had none.
 - **B4b — the linkable tour** (built 2026-08-08, ahead of B5, because B5's contract is unusable
   without it). A review tour is written for one change and handed to one person, so the handoff is a
   link, and `crumb-live.js` could only be started from a launcher control already on the page or from

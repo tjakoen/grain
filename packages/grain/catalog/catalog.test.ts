@@ -35,3 +35,33 @@ describe("createCatalog inject seams", () => {
     expect(html).not.toContain("undefined");
   });
 });
+
+// A component that owns the window (a deck at position: fixed) rendered live inside a panel
+// covers the whole catalog page — the failure that motivated the `flat` fence tag.
+describe("flat panels render source only", () => {
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), "batch-catalog-flat-"));
+    await mkdir(join(dir, "organisms", "deck"), { recursive: true });
+    await writeFile(join(dir, "organisms", "deck", "deck.md"),
+      "# Deck\n\n## Markup\n\n```html flat\n<div class=\"deck-live-marker\"></div>\n```\n\n" +
+      "## Live\n\n```html\n<div class=\"other-live-marker\"></div>\n```\n");
+  });
+  afterAll(() => rm(dir, { recursive: true, force: true }));
+
+  test("a ```html flat fence keeps its markup out of the live panel", async () => {
+    const html = await (createCatalog(dir)).html();
+    // the flat panel: no live node, but the copyable source survives escaped
+    expect(html).not.toContain(`<div class="deck-live-marker">`);
+    expect(html).toContain("&lt;div class=&quot;deck-live-marker&quot;&gt;");
+    expect(html).toContain("panel__flat");
+    // an untagged fence in the same doc still renders live
+    expect(html).toContain(`<div class="other-live-marker">`);
+  });
+
+  test("each component entry carries a data-surface address", async () => {
+    const html = await (createCatalog(dir)).html();
+    expect(html).toContain(`data-surface="catalog:deck"`);
+  });
+});

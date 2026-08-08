@@ -10,7 +10,7 @@
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
-interface Panel { label: string; code: string; }
+interface Panel { label: string; code: string; flat?: boolean; }
 interface Group { label: string; panels: Panel[]; }
 interface Doc { name: string; slug: string; intro: string; groups: Group[]; }
 interface Component { layer: string; slug: string; name: string; human: Doc; ai: Doc | null; }
@@ -34,6 +34,10 @@ const LAYER_ORDER = ["atoms", "molecules", "organisms"];
 const rank = (layer: string) => { const i = LAYER_ORDER.indexOf(layer); return i < 0 ? 99 : i; };
 
 // minimal markdown: # title, ## group, ### panel, ```html fences, plain prose.
+// A fence tagged ```html flat renders as SOURCE ONLY, with no live panel. That escape hatch
+// exists for markup a catalog panel cannot honestly host: a component that sizes itself from
+// the viewport, or one that goes position: fixed, takes over the whole catalog page rather than
+// demonstrating itself inside its box. Default stays live — flat is the exception a doc asks for.
 function parseDoc(md: string): Doc {
   const lines = md.split("\n");
   const doc: Doc = { name: "Untitled", slug: "untitled", intro: "", groups: [] };
@@ -48,12 +52,13 @@ function parseDoc(md: string): Doc {
     if (line.startsWith("## ")) { group = { label: line.slice(3).trim(), panels: [] }; doc.groups.push(group); pendingLabel = ""; i++; continue; }
     if (line.startsWith("### ")) { pendingLabel = line.slice(4).trim(); i++; continue; }
     if (line.startsWith("```html")) {
+      const flat = /\bflat\b/.test(line.slice(7));
       const body: string[] = [];
       i++;
       while (i < lines.length && !lines[i].startsWith("```")) { body.push(lines[i]); i++; }
       i++; // skip closing fence
       if (!group) { group = { label: "", panels: [] }; doc.groups.push(group); }
-      group.panels.push({ label: pendingLabel, code: body.join("\n").trim() });
+      group.panels.push({ label: pendingLabel, code: body.join("\n").trim(), flat });
       continue;
     }
     if (!group && line.trim()) intro.push(line.trim());
@@ -130,9 +135,9 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
 
   function renderPanel(p: Panel): string {
     // live = author-controlled design-system markup (not user data) → inject raw
-    return `<figure class="panel">
+    return `<figure class="panel"${p.flat ? " data-flat" : ""}>
       ${p.label ? `<figcaption class="panel__label">${esc(p.label)}</figcaption>` : ""}
-      <div class="panel__live">${liveSafe(p.code)}</div>
+      ${p.flat ? `<p class="panel__flat">Source only — this one owns the whole window, so a panel cannot host it. Open a real one.</p>` : `<div class="panel__live">${liveSafe(p.code)}</div>`}
       <div class="panel__src">
         <button class="panel__copy" type="button">Copy</button>
         <pre><code>${esc(p.code)}</code></pre>
@@ -151,7 +156,9 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
 
   function renderDoc(c: Component): string {
     const ai = c.ai ?? c.human;   // no .ai.md → AI view re-uses the human panels, grain-flipped
-    return `<section class="cat-doc" id="${c.slug}" data-grade="smooth" data-layer="${c.layer}">
+    // data-surface addresses the entry so a tour, a lamp or the reasoner can point AT one
+    // component rather than at "the catalog". The id stays for plain anchor links.
+    return `<section class="cat-doc" id="${c.slug}" data-surface="catalog:${esc(c.slug)}" data-grade="smooth" data-layer="${c.layer}">
       <header class="cat-doc__head">
         <div class="cat-doc__title">
           <p class="cat-doc__eyebrow">${esc(cap(c.layer))}</p>
@@ -278,6 +285,8 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
     text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted);
     padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line); }
   .panel__live { padding: var(--space-6); display: flex; align-items: center; justify-content: center; background: var(--color-bg); }
+  .panel__flat { margin: 0; padding: var(--space-4) var(--space-6); background: var(--color-bg);
+    font-size: var(--text-xs); color: var(--color-muted); text-align: center; }
   .panel__src { position: relative; border-top: 1px solid var(--color-line); }
   .panel__src pre { margin: 0; padding: var(--space-3); overflow-x: auto;
     font-size: var(--text-xs); line-height: var(--leading-normal); background: var(--ink); color: var(--paper); }

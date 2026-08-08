@@ -156,8 +156,21 @@ a `devDependency`**, never a runtime dep. Internal deps (`grain`, `mill`) are `w
   the verify/flag marks (`choices` + `data-payload-text`). Gate: a recorded timeline → generated
   review tour → walk it → marks collected.
 - **B5 — `init` + the contract.** `crumb init` scaffolds `tours/` + the CLAUDE.md non-negotiable
-  ("drop `tours/review/<session>.md` after any UI-touching task") + optional hooks. Gate: init on a
+  ("drop `tours/review-<slug>.md` after any UI-touching task") + optional hooks. Gate: init on a
   throwaway dir produces a valid tour dir the AI picks up.
+  **Correction (2026-08-08):** this line used to say `tours/review/<session>.md`. `loader.ts` reads a
+  tours folder with a flat `readdir` and never recurses, so a subfolder is invisible to it and that
+  path would have scaffolded tours the board cannot see. A review tour is a filename prefix,
+  `review-<slug>.md`, unless the loader is deliberately taught to recurse. Found by the portfolio's
+  first real dev tour rather than by a test, which is the honest version of how it surfaced.
+- **B4b — the linkable tour** (built 2026-08-08, ahead of B5, because B5's contract is unusable
+  without it). A review tour is written for one change and handed to one person, so the handoff is a
+  link, and `crumb-live.js` could only be started from a launcher control already on the page or from
+  `window.crumb.start`. Any host URL now carries `?crumb=<id>` plus optional `crumb-mode` and
+  `crumb-frame`. The params are consumed via `history.replaceState` before the tour starts, because a
+  tour navigates for real and a param left in the URL would reset it to its intro card at every hop.
+  Gate: portfolio e2e, `crumb-review-tour.e2e.ts`, covering the link and the host's own params
+  surviving it.
 - **B6 — docs + a published note.** CLAUDE/README/AGENTS; fold into ROADMAP as a new track; a
   companion note in `tjakoen.github.io/notes/` (PROOF-style "where were we").
 

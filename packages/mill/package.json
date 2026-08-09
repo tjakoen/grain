@@ -19,6 +19,7 @@
     "@tjakoen/grain": "^0.1.8"
   },
   "exports": {
+    ".": "./index.ts",
     "./serve.ts": "./serve.ts",
     "./index.ts": "./index.ts",
     "./core/*": "./core/*",

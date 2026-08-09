@@ -15,6 +15,7 @@
     "./routes.ts": "./routes.ts",
     "./loader.ts": "./loader.ts",
     "./check.ts": "./check.ts",
+    "./from-timeline.ts": "./from-timeline.ts",
     "./crumb-live.js": "./crumb-live.js",
     "./crumb.css": "./crumb.css"
   },

@@ -1,4 +1,4 @@
-// /app/ai/manifest.ts — the AI's instruction manual, per screen.
+// grain/ai/manifest.ts — the AI's instruction manual, per screen.
 //
 // A machine-readable projection of what's addressable (targets) and invokable
 // (actions) on a screen, plus the in-view state the reasoner needs (MVP steps 2–4).

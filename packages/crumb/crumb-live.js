@@ -24,7 +24,7 @@ const cache = new Map();           // id -> Tour (avoid re-fetching across a sam
 const PREFIX = (document.documentElement.dataset.crumbPrefix || "/crumb").replace(/\/+$/, "");
 
 function getState() { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } }
-function setState(s) { s ? sessionStorage.setItem(KEY, JSON.stringify(s)) : sessionStorage.removeItem(KEY); }
+function setState(s) { if (s) sessionStorage.setItem(KEY, JSON.stringify(s)); else sessionStorage.removeItem(KEY); }
 const routeOf = (p) => (p.replace(/\/+$/, "") || "/");
 // A relative or absent route/at is not a navigable pathname — a host with nothing sensible to
 // go to (a hash-router SPA under one project-page subpath, say) declares no route at all, and

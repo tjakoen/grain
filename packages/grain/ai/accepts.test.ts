@@ -1,8 +1,8 @@
 // grain/ai/accepts.test.ts — UNIT: component affordance harvester in isolation.
 // Uses tmp files to simulate component HTML so no real fs state is needed.
 import { test, expect } from "bun:test";
-import { mkdirSync, writeFileSync, rmSync } from "fs";
-import { join } from "path";
+import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import { createAccepts } from "./accepts.ts";
 
 const TMP = join(import.meta.dir, "__accepts_test_tmp__");

@@ -11,5 +11,5 @@
     if (s) html.setAttribute("data-color-scheme", s);
     var t = localStorage.getItem("grain-theme");
     if (t) html.setAttribute("data-theme", t);
-  } catch (e) { /* no storage (privacy mode) → defaults render, theme.js stays the fallback */ }
+  } catch { /* no storage (privacy mode) → defaults render, theme.js stays the fallback */ }
 })();

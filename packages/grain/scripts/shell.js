@@ -48,7 +48,7 @@
     for (const b of shell.querySelectorAll(`[data-shell="${name}"]`))
       b.addEventListener("click", () => {
         const on = shell.getAttribute(attr) !== "true";
-        on ? shell.setAttribute(attr, "true") : shell.removeAttribute(attr);
+        if (on) shell.setAttribute(attr, "true"); else shell.removeAttribute(attr);
         try { localStorage.setItem(key, on ? "1" : "0"); } catch { /* ignore */ }
       });
   }

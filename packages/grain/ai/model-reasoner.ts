@@ -49,7 +49,7 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
 
   /** Stream text into a surface one code point at a time (kit ops), then settle it clean. */
   async function stream(surface: string, text: string, tools: ReasonTools): Promise<void> {
-    for (const ch of [...text]) {
+    for (const ch of text) {
       if (tools.cancelled()) break;
       if (thinkMs > 0) await tools.delay(TYPE_MS);
       tools.emit(typeToken(surface, ch));

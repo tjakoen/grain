@@ -30,7 +30,7 @@
   const DRAFT_KEY = "grain.notepad.draft";  // the human's uncommitted textarea text (kept across reload)
 
   const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-  const write = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* private mode */ } };
+  const write = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* private mode */ } };
 
   // Join every entry's markdown source, in order — the whole pad's canonical markdown.
   const deriveSource = (body) =>

@@ -36,6 +36,7 @@ const LIST_ITEM_RE = /^[-*]\s+/;
 const BLOCK_SPLIT_RE = /\n{2,}/;
 // Placeholder delimiter for pulled-out code spans (below) — \x00 can't occur in real chat text
 // (it was already esc()'d as ordinary text upstream), so it never collides.
+// eslint-disable-next-line no-control-regex
 const CODE_PLACEHOLDER_RE = /\x00(\d+)\x00/g;
 
 function inline(escaped: string): string {

@@ -18,21 +18,30 @@
 .lightbox::backdrop { background: color-mix(in srgb, var(--ink) 82%, transparent); }
 @media (prefers-reduced-motion: reduce) { .lightbox { transition: none; } }
 
-/* the figure: the centre column, holds the image + its caption */
+/* the figure: the centre column, holds the image + its caption. `align-items: center` is load-bearing:
+   without it the column stretches its children, so a long caption widens the figure and the image box
+   with it — the picture then letterboxes inside a too-wide box and the img's own background paints
+   paper-coloured bars beside it. Centred, the image shrink-wraps to its real aspect. */
 .lightbox__figure {
   grid-column: 2; justify-self: center; align-self: center;
-  display: flex; flex-direction: column; gap: var(--space-2);
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
   max-width: 100%; max-height: 100dvh; margin: 0; padding: var(--space-3);
   box-sizing: border-box;
 }
+/* the height budget: the viewport minus the bottom chrome the figure must not collide with (the dot
+   rail + counter) and minus room for a caption line or two. Without it a tall image pushes its own
+   caption down into the dots. */
 .lightbox__img {
-  display: block; max-width: 100%; max-height: calc(100dvh - 6rem);
+  display: block; max-width: 100%; max-height: calc(100dvh - 12rem);
   width: auto; height: auto; object-fit: contain;
   border-radius: var(--radius-md); background: var(--color-bg);
   box-shadow: 0 8px 32px color-mix(in srgb, var(--ink) 55%, transparent);
 }
+/* the caption WRAPS: centring the column stopped it from stretching, so an unbounded line would run
+   straight off both edges of the viewport. It reads under the image, never wider than the gutter. */
 .lightbox__caption {
-  text-align: center; font-size: .85rem; color: var(--color-bg);
+  align-self: stretch; max-width: min(100%, 60ch); margin: 0 auto;
+  text-align: center; font-size: .85rem; line-height: 1.4; color: var(--color-bg);
   text-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 85%, transparent);
 }
 

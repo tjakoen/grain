@@ -1,6 +1,7 @@
 {
   "name": "@tjakoen/grain-mcp",
   "version": "0.1.0",
+  "private": true,
   "description": "GRAIN-MCP — a zero-dependency, hand-rolled MCP stdio server over a grain app's STATIC EXPORT: reads the exported HTML, harvests the door manifest with grain's own pure domManifest, and serves read-only inspection + validation tools (grain_pages, grain_manifest, grain_actions, grain_validate_move) to any MCP client. No browser, no live driving, no npm dependencies beyond the grain workspace.",
   "type": "module",
   "license": "Apache-2.0",

@@ -23,8 +23,16 @@
   padding: var(--space-3) var(--space-3) var(--space-2);
   border-bottom: var(--border);
 }
-.crumb-pop__title { font-weight: 600; font-size: var(--text-sm); margin-right: auto; }
-.crumb-pop__count { font-size: var(--text-xs); color: var(--ink-soft, color-mix(in srgb, var(--ink) 55%, transparent)); font-variant-numeric: tabular-nums; }
+/* The title takes the slack and is the only thing allowed to. Everything after it is a fixed badge
+   that must never break across lines: "2 / 4" wrapping to "2 /" and "4" reads as a rendering fault
+   and costs the reviewer a beat working out it is not one. min-width:0 lets the title shrink instead
+   of shoving the badges into a wrap. */
+.crumb-pop__title { font-weight: 600; font-size: var(--text-sm); margin-right: auto; min-width: 0; }
+.crumb-pop__count {
+  font-size: var(--text-xs); color: var(--ink-soft, color-mix(in srgb, var(--ink) 55%, transparent));
+  font-variant-numeric: tabular-nums; white-space: nowrap; flex: 0 0 auto;
+}
+.crumb-pop__status { white-space: nowrap; flex: 0 0 auto; }
 .crumb-pop__x {
   appearance: none; border: 0; background: transparent; color: inherit; cursor: pointer;
   font-size: var(--text-lg); line-height: 1; padding: 0 var(--space-1); opacity: 0.6;

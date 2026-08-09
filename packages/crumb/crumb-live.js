@@ -128,6 +128,16 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 // Returns null when there is nothing to show (no declared prefill, or no live field to stage it
 // into — a step may target a surface a given page doesn't render); otherwise one of three honest
 // outcomes the step card displays via stagedNote(): "staged", "occupied", "offline".
+//
+// The surfaces this walk has already handed to the door. The grade check below covers the ordinary
+// re-render, but only AFTER the fill has actually landed: door.submit is async (it crosses the same
+// reasoner every other Intent does), so a re-render inside that window — a demo|dev flip is one
+// keystroke away and re-renders in place — would find the field still empty and ask a second time.
+// The op is idempotent, so the field would be fine; the narration the reasoner emits per fill is
+// not, and a tour that says it staged one draft should not leave two lines saying so. Cleared when
+// a walk ends, and a real navigation reloads this module anyway (the fresh page needs its own fill).
+const stagedSurfaces = new Set();
+
 function prefillStep(step) {
   if (!step || !step.prefill) return null;
   const el = document.querySelector(`[data-surface="${step.surface}"]`);
@@ -142,6 +152,8 @@ function prefillStep(step) {
   // redundant at best and, worse, would re-fire a timeline entry for a write that already happened.
   if (held && el.getAttribute("data-grade") === "grain") return "staged";
   if (!window.grain?.door?.submit || document.body.dataset.aiOnline === "false") return "offline";
+  if (stagedSurfaces.has(step.surface)) return "staged";   // asked already; the fill is still in flight
+  stagedSurfaces.add(step.surface);
   window.grain.door.submit("field.set", step.surface, { value: step.prefill });
   return "staged";
 }
@@ -346,9 +358,9 @@ function wireControls(root) {
 // re-render on a plain mode flip (setMode), so if EITHER of them called prefillStep itself, the
 // door call would live inside the thing that also runs on every demo|dev toggle, which is exactly
 // the surface a stray re-fire would hide on. Routing it through this single dispatch point means
-// there is one call site to reason about, and prefillStep's own idempotency (a step already wearing
-// data-grade="grain" returns "staged" without touching the door again) is what makes calling it on
-// every render safe rather than merely convenient.
+// there is one call site to reason about. It does NOT by itself make the re-fire impossible —
+// setMode re-renders through here too — so the safety is prefillStep's own: the grain grade once the
+// fill has landed, and stagedSurfaces while it is still in flight.
 function render(tour, idx, st) {
   const intro = idx < 0;
   const prompt = isPromptIndex(tour, idx);
@@ -409,6 +421,7 @@ function teardownFrame() {
 function end() {
   const st = getState();
   if (st) answerStore.delete(st.id);   // review notes die with the tour; nothing outlives the walk
+  stagedSurfaces.clear();              // the next walk stages its own fields, and asks the door again
   setState(null);
   if (spot) spot.off();
   if (pop && pop.open) pop.close();

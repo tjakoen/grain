@@ -51,7 +51,9 @@ function decodeEntities(raw: string): string {
     if (body[0] === "#") {
       const hex = body[1] === "x" || body[1] === "X";
       const codePoint = Number.parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10);
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : whole;
+      return Number.isFinite(codePoint) && codePoint >= 0 && codePoint <= 0x10FFFF
+        ? String.fromCodePoint(codePoint)
+        : whole;
     }
     return Object.hasOwn(NAMED_ENTITIES, body) ? NAMED_ENTITIES[body] : whole;
   });

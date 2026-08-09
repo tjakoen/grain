@@ -11,7 +11,6 @@
 //   tools/list                    → the four ToolDeclarations, unchanged from tools.ts
 //   tools/call                    → runs one tool, wraps its ToolResult as MCP `content`
 //   anything else                 → -32601 Method not found
-import { ACTIONS } from "@tjakoen/grain/ai/contract.ts";
 import {
   parseLine, buildResult, methodNotFound, invalidParams, internalError,
   type JsonRpcResponse, type JsonRpcRequest, type JsonRpcNotification,
@@ -135,7 +134,3 @@ export function handleLine(state: ServerState, line: string): JsonRpcResponse | 
   }
   return handleMessage(state, parsed.message);
 }
-
-// re-exported so a consumer (cli.ts, tests) can print/inspect the registry without importing
-// tools.ts directly for this one fact.
-export const ACTION_COUNT = Object.keys(ACTIONS).length;

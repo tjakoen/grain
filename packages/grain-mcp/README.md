@@ -32,15 +32,19 @@ All four are declared `{ readOnlyHint: true }`: none of them can mutate anything
 
 ## Usage
 
+This package is not published (see "Workspace-only" below), so run it from a checkout by path. Do
+**not** reach for `bunx grain-mcp`: that name belongs to an unrelated project on the public registry,
+and running it would fetch and execute someone else's code inside your agent harness.
+
 ```bash
 bun run <your grain app's export script>   # produces ./dist (or wherever your build writes it)
-bunx grain-mcp ./dist
+bun packages/grain-mcp/cli.ts ./dist       # from the grain repo root
 ```
 
-Wire it into Claude Code:
+Wire it into Claude Code, with absolute paths to both the CLI and the export:
 
 ```bash
-claude mcp add grain-mcp -- bunx grain-mcp /absolute/path/to/your/export/dist
+claude mcp add grain-mcp -- bun /absolute/path/to/grain/packages/grain-mcp/cli.ts /absolute/path/to/your/export/dist
 ```
 
 The process reads the export ONCE at startup: a personal export is small and there's no live-reload

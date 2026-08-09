@@ -207,6 +207,26 @@ body[data-crumb-frame] {
   display: flex; justify-content: flex-end; gap: var(--space-2);
 }
 
+/* the prompt card: the one place a tour takes input. One rule set for both presentations, since the
+   two prefixes render the same body (crumb-live.js promptBody). Tokenized like everything else, no
+   primitives: the fields have to read as the host's fields, not as a widget dropped on top. */
+.crumb-pop__ask, .crumb-sidebar__ask { display: grid; gap: var(--space-1); font-size: var(--text-xs); }
+.crumb-pop__asklabel, .crumb-sidebar__asklabel {
+  color: var(--ink-soft, color-mix(in srgb, var(--ink) 62%, transparent));
+}
+.crumb-pop__askinput, .crumb-sidebar__askinput,
+.crumb-pop__composed, .crumb-sidebar__composed {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  font: inherit; font-size: var(--text-sm); line-height: 1.45;
+  padding: var(--space-2); border: var(--border); border-radius: var(--radius-sm);
+  background: var(--paper, transparent); color: var(--ink);
+}
+/* the composed prompt is output, not input: it reads as a quote of what you are about to send */
+.crumb-pop__composed, .crumb-sidebar__composed {
+  font-family: var(--font-mono, monospace); font-size: var(--text-xs);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
 /* narrow screens: the sidebar becomes a bottom sheet; the host box + edge inset
    from the bottom instead of the side (same values on both, they stay glued) */
 @media (max-width: 720px) {

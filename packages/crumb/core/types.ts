@@ -34,6 +34,34 @@ export interface Step {
   verify: string | null;
 }
 
+// ---- The prompt card (the review loop's last step) --------------------------
+// A review tour ends by asking the reviewer what it could not check itself, and hands back a PROMPT
+// rather than a form submission: the reviewer pastes it into a session, or opens it in one. This is
+// the only part of a tour that collects input, and it still writes nothing to the app: the answers
+// are composed into text in the browser and the destination is somewhere else entirely.
+export interface Ask {
+  /** the token this answer fills in the template (`{id}`) */
+  id: string;
+  /** the question shown above the field */
+  label: string;
+}
+
+export interface PromptCard {
+  /** prose above the questions (the section's body text) */
+  intro: string;
+  asks: Ask[];
+  /** the text composed from the answers; `{id}` per ask, plus `{title}` and `{tour}` */
+  template: string;
+  /** a URL template with `{payload}` (grain's handoff contract) that opens the composed prompt in a
+   *  session. null = no destination declared, so the card offers the text and nothing else. */
+  handoff: string | null;
+}
+
+/** The reserved step heading that carries the prompt card. It can never collide with a real surface
+ *  address: a surface is `kind` or `kind:id` over grain's closed kind vocabulary, and `prompt` is
+ *  not one of those kinds. */
+export const PROMPT_SECTION = "prompt";
+
 // ---- A parsed tour ----------------------------------------------------------
 export interface Tour {
   id: string;          // = the filename stem; the stable address
@@ -47,6 +75,8 @@ export interface Tour {
   route: string | null;
   intro: string;       // the body prose before the first `## <surface>` heading
   steps: Step[];
+  /** the `## prompt` section, when the tour has one; null = the tour just ends */
+  prompt: PromptCard | null;
 }
 
 // A tour that failed to parse cleanly still yields a best-effort Tour plus the problems, so

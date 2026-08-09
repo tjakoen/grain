@@ -47,6 +47,15 @@ export interface Ask {
   id: string;
   /** the question shown above the field */
   label: string;
+  /** a closed set of answers, making this ask a DECISION rather than a free-text question. Empty
+   *  (the default, and every ask written before this existed) = a text field.
+   *
+   *  Kept as plain strings rather than grain's `Choice` ({ label, value? }), and the difference is
+   *  the point: a `choices` op sends its `value` back through the door as the next turn, so label
+   *  and value must be able to differ. Here the answer only ever becomes text in a template, so a
+   *  second field would be a distinction with nothing behind it. The two vocabularies still mean
+   *  the same thing to a reader: a short, closed set the human picks from. */
+  options: string[];
 }
 
 export interface PromptCard {

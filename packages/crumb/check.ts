@@ -30,9 +30,16 @@ function promptProblems(tour: LoadedTour["tour"]): string[] {
   const card = tour.prompt;
   if (!card || card.template === "") return [];
   const used = new Set(templateTokens(card.template));
-  return card.asks
+  const lines = card.asks
     .filter((a) => !used.has(a.id))
     .map((a) => `    prompt: ask "${a.id}" is never used by the template, so its answer is thrown away`);
+  // An ask with exactly one option is not a decision, it is a statement wearing a control: the
+  // reviewer's only move is to agree, and a card that can only be agreed with tells you nothing you
+  // did not already write. Two is the smallest real choice. (Zero is the free-text ask and is fine.)
+  for (const a of card.asks)
+    if (a.options.length === 1)
+      lines.push(`    prompt: ask "${a.id}" offers one option ("${a.options[0]}"), so there is nothing to decide — give it a second option or make it a text ask`);
+  return lines;
 }
 
 // A prefill the door would refuse is worse than none at all: the tour claims it staged the field

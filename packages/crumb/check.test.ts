@@ -156,3 +156,12 @@ test("a clean staged tour — safe value, non-empty say — passes", () => {
   const result = checkLoaded([load(withPrefill("Hi TJ, about grain."), "contact")], []);
   expect(result.ok).toBe(true);
 });
+
+test("an ask with one option is flagged: a choice of one is a statement wearing a control", () => {
+  const { ok, lines } = checkLoaded(
+    [load(`---\nmode: dev\ntitle: T\nroute: /\n---\n## nav:x\n- status: changed\n- review: r\nP\n\n## prompt\n- ask: lane | Which? | gated\n- template: {lane}\n`, "solo")],
+    [],
+  );
+  expect(ok).toBe(false);
+  expect(lines.join("\n")).toContain("one option");
+});

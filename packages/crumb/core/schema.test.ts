@@ -83,3 +83,34 @@ test("an absolute declared route is kept exactly as-is (root-mounted multi-page 
   expect(tour.route).toBe("/notes");
   expect(errors.some((e) => e.field === "route")).toBe(false);
 });
+
+// ---- prefill: stage a step's own field through the door ---------------------
+
+test("a prefill on a field: surface parses, cleanly, with no error", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\n---\n## field:contact-message\n- prefill: Hi TJ, about grain.\nx\n`, "t");
+  expect(tour.steps[0].prefill).toBe("Hi TJ, about grain.");
+  expect(errors.some((e) => e.field === "steps[0].prefill")).toBe(false);
+});
+
+test("\\n in a prefill becomes a real newline, same convention as the prompt card's template", () => {
+  const { tour } = parseTour(`---\nmode: demo\n---\n## field:contact-message\n- prefill: line one\\nline two\nx\n`, "t");
+  expect(tour.steps[0].prefill).toBe("line one\nline two");
+});
+
+test("a prefill on a non-field: surface can never work, so it is reported and degrades to null", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\n---\n## nav:/notes\n- prefill: Hi TJ.\nx\n`, "t");
+  expect(tour.steps[0].prefill).toBeNull();
+  expect(errors.some((e) => e.field === "steps[0].prefill" && /not a .field:. surface/.test(e.message))).toBe(true);
+});
+
+test("a prefill that is empty after trimming is reported and degrades to null", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\n---\n## field:contact-message\n- prefill:    \nx\n`, "t");
+  expect(tour.steps[0].prefill).toBeNull();
+  expect(errors.some((e) => e.field === "steps[0].prefill" && /empty/.test(e.message))).toBe(true);
+});
+
+test("a step with no prefill line parses to null, silently — most steps stage nothing", () => {
+  const { tour, errors } = parseTour(`---\nmode: demo\n---\n## screen\nx\n`, "t");
+  expect(tour.steps[0].prefill).toBeNull();
+  expect(errors.some((e) => e.field === "steps[0].prefill")).toBe(false);
+});

@@ -21,12 +21,12 @@ function asString(v: FrontmatterValue | undefined): string | undefined {
 
 // ---- the body → steps grammar -----------------------------------------------
 // A step is a level-2 heading whose text IS the surface address, then prose (the `say`) plus
-// optional `- key: value` meta lines (at / review / status / verify). Everything before the first
-// `## ` is the tour's intro. Kept line-based and boring on purpose — a heavy schema makes the AI
-// do bookkeeping instead of work (PLAN.md).
+// optional `- key: value` meta lines (at / review / status / verify / prefill). Everything before
+// the first `## ` is the tour's intro. Kept line-based and boring on purpose — a heavy schema makes
+// the AI do bookkeeping instead of work (PLAN.md).
 const STEP_HEADING = /^##\s+(.+?)\s*$/;                      // `## nav:/notes`
-const META = /^\s*[-*]\s+(at|review|status|verify)\s*:\s*(.*)$/i;   // `- verify: open the drawer`
-const STEP_META_KEYS = new Set(["at", "review", "status", "verify"]);
+const META = /^\s*[-*]\s+(at|review|status|verify|prefill)\s*:\s*(.*)$/i;   // `- verify: open the drawer`
+const STEP_META_KEYS = new Set(["at", "review", "status", "verify", "prefill"]);
 // The `## prompt` section has its own three keys, kept OUT of the step grammar so neither can eat
 // the other's lines: a stray `- ask:` inside a step stays visible prose instead of vanishing.
 const ASK = /^\s*[-*]\s+ask\s*:\s*(.*)$/i;                   // `- ask: what-broke | What looked off?`
@@ -114,6 +114,24 @@ function toStep(raw: RawStep, index: number, errors: TourError[]): Step {
 
   if (raw.surface === "") errors.push({ field: `steps[${index}].surface`, message: "empty `## ` heading — a step must name a data-surface address" });
 
+  // `prefill` stages text into this step's OWN field surface, through the host's door (field.set),
+  // never a direct write — PLAN.md's amended design law. `\n` becomes a real newline the same way
+  // the prompt card's `- template:` line handles it, because a staged message is often more than
+  // one line. Two ways this can never work, and both are reported rather than silently carried into
+  // a client that would try it anyway: the door only accepts field.set on a `field:` surface, so a
+  // prefill declared on anything else is dead on arrival; and an empty value stages nothing, so it's
+  // a no-op the author almost certainly didn't mean.
+  let prefill: string | null = null;
+  if (meta.prefill !== undefined) {
+    const value = meta.prefill.trim().replaceAll("\\n", "\n");
+    if (!raw.surface.startsWith("field:"))
+      errors.push({ field: `steps[${index}].prefill`, message: `prefill is set on "${raw.surface}", which is not a \`field:\` surface — the door only accepts field.set on a field, so this can never work; ignoring` });
+    else if (value.trim() === "")
+      errors.push({ field: `steps[${index}].prefill`, message: "prefill is empty after trimming, so there is nothing to stage; ignoring" });
+    else
+      prefill = value;
+  }
+
   return {
     surface: raw.surface,
     at: meta.at ? meta.at.trim() : null,
@@ -121,6 +139,7 @@ function toStep(raw: RawStep, index: number, errors: TourError[]): Step {
     review: meta.review ? meta.review.trim() : null,
     status,
     verify: meta.verify ? meta.verify.trim() : null,
+    prefill,
   };
 }
 

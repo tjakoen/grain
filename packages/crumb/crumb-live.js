@@ -117,6 +117,49 @@ function wirePrompt(root, tour) {
 const surfaceLabel = (s) => (s.surface || "").replace(/^nav:|^note:/, "").replace(/[:/]+/g, " ").trim() || "step";
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// ---- prefill: the tour's only write, and it goes through the door -----------
+// The design law, amended 2026-08-09 (PLAN.md): a tour may stage text into its OWN field surface,
+// but only by raising the SAME `field.set` Intent a human's own typing would raise — never by
+// touching `.value` directly. That is what makes a staged field indistinguishable, downstream, from
+// one the AI filled during a real session: same op, same grade, same "clears on a human touch"
+// behavior. This function is the one and only place in the client that may call `door.submit`; it
+// is asserted by crumb-live.test.ts (no `.value =` in its body, a `door.submit(` call inside it).
+//
+// Returns null when there is nothing to show (no declared prefill, or no live field to stage it
+// into — a step may target a surface a given page doesn't render); otherwise one of three honest
+// outcomes the step card displays via stagedNote(): "staged", "occupied", "offline".
+function prefillStep(step) {
+  if (!step || !step.prefill) return null;
+  const el = document.querySelector(`[data-surface="${step.surface}"]`);
+  if (!el || !("value" in el)) return null;
+  const held = el.value !== "";
+  // A non-empty value NOT wearing the AI's ink is the human's own writing — the door's own grade
+  // rule (ai-dispatch.js) already says a trusted input event strips data-grade="grain", so this is
+  // the same "who owns this text" test the rest of grain uses, not a new one invented here.
+  if (held && el.getAttribute("data-grade") !== "grain") return "occupied";
+  // Already staged by THIS tour (stepping back to a step and forward again re-renders it): the
+  // value and the grain grade are both still there, so calling door.submit a second time would be
+  // redundant at best and, worse, would re-fire a timeline entry for a write that already happened.
+  if (held && el.getAttribute("data-grade") === "grain") return "staged";
+  if (!window.grain?.door?.submit || document.body.dataset.aiOnline === "false") return "offline";
+  window.grain.door.submit("field.set", step.surface, { value: step.prefill });
+  return "staged";
+}
+
+// The honesty marker: shown wherever prefillStep() had something to say, in BOTH presentations
+// (the prefix `p` is the same "crumb-pop" / "crumb-sidebar" split promptBody already uses). Wording
+// is exact and load-bearing — this is the line that keeps a staged field from being mistaken for a
+// real one, which is the failure mode the feasibility audit was written to head off.
+function stagedNote(result, p) {
+  if (result === null) return "";
+  const text = result === "staged"
+    ? "Staged by the tour. The tour filled this field through the app's own door; nothing was sent."
+    : result === "occupied"
+      ? "Left as it was. You have already written here, so the tour did not touch it."
+      : "The door is offline, so this field stays empty and the step shows the real state.";
+  return `<p class="${p}__staged" data-staged="${result}">${text}</p>`;
+}
+
 // ---- the one lamp (passthrough) ---------------------------------------------
 let spot = null, escBound = false;
 function lamp() { return spot || (spot = createSpotlight({ passthrough: true })); }
@@ -159,7 +202,7 @@ function placeCard(card, surfaceEl) {
   card.style.left = `${Math.round(left)}px`;
   card.style.top = `${Math.round(Math.max(M, top))}px`;
 }
-function renderPopover(tour, idx, mode) {
+function renderPopover(tour, idx, mode, staged) {
   const n = tour.steps.length;
   const intro = idx < 0;
   const prompt = isPromptIndex(tour, idx);
@@ -176,6 +219,7 @@ function renderPopover(tour, idx, mode) {
       ? promptBody(tour, "crumb-pop")
       : `${dev && step.review ? `<p class="crumb-pop__review">${esc(step.review)}</p>` : ""}` +
         `<p class="crumb-pop__say">${esc(step.say)}</p>` +
+        stagedNote(staged, "crumb-pop") +
         `${dev && step.verify ? `<p class="crumb-pop__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
   const nextLabel = intro ? "Start" : (idx >= lastIndex(tour) ? "Finish" : "Next");
   p.innerHTML =
@@ -212,7 +256,7 @@ function frameRoot() {
   bindEsc();
   return frame;
 }
-function renderFrame(tour, idx, mode) {
+function renderFrame(tour, idx, mode, staged) {
   const n = tour.steps.length;
   const intro = idx < 0;
   const prompt = isPromptIndex(tour, idx);
@@ -258,6 +302,7 @@ function renderFrame(tour, idx, mode) {
       ? promptBody(tour, "crumb-sidebar")
       : `${dev && step.review ? `<p class="crumb-sidebar__review">${esc(step.review)}</p>` : ""}` +
         `<p class="crumb-sidebar__say">${esc(step.say)}</p>` +
+        stagedNote(staged, "crumb-sidebar") +
         `${dev && step.verify ? `<p class="crumb-sidebar__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
   const nextLabel = intro ? "Start" : (idx >= lastIndex(tour) ? "Finish" : "Next");
 
@@ -296,9 +341,21 @@ function wireControls(root) {
 }
 
 // ---- render dispatch --------------------------------------------------------
+// The step is computed here, once, the same way both presentations compute it internally — and
+// prefillStep() is called here, once, rather than inside renderPopover/renderFrame. Both of those
+// re-render on a plain mode flip (setMode), so if EITHER of them called prefillStep itself, the
+// door call would live inside the thing that also runs on every demo|dev toggle, which is exactly
+// the surface a stray re-fire would hide on. Routing it through this single dispatch point means
+// there is one call site to reason about, and prefillStep's own idempotency (a step already wearing
+// data-grade="grain" returns "staged" without touching the door again) is what makes calling it on
+// every render safe rather than merely convenient.
 function render(tour, idx, st) {
-  if (st.frame) { if (pop && pop.open) pop.close(); renderFrame(tour, idx, st.mode); }
-  else { teardownFrame(); renderPopover(tour, idx, st.mode); }
+  const intro = idx < 0;
+  const prompt = isPromptIndex(tour, idx);
+  const step = intro || prompt ? null : tour.steps[idx];
+  const staged = prefillStep(step);
+  if (st.frame) { if (pop && pop.open) pop.close(); renderFrame(tour, idx, st.mode, staged); }
+  else { teardownFrame(); renderPopover(tour, idx, st.mode, staged); }
 }
 
 // resume from sessionStorage: fetch the tour, navigate to the step's route if needed, else render.

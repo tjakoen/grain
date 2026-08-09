@@ -108,3 +108,51 @@ test("an ask the template never uses fails — the answer would be thrown away",
 test("a prompt card with no asks at all is fine — a fixed prompt is still a handoff", () => {
   expect(checkLoaded([load(withPrompt("- template: Continue the {title} review.\n"), "review-thing")], []).ok).toBe(true);
 });
+
+// ---- prefill: what the door would refuse, and the staged-with-no-say trap ---
+
+const withPrefill = (line: string) => `---
+id: contact
+mode: demo
+title: "Contact"
+route: /
+---
+Intro.
+
+## field:contact-message
+- prefill: ${line}
+Some prose about the field.
+`;
+
+test("an over-cap prefill is flagged, with the count and the cap", () => {
+  const over = "x".repeat(2001);
+  const result = checkLoaded([load(withPrefill(over), "contact")], []);
+  expect(result.ok).toBe(false);
+  expect(result.lines.join("\n")).toContain("2001 chars, over the 2000-char cap");
+});
+
+test("a control character in a prefill is flagged as the door would see it", () => {
+  const result = checkLoaded([load(withPrefill("bell\x07"), "contact")], []);
+  expect(result.ok).toBe(false);
+  expect(result.lines.join("\n")).toContain("control characters");
+});
+
+test("a staged step with an empty say is flagged — a staged screen needs prose or it reads as real", () => {
+  const raw = `---
+id: contact
+mode: demo
+title: "Contact"
+route: /
+---
+## field:contact-message
+- prefill: Hi TJ, about grain.
+`;
+  const result = checkLoaded([load(raw, "contact")], []);
+  expect(result.ok).toBe(false);
+  expect(result.lines.join("\n")).toContain("stages a value but has no `say`");
+});
+
+test("a clean staged tour — safe value, non-empty say — passes", () => {
+  const result = checkLoaded([load(withPrefill("Hi TJ, about grain."), "contact")], []);
+  expect(result.ok).toBe(true);
+});

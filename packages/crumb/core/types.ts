@@ -32,6 +32,9 @@ export interface Step {
   status: VerificationStatus | null;
   /** how the human confirms the step ("Open the drawer on mobile; the dock shouldn't clip it") */
   verify: string | null;
+  /** text this step stages into its OWN field surface, through the host's door, never a direct
+   *  write; null = the step stages nothing. */
+  prefill: string | null;
 }
 
 // ---- The prompt card (the review loop's last step) --------------------------

@@ -53,6 +53,14 @@ submits.**
 > form even by mistake. What the law now forbids by name is the shortcut: `crumb-live.js` must never
 > assign `el.value`, or touch app state any other way that skips the door. Feasibility audit:
 > `tjakoen.github.io/docs/CRUMB-PREFILL-FEASIBILITY-2026-08-09.md`.
+>
+> **Built 2026-08-10 (P2).** The step key is `prefill` (grammar above), the client function is
+> `prefillStep()` in `crumb-live.js` — the one function in the module allowed to call
+> `window.grain.door.submit`, held by a source-text test (`crumb-live.test.ts`) rather than only a
+> comment. It refuses to overwrite a field the human already touched, is idempotent on a re-render
+> (stepping back to a staged step and forward again does not re-fire the door), and the step card
+> says outright when a field was staged, when it was left alone, and when the door was offline —
+> `check.ts` also fails a value the door would refuse and a staged step with no `say` to explain it.
 
 - Tours are markdown with minimal frontmatter (below). The AI authors them with native tools — zero
   new workflow, zero plugin, zero API. (Same law as PROOF's plans, MILL's pages, the static export:
@@ -128,11 +136,20 @@ Each step (body or frontmatter list — settle in core):
   review: "Changed: z-index + safe-area pad."  # devContent (dev mode only)
   status: changed                  # the verification vocab
   verify: "Open the drawer on mobile; the dock shouldn't clip it."
+  prefill: "Hi TJ — about grain."   # staged into THIS step's own field, through the door; see below
 ```
 
 Body = the tour's prose intro + optional per-step long-form (rendered through MILL — CRUMB is MILL's
 second library consumer, same as PROOF's card detail). Schema stays small on purpose: a heavy schema
 makes the AI do bookkeeping instead of work.
+
+The fifth step key, `prefill`, exists only for `field:` surfaces — the door's `field.set` verb is the
+only write the app accepts, and it only accepts a `field` kind, so a `prefill` declared on anything
+else is dead on arrival and `core/schema.ts` reports it rather than carrying it into a client that
+would try it anyway. It stages, it never submits: `crumb-live.js` raises the SAME `field.set` Intent a
+human's own typing would raise, and refuses outright if the field already holds text the human wrote
+(never overwrites a human's own draft). `\n` becomes a real newline, the same convention the prompt
+card's `- template:` line already uses.
 
 ## Structure (mirror PROOF exactly)
 

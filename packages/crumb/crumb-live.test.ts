@@ -63,3 +63,22 @@ test("resume() navigates to the whole target, not a normalized pathname", async 
   expect(client).toContain("location.assign(target)");
   expect(client).not.toContain("location.assign(need)");
 });
+
+/** The body of `function prefillStep(...) { … }`, the one function in this module allowed to call
+ *  the door. Extracted so the design law — a prefill goes through door.submit, never a direct
+ *  `.value =` assignment — is held by an assertion instead of only a comment. */
+function prefillStepBody(src: string): string | null {
+  const m = src.match(/function prefillStep\([^)]*\)[^{]*\{\n([\s\S]*?)\n\}/);
+  return m ? m[1] : null;
+}
+
+test("prefillStep is the only write a tour makes, and it goes through the door", async () => {
+  const client = await read("./crumb-live.js");
+  const body = prefillStepBody(client);
+  expect(body, "prefillStep missing or reformatted in crumb-live.js").toBeTruthy();
+  expect(body).toContain("door.submit(");
+  expect(body).toContain('"field.set"');
+  // the design law, held as source text (PLAN.md, amended 2026-08-09): the door is the only write.
+  // A direct `el.value = …` assignment would be the forbidden shortcut, by name.
+  expect(body).not.toMatch(/\.value\s*=[^=]/);
+});

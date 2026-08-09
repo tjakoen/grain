@@ -89,3 +89,22 @@ test("the same bare step in a DEMO tour is fine — demo steps owe no review", (
   const asDemo = DEV_BARE.replace("mode: dev", "mode: demo");
   expect(checkLoaded([load(asDemo, "review-bare")], []).ok).toBe(true);
 });
+
+// ---- the prompt card --------------------------------------------------------
+
+const withPrompt = (section: string) => `${DEV_GOOD}\n## prompt\n${section}`;
+
+test("a prompt card whose template uses every ask passes", () => {
+  const result = checkLoaded([load(withPrompt("- ask: off | What looked off?\n- template: {title}: {off}\n"), "review-thing")], []);
+  expect(result.ok).toBe(true);
+});
+
+test("an ask the template never uses fails — the answer would be thrown away", () => {
+  const result = checkLoaded([load(withPrompt("- ask: off | What looked off?\n- ask: next | And next?\n- template: {off}\n"), "review-thing")], []);
+  expect(result.ok).toBe(false);
+  expect(result.lines.join("\n")).toContain('ask "next" is never used');
+});
+
+test("a prompt card with no asks at all is fine — a fixed prompt is still a handoff", () => {
+  expect(checkLoaded([load(withPrompt("- template: Continue the {title} review.\n"), "review-thing")], []).ok).toBe(true);
+});

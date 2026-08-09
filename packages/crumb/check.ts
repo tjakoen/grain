@@ -3,6 +3,7 @@
 // is a later piece; a running host validates targets at tour time. PLAN.md.) Pure over the
 // loader's output so it's testable without spawning a process.
 import { loadTours, type LoadedTour } from "./loader.ts";
+import { templateTokens } from "./core/prompt.ts";
 
 export interface CheckResult { ok: boolean; lines: string[]; }
 
@@ -18,12 +19,25 @@ function devStepProblems(tour: LoadedTour["tour"]): string[] {
     .map((s) => `    steps: "${s.surface}" is a dev step with no review and no status, so Review mode shows nothing for it`);
 }
 
+// An ask whose id never appears in the template is a question with nowhere to go: the reviewer types
+// an answer and the composed prompt does not contain it. The parser cannot call this an error (a
+// template referencing an unknown token is the mirror-image case, and it IS a parse error), so the
+// direction that leaves a field silently unused is caught here.
+function promptProblems(tour: LoadedTour["tour"]): string[] {
+  const card = tour.prompt;
+  if (!card || card.template === "") return [];
+  const used = new Set(templateTokens(card.template));
+  return card.asks
+    .filter((a) => !used.has(a.id))
+    .map((a) => `    prompt: ask "${a.id}" is never used by the template, so its answer is thrown away`);
+}
+
 export function checkLoaded(tours: LoadedTour[], duplicates: string[]): CheckResult {
   const lines: string[] = [];
   let problems = 0;
   for (const dup of duplicates) { lines.push(`✗ duplicate tour id "${dup}" (two files fold to the same stem)`); problems++; }
   for (const { tour, errors } of tours) {
-    const devProblems = devStepProblems(tour);
+    const devProblems = [...devStepProblems(tour), ...promptProblems(tour)];
     if (errors.length === 0 && devProblems.length === 0) { lines.push(`✓ ${tour.id} — ${tour.steps.length} step(s), ${tour.mode}`); continue; }
     lines.push(`✗ ${tour.id}`);
     for (const e of errors) { lines.push(`    ${e.field}: ${e.message}`); problems++; }

@@ -40,14 +40,30 @@ same component with `data-mode` flipped.
 
 ## The one design law
 
-**Tours are markdown data. CRUMB is a projection. The tour never writes to the app.**
+**Tours are markdown data. CRUMB is a projection. A tour writes only through the door, and never
+submits.**
+
+> **Amended 2026-08-09** (owner call), from "the tour never writes to the app". The wording was
+> load-bearing for two guarantees, and both survive the amendment: **no privileged back channel** and
+> **no submit**. What it was blocking was a prefilled demo, where the reviewer arrives with the form
+> already filled and judges the change by looking at it. A prefill raised as a `field.set` Intent
+> crosses the same door as everything else, so it inherits the accepts check, the refusal on an
+> unregistered surface, the spotlight bracket, the timeline entry and the grade that settles the
+> moment the human types. There is no submit verb in the vocabulary at all, so a tour cannot send a
+> form even by mistake. What the law now forbids by name is the shortcut: `crumb-live.js` must never
+> assign `el.value`, or touch app state any other way that skips the door. Feasibility audit:
+> `tjakoen.github.io/docs/CRUMB-PREFILL-FEASIBILITY-2026-08-09.md`.
 
 - Tours are markdown with minimal frontmatter (below). The AI authors them with native tools — zero
   new workflow, zero plugin, zero API. (Same law as PROOF's plans, MILL's pages, the static export:
   projection, never fork.)
 - A tour **targets** existing surfaces by their `data-surface="kind:id"` address and **routes**
   between them with the existing `navigate` RenderOp. It highlights, it explains, it collects a
-  verified/flagged mark — it never mutates app state.
+  verified/flagged mark. Where it changes app state at all it does so through the one door, with a
+  verb that exists, on a surface the page registered.
+- The **prompt card** (`## prompt`) is the one place a tour takes input, and it still writes nothing:
+  the answers compose into text in the browser, and the destination is a URL template the tour
+  declares. No form submit, no fetch, no clipboard.
 - Delete CRUMB and the tours stay readable markdown; the app is untouched. The tour is a viewport.
 
 ## Reuse, don't rebuild (GRAIN lessons 1 & 8 — this is most of the design)
@@ -177,6 +193,23 @@ a `devDependency`**, never a runtime dep. Internal deps (`grain`, `mill`) are `w
   tour navigates for real and a param left in the URL would reset it to its intro card at every hop.
   Gate: portfolio e2e, `crumb-review-tour.e2e.ts`, covering the link and the host's own params
   surviving it.
+- **B7a — the reload loop, ended** (built 2026-08-09). `resume()` compared the whole target against
+  `location.pathname`, so a step whose `at` carried a query string or a fragment could never match:
+  it navigated, the page loaded, and it navigated again, forever. The decision moved into
+  `core/nav.ts` (`needsNavigation`, unit tested) and `crumb-live.js` mirrors it verbatim under a
+  drift guard, because a browser-native module served as a host asset cannot import a `.ts` sibling.
+  The target is now assigned WHOLE, so a step can declare query state and reach it in one navigation.
+  This is what makes presetting a page through the host's own URL possible at all.
+- **B7b — the prompt card** (built 2026-08-09). A tour may end with a reserved `## prompt` section:
+  `- ask: <id> | <question>` lines, one `- template:` (with `\n` for line breaks), and an optional
+  `- handoff:` URL template. The client renders it as the state after the last step, composes the
+  answers into text live, and offers that text: a readonly field that selects on focus, plus a
+  handoff button when the host has loaded grain's `handoff.js`. `check.ts` fails an ask the template
+  never uses, and the parser reports a template token that is not an ask. The heading is reserved
+  safely: `prompt` is not one of grain's surface kinds, so it can never collide with a real address.
+  Gate: `core/prompt.test.ts` + `crumb-live.test.ts` (drift + the no-submit assertions) + a browser
+  walk of both presentations. The portfolio e2e waits on the publish, since the portfolio consumes a
+  published copy rather than this source.
 - **B6 — docs + a published note.** CLAUDE/README/AGENTS; fold into ROADMAP as a new track; a
   companion note in `tjakoen.github.io/notes/` (PROOF-style "where were we").
 

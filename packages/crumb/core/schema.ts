@@ -7,9 +7,11 @@
 import { parseFrontmatter } from "@tjakoen/mill/core/frontmatter.ts";
 import type { Frontmatter, FrontmatterValue } from "@tjakoen/mill/core/types.ts";
 import {
-  TOUR_MODES, VERIFICATION_STATUSES,
+  TOUR_MODES, VERIFICATION_STATUSES, PROMPT_SECTION,
   type Tour, type Step, type VerificationStatus, type ParsedTour, type TourError,
+  type PromptCard, type Ask,
 } from "./types.ts";
+import { templateTokens } from "./prompt.ts";
 
 // ---- frontmatter coercion (MILL emits string | string[]) --------------------
 function asString(v: FrontmatterValue | undefined): string | undefined {
@@ -25,6 +27,11 @@ function asString(v: FrontmatterValue | undefined): string | undefined {
 const STEP_HEADING = /^##\s+(.+?)\s*$/;                      // `## nav:/notes`
 const META = /^\s*[-*]\s+(at|review|status|verify)\s*:\s*(.*)$/i;   // `- verify: open the drawer`
 const STEP_META_KEYS = new Set(["at", "review", "status", "verify"]);
+// The `## prompt` section has its own three keys, kept OUT of the step grammar so neither can eat
+// the other's lines: a stray `- ask:` inside a step stays visible prose instead of vanishing.
+const ASK = /^\s*[-*]\s+ask\s*:\s*(.*)$/i;                   // `- ask: what-broke | What looked off?`
+const PROMPT_META = /^\s*[-*]\s+(template|handoff)\s*:\s*(.*)$/i;
+const ASK_ID = /^[a-z0-9][a-z0-9_-]*$/i;
 
 interface RawStep { surface: string; lines: string[]; }
 
@@ -45,6 +52,49 @@ function splitBody(body: string): { intro: string; blocks: RawStep[] } {
     }
   }
   return { intro: introLines.join("\n").trim(), blocks };
+}
+
+// Parse the reserved `## prompt` block: `- ask: <id> | <label>` lines, one `- template:`, an optional
+// `- handoff:`, and whatever prose is left as the card's intro. `\n` in a template is a real newline,
+// because a prompt worth pasting is usually more than one line and MILL's frontmatter subset has no
+// place to put a block of text.
+function toPromptCard(raw: RawStep, errors: TourError[]): PromptCard {
+  const asks: Ask[] = [];
+  const seen = new Set<string>();
+  const intro: string[] = [];
+  let template = "";
+  let handoff: string | null = null;
+
+  for (const line of raw.lines) {
+    const a = line.match(ASK);
+    if (a) {
+      const [rawId, ...rest] = a[1].split("|");
+      const id = (rawId ?? "").trim();
+      const label = rest.join("|").trim();
+      if (!ASK_ID.test(id)) { errors.push({ field: "prompt.ask", message: `"${a[1].trim()}" is not \`<id> | <label>\` with a token-safe id; ignoring` }); continue; }
+      if (label === "") { errors.push({ field: "prompt.ask", message: `ask "${id}" has no question after the "|"; ignoring` }); continue; }
+      if (seen.has(id)) { errors.push({ field: "prompt.ask", message: `duplicate ask id "${id}"; ignoring the second` }); continue; }
+      seen.add(id);
+      asks.push({ id, label });
+      continue;
+    }
+    const m = line.match(PROMPT_META);
+    if (m) {
+      if (m[1].toLowerCase() === "template") template = m[2].trim().replaceAll("\\n", "\n");
+      else handoff = m[2].trim() || null;
+      continue;
+    }
+    intro.push(line);
+  }
+
+  if (template === "") errors.push({ field: "prompt.template", message: "the prompt section has no `- template:` line, so there is nothing to hand back" });
+  else {
+    const unknown = templateTokens(template).filter((t) => t !== "title" && t !== "tour" && !seen.has(t));
+    for (const t of unknown)
+      errors.push({ field: "prompt.template", message: `"{${t}}" is not an ask id (or \`title\`/\`tour\`), so it stays in the composed text as written` });
+  }
+
+  return { intro: intro.join("\n").trim(), asks, template, handoff };
 }
 
 function toStep(raw: RawStep, index: number, errors: TourError[]): Step {
@@ -99,7 +149,14 @@ export function parseTour(raw: string, id: string): ParsedTour {
     else errors.push({ field: "route", message: `"${routeRaw}" is not an absolute pathname (must start with "/"); this tour has no navigable entry route` });
   }
   const { intro, blocks } = splitBody(body);
-  const steps = blocks.map((b, i) => toStep(b, i, errors));
+  // The reserved section is pulled out BEFORE the steps are built, so `## prompt` is never a step
+  // (and a tour that is nothing but a prompt card still reports "no steps", which is right: a card
+  // with no walk in front of it is not a tour).
+  const promptBlocks = blocks.filter((b) => b.surface.toLowerCase() === PROMPT_SECTION);
+  if (promptBlocks.length > 1) errors.push({ field: "prompt", message: `${promptBlocks.length} \`## ${PROMPT_SECTION}\` sections; using the first` });
+  const prompt = promptBlocks[0] ? toPromptCard(promptBlocks[0], errors) : null;
+
+  const steps = blocks.filter((b) => b.surface.toLowerCase() !== PROMPT_SECTION).map((b, i) => toStep(b, i, errors));
   if (steps.length === 0) errors.push({ field: "steps", message: "no `## <surface>` steps — a tour needs at least one" });
 
   const tour: Tour = {
@@ -109,6 +166,7 @@ export function parseTour(raw: string, id: string): ParsedTour {
     route,
     intro,
     steps,
+    prompt,
   };
   return { tour, errors };
 }

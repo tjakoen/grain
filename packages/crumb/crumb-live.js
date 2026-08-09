@@ -25,7 +25,18 @@ const PREFIX = (document.documentElement.dataset.crumbPrefix || "/crumb").replac
 
 function getState() { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } }
 function setState(s) { if (s) sessionStorage.setItem(KEY, JSON.stringify(s)); else sessionStorage.removeItem(KEY); }
-const routeOf = (p) => (p.replace(/\/+$/, "") || "/");
+// MIRRORED from core/nav.ts, verbatim, and drift-guarded by crumb-live.test.ts: this module is
+// browser-native and served as a host asset, so it cannot import a .ts sibling (its one import is
+// the host-served /scripts/ai-spotlight.js). See core/nav.ts for why the decision is not just a
+// pathname compare: a target carrying query or fragment state used to reload forever.
+const routeOf = (pathname) => (pathname.replace(/\/+$/, "") || "/");
+function needsNavigation(target, here) {
+  const cut = target.search(/[?#]/);
+  const path = routeOf(cut < 0 ? target : target.slice(0, cut));
+  const rest = cut < 0 ? "" : target.slice(cut);
+  if (path !== routeOf(here.pathname)) return true;
+  return rest !== "" && rest !== here.search + here.hash;
+}
 // A relative or absent route/at is not a navigable pathname — a host with nothing sensible to
 // go to (a hash-router SPA under one project-page subpath, say) declares no route at all, and
 // this is the ONE gate that decides whether resume() is allowed to call location.assign. Trust
@@ -46,6 +57,63 @@ async function fetchTour(id) {
 // A tour offers the demo|dev toggle only when it actually carries review content — otherwise the
 // flip would be a no-op switch (a step's review/verify/status is what dev mode adds over demo).
 const hasDevContent = (tour) => tour.steps.some((s) => s.review || s.verify || s.status);
+// The card index: a tour with a `## prompt` section has one state past its last step.
+const lastIndex = (tour) => tour.steps.length - (tour.prompt ? 0 : 1);
+const isPromptIndex = (tour, idx) => !!tour.prompt && idx === tour.steps.length;
+
+// ---- the prompt card's answers (in memory, deliberately) --------------------
+// The card is the one place a tour takes input, and it does not navigate, so the answers do not need
+// to survive a page load. Keeping them out of sessionStorage also keeps half-written review notes out
+// of a store the rest of the site can read.
+const answerStore = new Map();                     // tourId -> { askId: text }
+const answersOf = (id) => answerStore.get(id) || {};
+function setAnswer(id, ask, text) { answerStore.set(id, { ...answersOf(id), [ask]: text }); }
+
+// MIRRORED from core/prompt.ts, verbatim, drift-guarded by crumb-live.test.ts (same reason as
+// needsNavigation above: this module cannot import a .ts sibling from a host asset path).
+const PROMPT_TOKEN = /\{([a-z0-9][a-z0-9_-]*)\}/gi;
+function composePrompt(template, tour, answers) {
+  return template.replace(PROMPT_TOKEN, (whole, token) => {
+    if (token === "title") return tour.title;
+    if (token === "tour") return tour.id;
+    const answer = answers[token];
+    return answer && answer.trim() !== "" ? answer.trim() : whole;
+  });
+}
+
+// The card body, shared by both presentations (the class prefix is the only difference, the way the
+// step body already works). It collects answers, composes text, and offers it: no submit, no write to
+// the app, and the destination is whatever URL template the tour declared.
+function promptBody(tour, p) {
+  const card = tour.prompt;
+  const answers = answersOf(tour.id);
+  const composed = composePrompt(card.template, tour, answers);
+  const fields = card.asks.map((a) =>
+    `<label class="${p}__ask"><span class="${p}__asklabel">${esc(a.label)}</span>` +
+    `<textarea class="${p}__askinput" rows="2" data-crumb-ask="${esc(a.id)}">${esc(answers[a.id] || "")}</textarea>` +
+    `</label>`).join("");
+  // grain's handoff.js is the vendor-neutral way to carry text into another service, and it is a
+  // host script: when the host has not loaded it, the button would be inert, so it is not rendered
+  // at all and the text below stands on its own.
+  const handoff = card.handoff && window.grainHandoff
+    ? `<button class="btn" data-handoff data-handoff-url="${esc(card.handoff)}" data-handoff-source=".${p}__composed">Open in a session</button>`
+    : "";
+  return `${card.intro ? `<p class="${p}__say">${esc(card.intro)}</p>` : ""}${fields}` +
+    `<label class="${p}__ask"><span class="${p}__asklabel">The prompt to paste back</span>` +
+    `<textarea class="${p}__composed" rows="6" readonly>${esc(composed)}</textarea></label>${handoff}`;
+}
+
+// Live recompose on every keystroke, without re-rendering the card (a re-render would steal the
+// caret out of the field being typed into).
+function wirePrompt(root, tour) {
+  root.querySelectorAll("[data-crumb-ask]").forEach((el) => (el.oninput = () => {
+    setAnswer(tour.id, el.getAttribute("data-crumb-ask"), el.value);
+    const out = root.querySelector("[readonly]");
+    if (out) out.value = composePrompt(tour.prompt.template, tour, answersOf(tour.id));
+  }));
+  const out = root.querySelector("[readonly]");
+  if (out) out.onfocus = () => out.select();       // no clipboard permission needed to take it
+}
 const surfaceLabel = (s) => (s.surface || "").replace(/^nav:|^note:/, "").replace(/[:/]+/g, " ").trim() || "step";
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -94,19 +162,22 @@ function placeCard(card, surfaceEl) {
 function renderPopover(tour, idx, mode) {
   const n = tour.steps.length;
   const intro = idx < 0;
-  const step = intro ? null : tour.steps[idx];
+  const prompt = isPromptIndex(tour, idx);
+  const step = intro || prompt ? null : tour.steps[idx];
   const p = popover();
   p.setAttribute("data-mode", mode);
   const dev = mode === "dev";
-  const progress = intro ? "" : `<span class="crumb-pop__count">${idx + 1} / ${n}</span>`;
+  const progress = intro || prompt ? "" : `<span class="crumb-pop__count">${idx + 1} / ${n}</span>`;
   const statusChip = dev && step && step.status
     ? `<span class="crumb-pop__status" data-status="${esc(step.status)}">${esc(step.status.replace(/-/g, " "))}</span>` : "";
   const body = intro
     ? `<p class="crumb-pop__say">${esc(tour.intro || "Take a quick guided tour.")}</p>`
-    : `${dev && step.review ? `<p class="crumb-pop__review">${esc(step.review)}</p>` : ""}` +
-      `<p class="crumb-pop__say">${esc(step.say)}</p>` +
-      `${dev && step.verify ? `<p class="crumb-pop__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
-  const nextLabel = intro ? "Start" : (idx >= n - 1 ? "Finish" : "Next");
+    : prompt
+      ? promptBody(tour, "crumb-pop")
+      : `${dev && step.review ? `<p class="crumb-pop__review">${esc(step.review)}</p>` : ""}` +
+        `<p class="crumb-pop__say">${esc(step.say)}</p>` +
+        `${dev && step.verify ? `<p class="crumb-pop__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
+  const nextLabel = intro ? "Start" : (idx >= lastIndex(tour) ? "Finish" : "Next");
   p.innerHTML =
     `<div class="crumb-pop__head">` +
       `<span class="crumb-pop__title">${esc(tour.title)}</span>${statusChip}${progress}` +
@@ -118,8 +189,9 @@ function renderPopover(tour, idx, mode) {
       `<button class="btn" data-crumb="next">${nextLabel}</button>` +
     `</div>`;
   wireControls(p);
+  if (prompt) wirePrompt(p, tour);
   if (!p.open) p.show();          // non-modal: keeps the lit surface clickable (passthrough)
-  const surfaceEl = lightStep(step, intro);
+  const surfaceEl = lightStep(step, intro || prompt);
   requestAnimationFrame(() => placeCard(p, surfaceEl));
   p.querySelector('[data-crumb="next"]').focus({ preventScroll: true });
 }
@@ -143,7 +215,8 @@ function frameRoot() {
 function renderFrame(tour, idx, mode) {
   const n = tour.steps.length;
   const intro = idx < 0;
-  const step = intro ? null : tour.steps[idx];
+  const prompt = isPromptIndex(tour, idx);
+  const step = intro || prompt ? null : tour.steps[idx];
   const dev = mode === "dev";
   const showModes = hasDevContent(tour);
   const f = frameRoot();
@@ -167,21 +240,32 @@ function renderFrame(tour, idx, mode) {
         `<span class="crumb-sidebar__num">${i + 1}</span>` +
         `<span class="crumb-sidebar__label">${esc(surfaceLabel(s))}</span>${chip}` +
       `</button></li>`;
-  }).join("");
+  }).join("") +
+  // the prompt card gets its own rail entry, so a reviewer can see the walk ends in a question
+  // rather than discovering it by pressing Next on the last step.
+  (tour.prompt
+    ? `<li class="crumb-sidebar__step"${prompt ? " data-current" : ""}>` +
+        `<button class="crumb-sidebar__goto" data-crumb-goto="${n}">` +
+          `<span class="crumb-sidebar__num">${n + 1}</span>` +
+          `<span class="crumb-sidebar__label">hand it back</span>` +
+        `</button></li>`
+    : "");
 
-  // the content pane: the current step (or the intro).
+  // the content pane: the current step (or the intro, or the prompt card).
   const detail = intro
     ? `<p class="crumb-sidebar__say">${esc(tour.intro || "Take a quick guided tour.")}</p>`
-    : `${dev && step.review ? `<p class="crumb-sidebar__review">${esc(step.review)}</p>` : ""}` +
-      `<p class="crumb-sidebar__say">${esc(step.say)}</p>` +
-      `${dev && step.verify ? `<p class="crumb-sidebar__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
-  const nextLabel = intro ? "Start" : (idx >= n - 1 ? "Finish" : "Next");
+    : prompt
+      ? promptBody(tour, "crumb-sidebar")
+      : `${dev && step.review ? `<p class="crumb-sidebar__review">${esc(step.review)}</p>` : ""}` +
+        `<p class="crumb-sidebar__say">${esc(step.say)}</p>` +
+        `${dev && step.verify ? `<p class="crumb-sidebar__verify"><b>Try it:</b> ${esc(step.verify)}</p>` : ""}`;
+  const nextLabel = intro ? "Start" : (idx >= lastIndex(tour) ? "Finish" : "Next");
 
   f.innerHTML =
     `<div class="crumb-frame__edge" aria-hidden="true"></div>` +
     `<header class="crumb-frame__bar">` +
       `<span class="crumb-frame__title">${esc(tour.title)}</span>` +
-      `${intro ? "" : `<span class="crumb-frame__count">${idx + 1} / ${n}</span>`}` +
+      `${intro || prompt ? "" : `<span class="crumb-frame__count">${idx + 1} / ${n}</span>`}` +
       `${modeToggle}` +
       `<button class="crumb-frame__x btn" data-variant="soft" data-crumb="end">Exit tour</button>` +
     `</header>` +
@@ -196,7 +280,8 @@ function renderFrame(tour, idx, mode) {
     `</aside>`;
 
   wireControls(f);
-  lightStep(step, intro);
+  if (prompt) wirePrompt(f, tour);
+  lightStep(step, intro || prompt);
   const nb = f.querySelector('[data-crumb="next"]');
   if (nb) nb.focus({ preventScroll: true });
 }
@@ -222,8 +307,9 @@ async function resume() {
   if (!st) return;
   let tour;
   try { tour = await fetchTour(st.id); } catch (e) { console.warn(e); setState(null); return; }
-  if (st.step >= tour.steps.length) { end(); return; }
-  const step = st.step >= 0 ? tour.steps[st.step] : null;
+  if (st.step > lastIndex(tour)) { end(); return; }
+  // the prompt card (index === steps.length) has no surface and no route: it renders where it stands.
+  const step = st.step >= 0 && !isPromptIndex(tour, st.step) ? tour.steps[st.step] : null;
   // step.at wins when the step names one; the intro (step -1) falls back to the tour's entry
   // route; any other step with no `at` has nothing to navigate to (stay put — that's the
   // documented "global surface" contract, not new behavior). isRoutable is what makes a relative
@@ -231,10 +317,10 @@ async function resume() {
   // tour.route unconditionally, so Back from step 0 to the intro card forced a pathname navigation
   // even on a host — a hash-router SPA under a project-page subpath — with no sensible target).
   const target = step && step.at ? step.at : (st.step < 0 ? tour.route : null);
-  if (isRoutable(target)) {
-    const need = routeOf(target);
-    if (need !== routeOf(location.pathname)) { location.assign(need); return; }   // real nav; resume() re-fires on load
-  }
+  // The target is assigned WHOLE (query and fragment included); the decision to go is what compares
+  // pathnames. Assigning the normalized pathname instead would drop declared query state, and
+  // comparing the whole target against a bare pathname is what caused the reload loop (core/nav.ts).
+  if (isRoutable(target) && needsNavigation(target, location)) { location.assign(target); return; }   // real nav; resume() re-fires on load
   render(tour, st.step, st);
 }
 
@@ -242,7 +328,7 @@ async function go(step) {
   const st = getState();
   if (!st) return;
   const tour = await fetchTour(st.id);
-  if (step >= tour.steps.length) { end(); return; }
+  if (step > lastIndex(tour)) { end(); return; }
   setState({ ...st, step });
   await resume();
 }
@@ -264,6 +350,8 @@ function teardownFrame() {
   document.body.removeAttribute("data-crumb-frame");
 }
 function end() {
+  const st = getState();
+  if (st) answerStore.delete(st.id);   // review notes die with the tour; nothing outlives the walk
   setState(null);
   if (spot) spot.off();
   if (pop && pop.open) pop.close();

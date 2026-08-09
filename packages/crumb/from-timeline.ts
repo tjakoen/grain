@@ -115,6 +115,9 @@ export function tourFromTimeline(entries: LogEntry[], meta: TourMeta): Tour {
     intro: `Auto-generated from the interaction timeline: ${n} surface${n === 1 ? "" : "s"} the AI ` +
       `touched, walk each and mark it verified.`,
     steps,
+    // No prompt card: a projection of the timeline has no questions of its own to ask, and inventing
+    // some would put words in the reviewer's mouth. An author adds a `## prompt` section by hand.
+    prompt: null,
   };
 }
 

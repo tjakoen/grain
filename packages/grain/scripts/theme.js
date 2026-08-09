@@ -27,7 +27,7 @@
   const html = document.documentElement;
   const store = (() => { try { return window.localStorage; } catch { return null; } })();
   const get = (k) => { try { return store && store.getItem(k); } catch { return null; } };
-  const put = (k, v) => { try { if (store) v == null ? store.removeItem(k) : store.setItem(k, v); } catch {} };
+  const put = (k, v) => { try { if (store) { if (v == null) store.removeItem(k); else store.setItem(k, v); } } catch { /* private mode — the pref just doesn't persist */ } };
 
   // ---- color scheme (light | dark | auto; auto drops the attr → follow the OS) --------------
   function setScheme(s) {

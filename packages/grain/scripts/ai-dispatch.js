@@ -1,4 +1,4 @@
-// /frontend/scripts/ai-dispatch.js — the dispatcher island (docs/AI-INTERFACE.md §3).
+// grain/scripts/ai-dispatch.js — the dispatcher island (docs/AI-INTERFACE.md §3).
 //
 // The ONE accepted bit of client JS. Two jobs:
 //   1. Turn [data-action] interactions (click, or Enter in an input) into POST /intent
@@ -53,6 +53,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // dispatcher is the LAST line of defense before a value lands in a real form field, so it
   // re-checks even though the reasoner already validated.
   const FIELD_VALUE_CAP = 2000;
+  // eslint-disable-next-line no-control-regex
   const FIELD_VALUE_BAD_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/;
   const SAFE_FIELD_VALUE = (v) => typeof v === "string" && v.length <= FIELD_VALUE_CAP && !FIELD_VALUE_BAD_CHARS.test(v);
   // A `navigate` op tears the page down — irreversible, so give any in-flight settle (the
@@ -77,6 +78,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   const MD_LIST_ITEM_RE = /^[-*]\s+/;
   const MD_BLOCK_SPLIT_RE = /\n{2,}/;
   // Placeholder delimiter for pulled-out code spans (below) — \x00 can't occur in real chat text.
+  // eslint-disable-next-line no-control-regex
   const MD_CODE_PLACEHOLDER_RE = /\x00(\d+)\x00/g;
   function mdInline(escaped) {
     // Code spans are pulled OUT first (placeholdered), so their literal contents can never be
@@ -188,6 +190,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     const sh = document.querySelector(".app-shell");
     if (sh) { sh.removeAttribute("data-acting"); sh.removeAttribute("data-chat-open"); sh.removeAttribute("data-console-open"); }   // hand back: everything resets
     clearActing(spotlit); spotlit = null;
+    // eslint-disable-next-line unicorn/no-useless-spread -- the copy IS load-bearing: clearTrigger deletes from pendingTriggers while we iterate it
     for (const t of [...pendingTriggers.keys()]) clearTrigger(t);   // backstop: turn over → nothing stays "working"
   }
 
@@ -253,6 +256,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (pendingTriggers.size) watchdogTimer = setTimeout(watchdogFire, WATCHDOG_MS);
   }
   function watchdogFire() {
+    // eslint-disable-next-line unicorn/no-useless-spread -- the copy IS load-bearing: clearTrigger deletes from pendingTriggers while we iterate it
     for (const [target, trg] of [...pendingTriggers.entries()]) {
       trg.removeAttribute("data-state"); void trg.offsetWidth;   // restart the flash
       trg.setAttribute("data-state", "error");
@@ -299,7 +303,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
         applyType(el, op);
         return;
       case "spotlight":                              // the AI as actor: dim + light the target
-        op.active ? spotlightOn(op.target, op.click) : spotlightOff();
+        if (op.active) spotlightOn(op.target, op.click); else spotlightOff();
         return;
       case "navigate":                                // AI-directed browser navigation (contract.ts's `navigate` op)
         if (typeof op.href !== "string" || !SAFE_NAV_HREF.test(op.href)) {
@@ -353,7 +357,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
       el.setAttribute("data-commit", "pending");
       body = el.querySelector(".stream-body");
       // OVERWRITE (op.back) re-enters an already-written surface → keep its text so the
-      // the AI can backspace it. A fresh write (text, no back) starts empty (wipes any placeholder).
+      // AI can backspace it. A fresh write (text, no back) starts empty (wipes any placeholder).
       if (typeof op.back === "number") body.textContent = prev;
     }
     if (typeof op.back === "number" && op.back > 0)                 // the AI revising: delete trailing chars
@@ -484,7 +488,7 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (trigger) { clearTrigger(target); trigger.setAttribute("data-commit", "pending"); pendingTriggers.set(target, trigger); armWatchdog(); }
     const send = () => sendIntent({ source: "user", session, screen, surface: target, action, payload })
       .catch(() => { clearTrigger(target); markOnline(false); });   // couldn't reach the door (timeout/network) → undo + honest offline
-    sseIsOpen ? send() : sseReady.then(send);                    // wait for the stream so no early ops are lost
+    if (sseIsOpen) send(); else sseReady.then(send);              // wait for the stream so no early ops are lost
   }
 
   // fire a [data-action] trigger (a button/link with a verb) through the ONE door. Shared by page

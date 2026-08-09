@@ -1,4 +1,4 @@
-// /app/ai/interaction-layer.ts — THE ONE DOOR (the single internal AI interaction
+// grain/ai/interaction-layer.ts — THE ONE DOOR (the single internal AI interaction
 // layer; MVP §"One interface, one path"). Every Intent — from a human click or an
 // AI decision — enters here, is validated against the closed vocabulary, handed to
 // the reasoner (the single writer), and the resulting RenderOps are PUSHED back to

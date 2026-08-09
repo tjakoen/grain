@@ -6,7 +6,7 @@ import { parseFrontmatter } from "@tjakoen/mill/core/frontmatter.ts";
 import type { Frontmatter, FrontmatterValue } from "@tjakoen/mill/core/types.ts";
 import {
   STATUSES, OWNERS,
-  type Plan, type PlanStatus, type PlanOwner, type PlanTask, type ParsedPlan, type PlanError,
+  type Plan, type PlanTask, type ParsedPlan, type PlanError,
 } from "./types.ts";
 
 // ---- frontmatter coercion (the tiny subset MILL emits: string | string[]) ---
@@ -50,8 +50,8 @@ export function parsePlan(raw: string, id: string): ParsedPlan {
   const { data, body } = parseFrontmatter(raw);
   const errors: PlanError[] = [];
 
-  const status = validateEnum(data, "status", STATUSES, "todo", errors) as PlanStatus;
-  const owner = validateEnum(data, "owner", OWNERS, "ai", errors) as PlanOwner;
+  const status = validateEnum(data, "status", STATUSES, "todo", errors);
+  const owner = validateEnum(data, "owner", OWNERS, "ai", errors);
 
   // `id` in frontmatter is optional; when present it should match the filename stem, or the
   // address the rest of the stack links to (`depends: [that-id]`) silently won't resolve.

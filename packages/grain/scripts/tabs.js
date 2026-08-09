@@ -103,7 +103,7 @@
       if (path !== here) return render();
       // closing the page you're ON: go to the neighbor tab, else the first pinned tab, else home
       const next = list[Math.min(i, list.length - 1)]
-        || (strip.querySelector("a[data-pinned]") || {}).getAttribute?.("href") || "/";
+        || strip.querySelector("a[data-pinned]")?.getAttribute("href") || "/";
       location.assign(next);
     };
 
@@ -112,7 +112,7 @@
       list = [];
       save(list);
       if (!wasHere) return render();
-      location.assign((strip.querySelector("a[data-pinned]") || {}).getAttribute?.("href") || "/");
+      location.assign(strip.querySelector("a[data-pinned]")?.getAttribute("href") || "/");
     };
 
     const allBtns = document.querySelectorAll('[data-shell="tabs-close-all"]');

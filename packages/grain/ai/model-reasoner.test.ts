@@ -135,7 +135,7 @@ test("say.set → the reply streams straight into the reflection surface (no cha
   const d = await r.decide(intent({ action: "say.set", surface: "reflection", payload: { text: "clear thursday" } }), tools);
 
   expect(d.ok).toBe(true);
-  expect(targetsOf(ops.filter((o) => o.op === "type"))).toEqual(new Array([...("Noted: clear Thursday.")].length + 1).fill("reflection"));
+  expect(targetsOf(ops.filter((o) => o.op === "type"))).toEqual(Array.from<string>({ length: [...("Noted: clear Thursday.")].length + 1 }).fill("reflection"));
   expect(ops.every((o) => o.target === "reflection")).toBe(true);       // no chat-log bubble machinery
 });
 

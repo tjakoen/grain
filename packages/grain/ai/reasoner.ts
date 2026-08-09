@@ -1,4 +1,4 @@
-// /app/ai/reasoner.ts — the reasoner boundary (the PROJECT-PLAN §10c `Model` seam)
+// grain/ai/reasoner.ts — the reasoner boundary (the PROJECT-PLAN §10c `Model` seam)
 // plus a stub standing in for the real cloud/local model during frontend work.
 //
 // The reasoner is the SINGLE WRITER: it decides, then writes + renders through
@@ -69,7 +69,7 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
       // arrives at grain with a caret; `done` settles it to clean (DESIGN-SYSTEM §3).
       // Shared by both text verbs so the input and the button feel the same.
       const stream = async (surface: string, line: string, done = true): Promise<Decision> => {
-        for (const ch of [...line]) {                       // spread = per code point (handles "—")
+        for (const ch of line) {                             // for-of on a string already iterates per code point (handles "—")
           if (tools.cancelled()) break;                     // stop promptly at a clean boundary…
           await tools.delay(thinkMs > 0 ? TYPE_MS : 0);
           tools.emit({ target: surface, op: "type", text: ch, provenance: "ai", commit: "pending" });

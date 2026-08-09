@@ -1,4 +1,4 @@
-// /app/ai/contract.ts — the action vocabulary contract (see https://tjakoen.github.io/grain/docs/ai-interface).
+// grain/ai/contract.ts — the action vocabulary contract (see https://tjakoen.github.io/grain/docs/ai-interface).
 //
 // Two closed registries + three envelopes. Both a human interaction and an AI
 // decision become the SAME Intent, flow through the SAME door, and come back as
@@ -224,6 +224,7 @@ export const isSafeNavigateHref = (href: unknown): href is string =>
 /** Cap on a field.set value — a prefill is a message draft, not a document. */
 export const FIELD_VALUE_CAP = 2000;
 /** Plain text only: no C0 control chars except \n and \t (a textarea needs both). */
+// eslint-disable-next-line no-control-regex
 const FIELD_VALUE_BAD_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/;
 export const isSafeFieldValue = (v: unknown): v is string =>
   typeof v === "string" && v.length <= FIELD_VALUE_CAP && !FIELD_VALUE_BAD_CHARS.test(v);

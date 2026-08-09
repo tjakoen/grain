@@ -19,7 +19,7 @@
   "use strict";
   if (window.grain && window.grain.terminal) return;   // idempotent
 
-  const PROMPT = "❯";                              // ❯
+  const PROMPT = "❯";
   const HISTORY_KEY = "grain.terminal.history";
   const HISTORY_CAP = 50;
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

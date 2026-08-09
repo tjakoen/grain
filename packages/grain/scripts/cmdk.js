@@ -139,7 +139,7 @@
   function init() {
     build();
     document.addEventListener("keydown", (ev) => {
-      if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "k") { ev.preventDefault(); isOpen() ? close() : open(); }
+      if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "k") { ev.preventDefault(); if (isOpen()) close(); else open(); }
     });
     // declarative trigger: any [data-cmdk-open] element opens the palette (e.g. the title
     // bar's search field — a button drawn as an input)

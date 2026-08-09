@@ -8,7 +8,7 @@ import { parseFrontmatter } from "@tjakoen/mill/core/frontmatter.ts";
 import type { Frontmatter, FrontmatterValue } from "@tjakoen/mill/core/types.ts";
 import {
   TOUR_MODES, VERIFICATION_STATUSES,
-  type Tour, type TourMode, type Step, type VerificationStatus, type ParsedTour, type TourError,
+  type Tour, type Step, type VerificationStatus, type ParsedTour, type TourError,
 } from "./types.ts";
 
 // ---- frontmatter coercion (MILL emits string | string[]) --------------------
@@ -81,7 +81,7 @@ export function parseTour(raw: string, id: string): ParsedTour {
   const { data, body } = parseFrontmatter(raw);
   const errors: TourError[] = [];
 
-  const mode = validateEnum(data, "mode", TOUR_MODES, "demo", errors) as TourMode;
+  const mode = validateEnum(data, "mode", TOUR_MODES, "demo", errors);
 
   const declaredId = asString(data.id);
   if (declaredId !== undefined && declaredId !== id)

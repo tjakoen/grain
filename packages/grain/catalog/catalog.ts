@@ -7,8 +7,8 @@
 // dropdowns, with a live search filter. Dependency-free: a tiny line parser, no
 // markdown library, no CDN. It reads the filesystem directly (like ai/accepts.ts) and
 // imports nothing from batch — the composition root passes the page-nav routes in.
-import { readdirSync, readFileSync } from "fs";
-import { join } from "path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 interface Panel { label: string; code: string; flat?: boolean; }
 interface Group { label: string; panels: Panel[]; }

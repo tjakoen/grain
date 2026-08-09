@@ -1,11 +1,11 @@
-// /framework/render/accepts.ts — harvest component-declared affordances.
+// grain/ai/accepts.ts — harvest component-declared affordances.
 //
 // Scans each component's .html for `data-kind` + `data-accepts` and returns a
 // kind → action-names map. This is the single source the AI manifest reads, so it
 // can't drift from what the components actually expose (https://tjakoen.github.io/grain/docs/ai-interface §4).
 // Generic: it knows nothing about the app's specific verbs or surfaces.
-import { readdirSync, readFileSync } from "fs";
-import { join } from "path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const KIND = /\bdata-kind=["']([^"']+)["']/;
 const ACCEPTS = /\bdata-accepts=["']([^"']+)["']/;

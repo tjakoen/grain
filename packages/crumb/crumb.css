@@ -238,6 +238,24 @@ body[data-crumb-frame] {
   background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
+/* a decision ask: a closed set as radios, so every option is READ rather than hidden behind a select.
+   A fieldset carries its own margin and border in every browser, and this has to sit flush with the
+   text asks above and below it, so both are cleared and the legend is re-hung as an ordinary label. */
+.crumb-pop__decision, .crumb-sidebar__decision {
+  margin: 0; padding: 0; border: 0;
+}
+.crumb-pop__decision > legend, .crumb-sidebar__decision > legend {
+  padding: 0; margin-bottom: var(--space-1);
+}
+.crumb-pop__option, .crumb-sidebar__option {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-1) 0; font-size: var(--text-sm); cursor: pointer;
+}
+.crumb-pop__option input, .crumb-sidebar__option input { margin: 0; accent-color: var(--accent, currentColor); }
+/* the escape's field only exists once "Something else" is picked; hidden is the client's own toggle */
+.crumb-pop__decision > input[hidden], .crumb-sidebar__decision > input[hidden] { display: none; }
+.crumb-pop__decision > input, .crumb-sidebar__decision > input { margin-top: var(--space-1); }
+
 /* narrow screens: the sidebar becomes a bottom sheet; the host box + edge inset
    from the bottom instead of the side (same values on both, they stay glued) */
 @media (max-width: 720px) {

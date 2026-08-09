@@ -68,14 +68,33 @@ function toPromptCard(raw: RawStep, errors: TourError[]): PromptCard {
   for (const line of raw.lines) {
     const a = line.match(ASK);
     if (a) {
-      const [rawId, ...rest] = a[1].split("|");
-      const id = (rawId ?? "").trim();
-      const label = rest.join("|").trim();
+      // Two fields is a text question; three makes it a DECISION over a closed set. The split is
+      // capped at three so the two-field form keeps its old meaning exactly, pipes in the label and
+      // all. The cost is that a label containing a pipe can no longer be followed by nothing: the
+      // parser reads what comes after it as options. That is the documented shape of the key, and it
+      // is worth the ambiguity because a question mark and a comma list are what authors actually
+      // write, while a piped label was never a thing anyone did.
+      const parts = a[1].split("|");
+      const id = (parts[0] ?? "").trim();
+      const hasOptions = parts.length >= 3;
+      const label = (hasOptions ? parts[1] : parts.slice(1).join("|")).trim();
       if (!ASK_ID.test(id)) { errors.push({ field: "prompt.ask", message: `"${a[1].trim()}" is not \`<id> | <label>\` with a token-safe id; ignoring` }); continue; }
       if (label === "") { errors.push({ field: "prompt.ask", message: `ask "${id}" has no question after the "|"; ignoring` }); continue; }
       if (seen.has(id)) { errors.push({ field: "prompt.ask", message: `duplicate ask id "${id}"; ignoring the second` }); continue; }
+      // A duplicate option is reported and dropped rather than rendered twice: two identical radios
+      // is a control that cannot say which one was picked. An option list that trims away to nothing
+      // degrades to a text field, which is the older, still-valid shape rather than a broken card.
+      const options: string[] = [];
+      if (hasOptions) {
+        for (const rawOption of parts.slice(2).join("|").split(",")) {
+          const option = rawOption.trim();
+          if (option === "") continue;
+          if (options.includes(option)) { errors.push({ field: "prompt.ask", message: `ask "${id}" lists the option "${option}" twice; ignoring the second` }); continue; }
+          options.push(option);
+        }
+      }
       seen.add(id);
-      asks.push({ id, label });
+      asks.push({ id, label, options });
       continue;
     }
     const m = line.match(PROMPT_META);

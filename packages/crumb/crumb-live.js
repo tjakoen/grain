@@ -81,6 +81,43 @@ function composePrompt(template, tour, answers) {
   });
 }
 
+// A free-text ask: the original shape, and still the right one for "what looked wrong here".
+function textField(a, answer, p) {
+  return `<label class="${p}__ask"><span class="${p}__asklabel">${esc(a.label)}</span>` +
+    `<textarea class="${p}__askinput" rows="2" data-crumb-ask="${esc(a.id)}">${esc(answer)}</textarea>` +
+    `</label>`;
+}
+
+// A DECISION ask: a closed set of answers as radios. Why radios rather than a select — the whole
+// value of asking here is that the options are READ, and a select hides every option but one behind
+// a click, which is how a reviewer ends up picking the default because they never saw the rest.
+//
+// The trailing "Something else" is not politeness. A decision card exists precisely for the calls the
+// AI could not make, so the case where none of its options is right is the case most worth catching;
+// without an escape the reviewer's only honest move would be to answer nothing at all. Picking it
+// reveals a text input, and from there it behaves exactly like a text ask.
+//
+// The radio `name` is namespaced by ask id so two decisions on one card do not share a group, and the
+// escape's own input carries the same `data-crumb-ask` id: whichever control is live last wins, which
+// is what makes wirePrompt's one handler enough for both halves.
+const ESCAPE_LABEL = "Something else";
+function decisionField(a, answer, p) {
+  const chosen = a.options.includes(answer) ? answer : null;
+  const escaped = chosen === null && answer !== "";      // an answer that is not one of the options came from the escape
+  const name = `crumb-ask-${a.id}`;
+  const radios = [...a.options, ESCAPE_LABEL].map((option, i) => {
+    const isEscape = i === a.options.length;
+    const on = isEscape ? escaped : chosen === option;
+    return `<label class="${p}__option"><input type="radio" name="${esc(name)}" value="${esc(isEscape ? "" : option)}"` +
+      `${on ? " checked" : ""} data-crumb-pick="${esc(a.id)}"${isEscape ? ` data-crumb-escape="${esc(a.id)}"` : ""}>` +
+      `<span>${esc(option)}</span></label>`;
+  }).join("");
+  return `<fieldset class="${p}__ask ${p}__decision"><legend class="${p}__asklabel">${esc(a.label)}</legend>${radios}` +
+    `<input class="${p}__askinput" type="text" data-crumb-ask="${esc(a.id)}" data-crumb-other="${esc(a.id)}"` +
+    ` value="${esc(escaped ? answer : "")}" placeholder="Say what instead"${escaped ? "" : " hidden"}>` +
+    `</fieldset>`;
+}
+
 // The card body, shared by both presentations (the class prefix is the only difference, the way the
 // step body already works). It collects answers, composes text, and offers it: no submit, no write to
 // the app, and the destination is whatever URL template the tour declared.
@@ -88,10 +125,7 @@ function promptBody(tour, p) {
   const card = tour.prompt;
   const answers = answersOf(tour.id);
   const composed = composePrompt(card.template, tour, answers);
-  const fields = card.asks.map((a) =>
-    `<label class="${p}__ask"><span class="${p}__asklabel">${esc(a.label)}</span>` +
-    `<textarea class="${p}__askinput" rows="2" data-crumb-ask="${esc(a.id)}">${esc(answers[a.id] || "")}</textarea>` +
-    `</label>`).join("");
+  const fields = card.asks.map((a) => (a.options.length ? decisionField(a, answers[a.id] || "", p) : textField(a, answers[a.id] || "", p))).join("");
   // grain's handoff.js is the vendor-neutral way to carry text into another service, and it is a
   // host script: when the host has not loaded it, the button would be inert, so it is not rendered
   // at all and the text below stands on its own.
@@ -106,13 +140,30 @@ function promptBody(tour, p) {
 // Live recompose on every keystroke, without re-rendering the card (a re-render would steal the
 // caret out of the field being typed into).
 function wirePrompt(root, tour) {
+  const out = () => root.querySelector("[readonly]");
+  const recompose = () => {
+    const o = out();
+    if (o) o.value = composePrompt(tour.prompt.template, tour, answersOf(tour.id));
+  };
   root.querySelectorAll("[data-crumb-ask]").forEach((el) => (el.oninput = () => {
     setAnswer(tour.id, el.getAttribute("data-crumb-ask"), el.value);
-    const out = root.querySelector("[readonly]");
-    if (out) out.value = composePrompt(tour.prompt.template, tour, answersOf(tour.id));
+    recompose();
   }));
-  const out = root.querySelector("[readonly]");
-  if (out) out.onfocus = () => out.select();       // no clipboard permission needed to take it
+  // A radio changes on `change`, not `input`, and it never re-renders the card: same reason a text
+  // ask does not (a re-render moves focus off the control the reviewer is still using). Picking a
+  // real option stores it and hides the escape's input; picking the escape clears the stored answer
+  // back to whatever is typed there and shows it, so the composed text always reflects one source.
+  root.querySelectorAll("[data-crumb-pick]").forEach((el) => (el.onchange = () => {
+    const id = el.getAttribute("data-crumb-pick");
+    const other = root.querySelector(`[data-crumb-other="${id}"]`);
+    const isEscape = el.hasAttribute("data-crumb-escape");
+    if (other) other.hidden = !isEscape;
+    setAnswer(tour.id, id, isEscape ? (other ? other.value : "") : el.value);
+    recompose();
+    if (isEscape && other) other.focus();
+  }));
+  const o = out();
+  if (o) o.onfocus = () => o.select();             // no clipboard permission needed to take it
 }
 const surfaceLabel = (s) => (s.surface || "").replace(/^nav:|^note:/, "").replace(/[:/]+/g, " ").trim() || "step";
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

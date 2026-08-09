@@ -18,8 +18,9 @@ test("a `## prompt` section parses into a card and is not a step", () => {
   expect(errors).toEqual([]);
   expect(t.steps.map((s) => s.surface)).toEqual(["nav:drawer"]);
   expect(t.prompt?.asks).toEqual([
-    { id: "looked-off", label: "What did not look right?" },
-    { id: "next", label: "What should change?" },
+    // no third field, so no options: a two-field ask is still a free-text question, unchanged
+    { id: "looked-off", label: "What did not look right?", options: [] },
+    { id: "next", label: "What should change?", options: [] },
   ]);
   expect(t.prompt?.intro).toBe("Tell me what I could not check myself.");
   expect(t.prompt?.template).toContain("\n");            // `\n` in the source is a real newline
@@ -46,7 +47,7 @@ test("malformed and duplicate asks are reported and dropped, the rest survive", 
   const { tour: t, errors } = tour(
     `${WALK}\n## prompt\n- ask: no-question\n- ask: a b | spaces in the id\n- ask: ok | Fine?\n- ask: ok | Again?\n- template: {ok}\n`,
   );
-  expect(t.prompt?.asks).toEqual([{ id: "ok", label: "Fine?" }]);
+  expect(t.prompt?.asks).toEqual([{ id: "ok", label: "Fine?", options: [] }]);
   expect(errors.filter((e) => e.field === "prompt.ask")).toHaveLength(3);
 });
 
@@ -77,4 +78,37 @@ test("composePrompt fills answers and the tour's own fields", () => {
 test("a blank or missing answer leaves its token visible, so a half-answered card still reads", () => {
   const composed = composePrompt("Off: {a}. Next: {b}. Huh: {c}", { id: "t", title: "T" }, { a: "x", b: "   " });
   expect(composed).toBe("Off: x. Next: {b}. Huh: {c}");
+});
+
+// ---- the decision ask: a third pipe-separated field turns a question into a closed choice --------
+// The two-field form has to keep meaning exactly what it meant, because every ask written before this
+// existed is two fields. That is what the first assertion in each of these is really checking.
+
+test("a third field makes an ask a decision, and two fields still means free text", () => {
+  const { tour: t, errors } = tour(
+    `${WALK}\n## prompt\n` +
+    "- ask: lane | Which lane? | gated, human, auto\n" +
+    "- ask: why | Say more\n" +
+    "- template: {lane} because {why}\n",
+  );
+  expect(errors).toEqual([]);
+  expect(t.prompt?.asks).toEqual([
+    { id: "lane", label: "Which lane?", options: ["gated", "human", "auto"] },
+    { id: "why", label: "Say more", options: [] },
+  ]);
+});
+
+test("a duplicate option is reported and dropped, because two identical radios cannot say which was picked", () => {
+  const { tour: t, errors } = tour(
+    `${WALK}\n## prompt\n- ask: lane | Which? | gated, human, gated\n- template: {lane}\n`,
+  );
+  expect(t.prompt?.asks[0].options).toEqual(["gated", "human"]);
+  expect(errors.filter((e) => e.field === "prompt.ask")).toHaveLength(1);
+});
+
+test("an option list that trims away to nothing degrades to a text ask rather than a broken card", () => {
+  const { tour: t } = tour(
+    `${WALK}\n## prompt\n- ask: lane | Which? | , ,\n- template: {lane}\n`,
+  );
+  expect(t.prompt?.asks[0].options).toEqual([]);
 });

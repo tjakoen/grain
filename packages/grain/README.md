@@ -232,7 +232,7 @@ every theme, and verify it still reads in dark.
    (`data-field` / `data-bind-*` / `each` / `<slot-tag>`).
 2. Register the dir at your **composition root** so the host composes `<mywidget>` and bundles
    its CSS: add it to the renderer's component roots + the style bundle + the catalog
-   (this repo: `componentRoots` / `styleRoots` in `tjakoen.github.io/config.ts`; a standalone consumer
+   (this repo: `componentRoots` / `styleRoots` in `tjakoen.github.io/src/config.ts`; a standalone consumer
    passes its dir to `createRenderer` / the style bundle / `createCatalog`). It then appears
    in `/catalog` automatically.
 

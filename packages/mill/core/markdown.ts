@@ -64,7 +64,9 @@ export function parseMarkdown(md: string): MillNode[] {
       continue;
     }
 
-    // list — gather consecutive items sharing ordered-ness
+    // list — gather consecutive items sharing ordered-ness. An item's text may soft-wrap:
+    // continuation lines are joined with a space, on the same test the paragraph branch uses,
+    // so an indented `- b` reads as the next item (flat) rather than as nested text.
     const li = line.match(LIST_ITEM);
     if (li) {
       const ordered = /\d/.test(li[1]);
@@ -72,8 +74,12 @@ export function parseMarkdown(md: string): MillNode[] {
       while (i < lines.length) {
         const m = lines[i].match(LIST_ITEM);
         if (!m || /\d/.test(m[1]) !== ordered) break;
-        items.push(parseInline(m[2]));
+        const buf: string[] = [m[2]];
         i++;
+        while (i < lines.length && lines[i].trim() !== "" && !startsBlock(lines[i])) {
+          buf.push(lines[i].trim()); i++;
+        }
+        items.push(parseInline(buf.join(" ").trim()));
       }
       nodes.push({ type: "list", ordered, items });
       continue;

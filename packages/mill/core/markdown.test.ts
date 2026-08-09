@@ -26,6 +26,42 @@ test("unordered vs ordered lists", () => {
   if (ol.type === "list") { expect(ol.ordered).toBe(true); expect(ol.items).toHaveLength(2); }
 });
 
+test("a soft-wrapped list item keeps its continuation line", () => {
+  const nodes = parseMarkdown("- **Scope cap** — the area a run may touch. Growth past it is an ask-trigger, not\n  a judgment call the run makes alone.");
+  expect(nodes.map(n => n.type)).toEqual(["list"]);
+  if (nodes[0].type === "list") {
+    expect(nodes[0].items).toHaveLength(1);
+    expect(inlineText(nodes[0].items[0]))
+      .toBe("Scope cap — the area a run may touch. Growth past it is an ask-trigger, not a judgment call the run makes alone.");
+  }
+});
+
+test("a continuation line stops at the next item", () => {
+  const [list] = parseMarkdown("- one\n  wrapped\n- two");
+  expect(list.type).toBe("list");
+  if (list.type === "list") {
+    expect(list.items).toHaveLength(2);
+    expect(inlineText(list.items[0])).toBe("one wrapped");
+    expect(inlineText(list.items[1])).toBe("two");
+  }
+});
+
+test("a continuation line stops at a blank line", () => {
+  const nodes = parseMarkdown("- one\n  wrapped\n\nprose after");
+  expect(nodes.map(n => n.type)).toEqual(["list", "paragraph"]);
+  if (nodes[0].type === "list") expect(inlineText(nodes[0].items[0])).toBe("one wrapped");
+  if (nodes[1].type === "paragraph") expect(inlineText(nodes[1].children)).toBe("prose after");
+});
+
+test("a nested list stays flat — the subset does not nest, and does not half-nest", () => {
+  const [list] = parseMarkdown("- one\n  - inner\n- two");
+  expect(list.type).toBe("list");
+  if (list.type === "list") {
+    expect(list.items).toHaveLength(3);
+    expect(list.items.map(inlineText)).toEqual(["one", "inner", "two"]);
+  }
+});
+
 test("fenced code keeps text verbatim and captures the language", () => {
   const [code] = parseMarkdown("```ts\nconst x = 1 < 2;\n```");
   expect(code.type).toBe("code");

@@ -4,6 +4,9 @@
 // loader's output so it's testable without spawning a process.
 import { loadTours, type LoadedTour } from "./loader.ts";
 import { templateTokens } from "./core/prompt.ts";
+// isSafeFieldValue/FIELD_VALUE_CAP come straight from grain's contract, never mirrored, so this
+// lint can never drift from what the door itself enforces when a tour actually calls field.set.
+import { isSafeFieldValue, FIELD_VALUE_CAP } from "@tjakoen/grain/ai/contract.ts";
 
 export interface CheckResult { ok: boolean; lines: string[]; }
 
@@ -32,12 +35,41 @@ function promptProblems(tour: LoadedTour["tour"]): string[] {
     .map((a) => `    prompt: ask "${a.id}" is never used by the template, so its answer is thrown away`);
 }
 
+// A prefill the door would refuse is worse than none at all: the tour claims it staged the field
+// and either nothing appears or the value silently truncates, and the reviewer has no way to tell
+// from the rendered step. `isSafeFieldValue`/`FIELD_VALUE_CAP` are the same functions the door runs
+// at submit time (imported, not mirrored), so this can only ever agree with the real refusal.
+// A staged value on a step with no `say` is the second failure mode: the feasibility audit's core
+// warning was a staged state reading as a real one, and prose-free staging is that exact case — the
+// reviewer sees a filled field with nothing explaining it was the tour, not the human.
+function prefillProblems(tour: LoadedTour["tour"]): string[] {
+  const lines: string[] = [];
+  for (const s of tour.steps) {
+    const value = s.prefill;
+    if (!value) continue;
+    // `isSafeFieldValue` is a type predicate (`v is string`); calling it directly in the `if`
+    // would have TypeScript narrow `value`'s type in the false branch too, and since `value` is
+    // already a `string` here, narrowing "not string" out of "string" leaves `never` — hence the
+    // boolean is captured first, which keeps `value` a plain string on both branches.
+    const safe: boolean = isSafeFieldValue(value);
+    if (!safe) {
+      const why = value.length > FIELD_VALUE_CAP
+        ? `${value.length} chars, over the ${FIELD_VALUE_CAP}-char cap`
+        : "control characters";
+      lines.push(`    steps: "${s.surface}" prefill has ${why}, so the door would refuse it`);
+    }
+    if (s.say.trim() === "")
+      lines.push(`    steps: "${s.surface}" stages a value but has no \`say\` — a staged screen with no prose is the exact thing the feasibility audit warned about (a staged state reading as a real one)`);
+  }
+  return lines;
+}
+
 export function checkLoaded(tours: LoadedTour[], duplicates: string[]): CheckResult {
   const lines: string[] = [];
   let problems = 0;
   for (const dup of duplicates) { lines.push(`✗ duplicate tour id "${dup}" (two files fold to the same stem)`); problems++; }
   for (const { tour, errors } of tours) {
-    const devProblems = [...devStepProblems(tour), ...promptProblems(tour)];
+    const devProblems = [...devStepProblems(tour), ...promptProblems(tour), ...prefillProblems(tour)];
     if (errors.length === 0 && devProblems.length === 0) { lines.push(`✓ ${tour.id} — ${tour.steps.length} step(s), ${tour.mode}`); continue; }
     lines.push(`✗ ${tour.id}`);
     for (const e of errors) { lines.push(`    ${e.field}: ${e.message}`); problems++; }

@@ -77,6 +77,10 @@ function groupToStep(g: Group): Step {
       review: `${verbs} was rejected or failed here (${g.ops} op${g.ops === 1 ? "" : "s"} landed).`,
       status: "known-issue",
       verify: `Investigate the failed ${verbs} on ${g.surface}.`,
+      // The timeline records what the AI did, not a demo script — it has nothing to stage. A
+      // review tour that WANTS a prefilled step is edited by hand after generation, same as any
+      // other field a projection has no data for.
+      prefill: null,
     };
   }
   return {
@@ -88,6 +92,7 @@ function groupToStep(g: Group): Step {
     // Deliberately NOT grade (grade = who authored the pixels; this is review state — lesson 3).
     status: "needs-verification",
     verify: `Confirm ${g.surface} looks right after ${verbs}.`,
+    prefill: null,
   };
 }
 
@@ -146,6 +151,7 @@ export function toTourMarkdown(tour: Tour): string {
     if (s.review) lines.push(`- review: ${s.review}`);
     if (s.status) lines.push(`- status: ${s.status}`);
     if (s.verify) lines.push(`- verify: ${s.verify}`);
+    if (s.prefill) lines.push(`- prefill: ${s.prefill}`);
     return lines.join("\n");
   });
 

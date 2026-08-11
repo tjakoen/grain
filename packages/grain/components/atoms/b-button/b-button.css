@@ -1,17 +1,9 @@
 /* atoms/b-button — the button, ONE class: .btn. Variants are ATTRIBUTES, not
    extra classes (vanilla CSS, no utility soup). The component owns its styling.
-   Accent is three CSS vars scoped to .btn; a status attribute repoints them, so
-   every variant inherits the new color for free.
    Each pseudo-state has a parallel data-force value so the catalog can show it
    statically (e.g. .btn:hover AND .btn[data-force~="hover"]). */
 
 .btn {
-  /* accent token set — [data-status] overrides these */
-  --btn-accent: var(--color-primary);
-  --btn-accent-hover: var(--color-primary-hover);
-  --btn-accent-contrast: var(--color-primary-contrast);
-  --btn-accent-soft: var(--color-primary-soft);
-
   display: inline-flex; align-items: center; justify-content: center;
   gap: var(--space-2);
   font-family: var(--type-font);
@@ -24,7 +16,7 @@
   border: var(--border);                  /* ink hairline — no fill, no shadow */
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 
   /* default = transparent fill, ink border + label (DESIGN-SYSTEM §5 Buttons) */
   background: transparent;
@@ -43,20 +35,34 @@
 .btn[data-variant="soft"]    { background: var(--paper-2); }
 .btn[data-variant="outline"] { background: transparent; }   /* already the default look */
 
-/* ---- status (attribute): repoint the accent token set ---- */
-.btn[data-status="success"] {
-  --btn-accent: var(--color-success); --btn-accent-hover: var(--color-success-hover);
-  --btn-accent-contrast: var(--color-success-contrast); --btn-accent-soft: var(--color-success-soft);
-}
-.btn[data-status="danger"] {
-  --btn-accent: var(--color-danger); --btn-accent-hover: var(--color-danger-hover);
-  --btn-accent-contrast: var(--color-danger-contrast); --btn-accent-soft: var(--color-danger-soft);
-}
+/* ---- status (attribute): a doubled rule on the irreversible one, and nothing else ----
+   Settled 2026-08-11 by a walked review, not by a reading: plans/grain-token-debt.md in the
+   portfolio, tour review-grain-status, candidate B with the fill kept for the hover.
+   Four --btn-accent* tokens used to be declared above and repointed here. They are DELETED
+   rather than wired up, because wiring them would have rendered nothing: --color-success and
+   --color-danger both resolve to var(--ink), with the same --paper and --paper-2 partners as
+   every other button. There is no hue to spend and that is the design (DESIGN-SYSTEM §2), so
+   the honest fix is to stop declaring a colour the palette does not have.
+   success gets NO visual rule, on purpose. It keeps its meaning for assistive tech and for the
+   AI layer while visual ranking stays data-variant's job, which is the axis that already works
+   in a monochrome palette. Only the action you cannot undo is marked. */
+.btn[data-status="danger"] { border-width: 2px; }
 
 /* ---- pseudo-states. Hover = a quiet ink WASH (DESIGN-SYSTEM §5), never an invert and
    never a new hue — the full ink-fill invert read as a loud accent block and revealed the
    corner radius on otherwise-flat buttons (regression, 2026-07-04). ---- */
 .btn:hover, .btn[data-force~="hover"] { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+
+/* The one exception to "hover is a wash", and the one place a solid fill is spent: the
+   destructive control. At rest it is only a doubled rule, so the row stays quiet; the moment the
+   pointer is on the button that cannot be undone it goes solid ink with a paper label, which is
+   the loudest thing GRAIN can say without a hue. Reads at (0,3,0) so it beats the wash above on
+   specificity, not on source order. border-color is set explicitly for a flavor that repoints
+   --hairline away from --ink; in the stock themes the two are the same value. */
+.btn[data-status="danger"]:hover,
+.btn[data-status="danger"][data-force~="hover"] {
+  background: var(--ink); color: var(--paper); border-color: var(--ink);
+}
 
 .btn:focus-visible, .btn[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .btn:active,        .btn[data-force~="active"] { transform: translateY(1px); }

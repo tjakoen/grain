@@ -9,11 +9,20 @@
 .crumb-pop {
   position: fixed; margin: 0; inset: auto; z-index: 9100;
   max-width: min(24rem, calc(100vw - 24px));
+  /* The card is BOUNDED and its body scrolls (added 2026-08-11). It had no max-height at all, so a
+     card taller than the viewport ran off the bottom taking Back and Finish with it. This is only
+     the floor: the real budget depends on where the card's top lands, so placeCard overrides this
+     inline with the space actually below it. Measured, not assumed — 100dvh alone did not fix it,
+     because a card can start low and still overflow while being shorter than the screen. */
+  max-height: calc(100dvh - 24px);
   padding: 0; border: var(--border); border-radius: var(--radius-md);
   background: var(--paper); color: var(--ink);
   box-shadow: 0 8px 30px color-mix(in srgb, var(--ink) 24%, transparent);
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-smooth);
 }
+/* head and foot stay put, the body takes the scroll — the reviewer can always reach Finish. */
+.crumb-pop[open] { display: flex; flex-direction: column; }
+.crumb-pop__head, .crumb-pop__foot { flex: 0 0 auto; }
 .crumb-pop:not([open]) { display: none; }
 @starting-style { .crumb-pop[open] { opacity: 0; transform: translateY(4px); } }
 .crumb-pop { transition: opacity 0.16s ease, transform 0.16s ease; }
@@ -29,7 +38,7 @@
    of shoving the badges into a wrap. */
 .crumb-pop__title { font-weight: 600; font-size: var(--text-sm); margin-right: auto; min-width: 0; }
 .crumb-pop__count {
-  font-size: var(--text-xs); color: var(--ink-soft, color-mix(in srgb, var(--ink) 55%, transparent));
+  font-size: var(--text-xs); color: var(--ink-muted);
   font-variant-numeric: tabular-nums; white-space: nowrap; flex: 0 0 auto;
 }
 .crumb-pop__status { white-space: nowrap; flex: 0 0 auto; }
@@ -39,23 +48,28 @@
 }
 .crumb-pop__x:hover { opacity: 1; }
 
-.crumb-pop__body { padding: var(--space-3); display: grid; gap: var(--space-2); }
+/* min-height:0 is the load-bearing half: a flex child's automatic minimum is its content size, so
+   without it the body refuses to shrink and max-height above buys nothing. */
+.crumb-pop__body {
+  padding: var(--space-3); display: grid; gap: var(--space-2);
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+}
 .crumb-pop__say { margin: 0; font-size: var(--text-sm); line-height: 1.5; }
 .crumb-pop__review {
   margin: 0; font-size: var(--text-sm); line-height: 1.5;
   padding: var(--space-2); border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--ink) 5%, transparent);
-  border-left: 3px solid var(--accent, var(--ink));
+  border-left: 3px solid var(--color-accent);
 }
 .crumb-pop__verify {
   margin: 0; font-size: var(--text-xs); line-height: 1.45;
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 62%, transparent));
+  color: var(--ink-muted);
 }
 /* the prefill honesty marker (stagedNote in crumb-live.js) — italic to read as a system note about
    the field's state, distinct from the tour's own review/verify prose sitting beside it. */
 .crumb-pop__staged {
   margin: 0; font-size: var(--text-xs); line-height: 1.45; font-style: italic;
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 62%, transparent));
+  color: var(--ink-muted);
 }
 
 .crumb-pop__foot {
@@ -63,18 +77,24 @@
   padding: var(--space-2) var(--space-3) var(--space-3);
 }
 
-/* verification-status chip — CRUMB's own review vocab, deliberately NOT grade. Neutral-by-default;
-   only known-issue and verified carry a color hint (kept subtle, tokenized). */
+/* verification-status chip — CRUMB's own review vocab, deliberately NOT grade.
+   These two used to read `var(--ok, green)` and `var(--warn, orange)`. Neither token was defined
+   anywhere in grain or crumb, so the fallbacks always fired and a literal green and orange were
+   the only hues reaching the screen in a palette that has none. Settled 2026-08-11 by the same
+   walked review that settled the button (plans/grain-token-debt.md, tour review-grain-status):
+   the chips follow the button's answer, so the difference is weight, never hue. verified goes
+   denser in the ink ramp because it is settled; known-issue takes the doubled rule, which is the
+   exact vocabulary the destructive button now carries — one thing to learn, used twice. */
 .crumb-pop__status {
   font-size: var(--text-xs); text-transform: lowercase; letter-spacing: 0.01em;
-  padding: 2px var(--space-2); border-radius: var(--radius-pill, 999px);
+  padding: 2px var(--space-2); border-radius: var(--radius-pill);
   border: var(--border); color: var(--ink);
   background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
-.crumb-pop__status[data-status="verified"] { background: color-mix(in srgb, var(--ok, green) 16%, transparent); }
-.crumb-pop__status[data-status="known-issue"] { background: color-mix(in srgb, var(--warn, orange) 18%, transparent); }
+.crumb-pop__status[data-status="verified"] { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.crumb-pop__status[data-status="known-issue"] { border-width: 2px; }
 .crumb-pop__status[data-status="changed"],
-.crumb-pop__status[data-status="new"] { background: color-mix(in srgb, var(--accent, var(--ink)) 12%, transparent); }
+.crumb-pop__status[data-status="new"] { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
 
 @media (prefers-reduced-motion: reduce) {
   .crumb-pop { transition: none; }
@@ -108,7 +128,7 @@ body[data-crumb-frame] {
   overflow: hidden;
 }
 .crumb-frame {
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-smooth);
 }
 
 /* the bordered viewport edge — a pure visual frame around the SHRUNK host box
@@ -117,7 +137,7 @@ body[data-crumb-frame] {
 .crumb-frame__edge {
   position: fixed; z-index: 9110; pointer-events: none;
   inset: var(--crumb-bar-h) var(--crumb-side-w) 0 0;
-  border: 2px solid color-mix(in srgb, var(--accent, var(--ink)) 55%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
   border-top: 0;
 }
 
@@ -133,20 +153,20 @@ body[data-crumb-frame] {
 .crumb-frame__title { font-weight: 600; font-size: var(--text-sm); }
 .crumb-frame__count {
   font-size: var(--text-xs); font-variant-numeric: tabular-nums;
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 55%, transparent));
+  color: var(--ink-muted);
 }
 .crumb-frame__x { margin-left: auto; }
 
 /* the demo|dev toggle — a segmented control; the SAME step re-renders on flip. */
 .crumb-frame__modes {
   display: inline-flex; gap: 2px; padding: 2px;
-  border: var(--border); border-radius: var(--radius-pill, 999px);
+  border: var(--border); border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 .crumb-frame__mode {
   appearance: none; border: 0; cursor: pointer;
   font: inherit; font-size: var(--text-xs); color: var(--ink);
-  padding: 3px var(--space-3); border-radius: var(--radius-pill, 999px);
+  padding: 3px var(--space-3); border-radius: var(--radius-pill);
   background: transparent; opacity: 0.7;
 }
 .crumb-frame__mode[aria-selected="true"] {
@@ -177,28 +197,29 @@ body[data-crumb-frame] {
 .crumb-sidebar__num {
   flex: 0 0 auto; width: 1.5rem; height: 1.5rem; display: grid; place-items: center;
   font-size: var(--text-xs); font-variant-numeric: tabular-nums;
-  border: var(--border); border-radius: var(--radius-pill, 999px);
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 60%, transparent));
+  border: var(--border); border-radius: var(--radius-pill);
+  color: var(--ink-muted);
 }
 .crumb-sidebar__label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crumb-sidebar__step[data-visited] .crumb-sidebar__num {
   background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink);
 }
 .crumb-sidebar__step[data-current] .crumb-sidebar__goto {
-  background: color-mix(in srgb, var(--accent, var(--ink)) 12%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 .crumb-sidebar__step[data-current] .crumb-sidebar__num {
-  background: var(--accent, var(--ink)); color: var(--paper); border-color: transparent;
+  background: var(--color-accent); color: var(--paper); border-color: transparent;
 }
 .crumb-sidebar__chip {
   flex: 0 0 auto; font-size: 0.66rem; text-transform: lowercase; letter-spacing: 0.01em;
-  padding: 1px var(--space-2); border-radius: var(--radius-pill, 999px);
+  padding: 1px var(--space-2); border-radius: var(--radius-pill);
   border: var(--border); background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
-.crumb-sidebar__chip[data-status="verified"] { background: color-mix(in srgb, var(--ok, green) 16%, transparent); }
-.crumb-sidebar__chip[data-status="known-issue"] { background: color-mix(in srgb, var(--warn, orange) 18%, transparent); }
+/* the rail's chip — same vocabulary as .crumb-pop__status above, same reason. */
+.crumb-sidebar__chip[data-status="verified"] { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.crumb-sidebar__chip[data-status="known-issue"] { border-width: 2px; }
 .crumb-sidebar__chip[data-status="changed"],
-.crumb-sidebar__chip[data-status="new"] { background: color-mix(in srgb, var(--accent, var(--ink)) 12%, transparent); }
+.crumb-sidebar__chip[data-status="new"] { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
 
 /* content pane — the current step's prose (+ dev review/verify) */
 .crumb-sidebar__detail {
@@ -210,19 +231,24 @@ body[data-crumb-frame] {
   margin: 0; font-size: var(--text-sm); line-height: 1.5;
   padding: var(--space-2); border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--ink) 5%, transparent);
-  border-left: 3px solid var(--accent, var(--ink));
+  border-left: 3px solid var(--color-accent);
 }
 .crumb-sidebar__verify {
   margin: 0; font-size: var(--text-xs); line-height: 1.45;
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 62%, transparent));
+  color: var(--ink-muted);
 }
 /* the prefill honesty marker — see .crumb-pop__staged; same treatment, framed presentation. */
 .crumb-sidebar__staged {
   margin: 0; font-size: var(--text-xs); line-height: 1.45; font-style: italic;
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 62%, transparent));
+  color: var(--ink-muted);
 }
+/* Pinned chrome, no longer a child of the scrolling pane (crumb-live.js renderFrame). It carries
+   its own padding now that it does not inherit __detail's, and a rule so it reads as an edge
+   rather than as prose that happens to be last. */
 .crumb-sidebar__foot {
-  margin-top: auto; padding-top: var(--space-2);
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-top: var(--border);
   display: flex; justify-content: flex-end; gap: var(--space-2);
 }
 
@@ -231,7 +257,7 @@ body[data-crumb-frame] {
    primitives: the fields have to read as the host's fields, not as a widget dropped on top. */
 .crumb-pop__ask, .crumb-sidebar__ask { display: grid; gap: var(--space-1); font-size: var(--text-xs); }
 .crumb-pop__asklabel, .crumb-sidebar__asklabel {
-  color: var(--ink-soft, color-mix(in srgb, var(--ink) 62%, transparent));
+  color: var(--ink-muted);
 }
 .crumb-pop__askinput, .crumb-sidebar__askinput,
 .crumb-pop__composed, .crumb-sidebar__composed {
@@ -240,6 +266,12 @@ body[data-crumb-frame] {
   padding: var(--space-2); border: var(--border); border-radius: var(--radius-sm);
   background: var(--paper, transparent); color: var(--ink);
 }
+/* the paste block, shut by default (crumb-live.js promptBody). It is the fallback for when Finish
+   does not land, so it should be reachable and not tall: a summary keeps it one click away and
+   keeps Finish in view. The label reuses __asklabel so it sits in the same voice as the asks. */
+.crumb-pop__paste, .crumb-sidebar__paste { display: grid; gap: var(--space-1); font-size: var(--text-xs); }
+.crumb-pop__paste > summary, .crumb-sidebar__paste > summary { cursor: pointer; }
+
 /* the composed prompt is output, not input: it reads as a quote of what you are about to send */
 .crumb-pop__composed, .crumb-sidebar__composed {
   font-family: var(--font-mono, monospace); font-size: var(--text-xs);
@@ -259,7 +291,7 @@ body[data-crumb-frame] {
   display: flex; align-items: baseline; gap: var(--space-2);
   padding: var(--space-1) 0; font-size: var(--text-sm); cursor: pointer;
 }
-.crumb-pop__option input, .crumb-sidebar__option input { margin: 0; accent-color: var(--accent, currentColor); }
+.crumb-pop__option input, .crumb-sidebar__option input { margin: 0; accent-color: var(--color-accent); }
 /* the escape's field only exists once "Something else" is picked; hidden is the client's own toggle */
 .crumb-pop__decision > input[hidden], .crumb-sidebar__decision > input[hidden] { display: none; }
 .crumb-pop__decision > input, .crumb-sidebar__decision > input { margin-top: var(--space-1); }

@@ -132,9 +132,16 @@ function promptBody(tour, p) {
   const handoff = card.handoff && window.grainHandoff
     ? `<button class="btn" data-handoff data-handoff-url="${esc(card.handoff)}" data-handoff-source=".${p}__composed">Open in a session</button>`
     : "";
+  // The composed text is COLLAPSED by default (owner's call, 2026-08-11). Pressing Finish is the
+  // path that records the answer, so the paste block is the fallback for when that does not work,
+  // and a fallback should not be the tallest thing on the card — open, it pushed Finish off the
+  // bottom of a card that had no scroll of its own. It stays in the DOM whether or not the
+  // <details> is open, so wirePrompt's `[readonly]` lookup and handoff's `data-handoff-source`
+  // both keep working shut.
   return `${card.intro ? `<p class="${p}__say">${esc(card.intro)}</p>` : ""}${fields}` +
-    `<label class="${p}__ask"><span class="${p}__asklabel">The prompt to paste back</span>` +
-    `<textarea class="${p}__composed" rows="6" readonly>${esc(composed)}</textarea></label>${handoff}`;
+    `<details class="${p}__paste"><summary class="${p}__asklabel">The prompt to paste back</summary>` +
+    `<textarea class="${p}__composed" rows="6" readonly aria-label="The prompt to paste back">${esc(composed)}</textarea>` +
+    `</details>${handoff}`;
 }
 
 // Live recompose on every keystroke, without re-rendering the card (a re-render would steal the
@@ -164,6 +171,12 @@ function wirePrompt(root, tour) {
   }));
   const o = out();
   if (o) o.onfocus = () => o.select();             // no clipboard permission needed to take it
+  // Opening the paste block changes the card's height, and for the floating popover that means the
+  // height budget placeCard worked out is now wrong. Re-place rather than leave it: the prompt card
+  // has no surface to anchor to, so this re-centres and re-clamps in one call, and the body keeps
+  // the scroll instead of the card growing off the bottom of the screen.
+  const paste = root.querySelector("details");
+  if (paste && root.classList.contains("crumb-pop")) paste.ontoggle = () => placeCard(root, null);
 }
 const surfaceLabel = (s) => (s.surface || "").replace(/^nav:|^note:/, "").replace(/[:/]+/g, " ").trim() || "step";
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -250,20 +263,29 @@ function popover() {
   bindEsc();                       // non-modal <dialog> doesn't auto-close on Escape
   return pop;
 }
+// The card is bounded to the space below its OWN top, not to the viewport. It is position:fixed
+// with an inline top and it grows downward, so `max-height: 100dvh` in the stylesheet does not save
+// it: a card shorter than the viewport still runs off the bottom if it starts low enough. Opening
+// the paste block did exactly that — the card grew past the edge and Finish went with it. The top
+// is decided here, so here is the only place that knows the real height budget.
 function placeCard(card, surfaceEl) {
+  card.style.maxHeight = "";                    // measure the card unbounded, then clamp it
   const w = card.offsetWidth, h = card.offsetHeight, M = 12;
+  let top;
   if (!surfaceEl) {
     card.style.left = `${Math.round((innerWidth - w) / 2)}px`;
-    card.style.top = `${Math.round((innerHeight - h) / 2)}px`;
-    return;
+    top = Math.round((innerHeight - h) / 2);
+  } else {
+    const r = surfaceEl.getBoundingClientRect();
+    top = r.bottom + M;
+    if (top + h > innerHeight - M) top = Math.max(M, r.top - h - M);   // flip above
+    let left = r.left + r.width / 2 - w / 2;                           // center on the surface
+    left = Math.max(M, Math.min(left, innerWidth - w - M));
+    card.style.left = `${Math.round(left)}px`;
   }
-  const r = surfaceEl.getBoundingClientRect();
-  let top = r.bottom + M;
-  if (top + h > innerHeight - M) top = Math.max(M, r.top - h - M);   // flip above
-  let left = r.left + r.width / 2 - w / 2;                            // center on the surface
-  left = Math.max(M, Math.min(left, innerWidth - w - M));
-  card.style.left = `${Math.round(left)}px`;
-  card.style.top = `${Math.round(Math.max(M, top))}px`;
+  top = Math.max(M, Math.round(top));
+  card.style.top = `${top}px`;
+  card.style.maxHeight = `${Math.max(120, innerHeight - top - M)}px`;
 }
 function renderPopover(tour, idx, mode, staged) {
   const n = tour.steps.length;
@@ -379,11 +401,13 @@ function renderFrame(tour, idx, mode, staged) {
     `</header>` +
     `<aside class="crumb-sidebar" data-mode="${mode}">` +
       `<nav class="crumb-sidebar__nav" aria-label="Tour steps"><ol class="crumb-sidebar__list">${rail}</ol></nav>` +
-      `<div class="crumb-sidebar__detail">${detail}` +
-        `<div class="crumb-sidebar__foot">` +
-          `${intro ? "" : `<button class="btn" data-variant="soft" data-crumb="prev">Back</button>`}` +
-          `<button class="btn" data-crumb="next">${nextLabel}</button>` +
-        `</div>` +
+      `<div class="crumb-sidebar__detail">${detail}</div>` +
+      // The foot is a SIBLING of the scrolling pane, not a child of it. Inside, it scrolled away
+      // with the prose, so on a long card (the prompt card, with two decisions and an escape
+      // field) Finish was below the fold and the walk looked like it had no way to end.
+      `<div class="crumb-sidebar__foot">` +
+        `${intro ? "" : `<button class="btn" data-variant="soft" data-crumb="prev">Back</button>`}` +
+        `<button class="btn" data-crumb="next">${nextLabel}</button>` +
       `</div>` +
     `</aside>`;
 

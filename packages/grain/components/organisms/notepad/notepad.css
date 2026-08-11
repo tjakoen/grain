@@ -44,7 +44,11 @@
 .notepad__entry { min-width: 0; overflow-wrap: anywhere; }
 /* a code block is the one thing that shouldn't hard-wrap — let it scroll on its own, capped to width */
 .notepad__entry pre { max-width: 100%; overflow-x: auto; }
-.notepad__entry[data-grade="grain"] { color: var(--color-grain, var(--color-muted)); }
+/* --color-grain was referenced here and defined nowhere, in this one line and no other in the
+   estate, so the fallback was the only thing that ever rendered. There is no "grain colour" to
+   point it at either: the grade vocabulary is carried by the FONT (--font-grain / --type-font),
+   not by a hue. So the phantom goes and the fallback becomes the rule it always was. */
+.notepad__entry[data-grade="grain"] { color: var(--color-muted); }
 .notepad__entry > :first-child { margin-top: 0; }
 .notepad__entry > :last-child { margin-bottom: 0; }
 .notepad__entry a { color: var(--color-accent); text-decoration: none; }

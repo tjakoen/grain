@@ -170,6 +170,18 @@
   /* AI takeover STACKING — one source of truth so the AI module (grain/ai/ai.css) and any
      consumer chrome (e.g. the app's portfolio-frame console/chat) agree without duplicating
      magic z-index numbers. veil < spotlit surface < the AI surfaces that stay above the veil. */
+  /* Shared chrome heights. The one-line head that the drawer, the app-shell topbar and the
+     sidebar-panel all have to agree on: all three read `var(--editor-header-h, 2.9rem)` and none
+     of them defined it, so three organisms were agreeing by repeating a magic number rather than
+     by sharing a token. 2.9rem is the value that already rendered; declaring it here is what makes
+     the agreement real, and what makes it possible to change the row height in one place. */
+  --editor-header-h: 2.9rem;
+
+  /* Presentation sits BELOW the AI ladder on purpose: the lamp has to be able to dim a slide.
+     It was already reading `var(--z-presentation, 8000)` in presentation.css with nothing
+     defining it, so 8000 is the value that has always rendered — this declares it rather than
+     changing it, and puts it on the ladder where the next person can see the ordering. */
+  --z-presentation: 8000;
   --z-ai-veil: 9000;      /* the dimming backdrop */
   --z-ai-spot: 9001;      /* the spotlit surface, lifted out of the dim */
   --z-ai-surface: 9002;   /* AI surfaces kept above the veil (acting label, console, chat) */

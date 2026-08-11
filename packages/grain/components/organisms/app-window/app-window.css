@@ -20,7 +20,7 @@
 /* the backdrop: the page behind the window, a shade darker than the paper */
 .app-window-backdrop {
   background: color-mix(in srgb, var(--ink) 12%, var(--paper));
-  padding: clamp(0.5rem, 2vh, 1.5rem);
+  padding: clamp(var(--space-2), 2vh, var(--space-6));
   height: 100dvh;
   box-sizing: border-box;
 }

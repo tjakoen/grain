@@ -89,12 +89,18 @@ passes on a `<select>`, and assigning a select anything that is not one of its o
 day. Leaving a choice's address on its label makes a stray write inert instead of destructive, which
 is the safer of the two failure modes.
 
-**Three ways to close it, and the choice is the owner's.** Move the binding onto the control inside
-each atom, which is a one-line template change per atom and makes the original claim true. Or guard
-the dispatcher so a write to an element with no `value` reports rather than no-ops. Or leave both and
-let every consuming page carry the workaround, which is the option that quietly costs the most. This
-is recorded here rather than fixed because the atoms are committed and this pass was scoped out of
-grain's component source.
+**CLOSED the same day, by the owner's call: the binding moved onto the control.** `b-field` binds the
+surface on its `<input>` and `b-choice` on its `<select>`, the conformance test now asserts *where* the
+address lands rather than only that the binding exists, and the portfolio deleted the script it had
+been carrying to move each address down by hand. Result 3 is true for the first time: measured on the
+live page, all three addresses resolve to a fillable control and the desk writes into a generated
+field with nothing registered by hand.
+
+**What stays open is the select, and it is a caller problem now rather than an addressing one.** A
+choice is reachable like anything else, and a write that is not one of its option values empties it
+instead of failing. `b-choice.md` says so plainly, and the demo's own draft code refuses to draft a
+value for a choice at all. Guarding the dispatcher against a write it cannot land is the obvious next
+move and it was deliberately not taken here.
 
 ### A defect found on the way
 

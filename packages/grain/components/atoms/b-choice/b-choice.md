@@ -25,11 +25,20 @@ kept, so nothing here needs a color.
 ## What it renders
 
 ```html
-<label class="field" data-surface="field:contact-topic">
+<label class="field">
   <span class="field__label">About</span>
-  <select class="field__select" name="topic">
+  <select class="field__select" data-surface="field:contact-topic" name="topic">
     <option value="grain">GRAIN</option>
     <option value="hiring" selected="selected">Hiring</option>
   </select>
 </label>
 ```
+
+## Writing to one, and why it is not the same as writing to a field
+
+The address sits on the select, so a choice is addressable exactly like a text field. What it is not
+is safe to write to carelessly. A select passes the same check a text input does, and assigning it a
+string that is not one of its option values does not fail: it sets the value to the empty string, so
+the control goes blank and nothing is logged. Anything writing to a choice has to send an option
+value, never a label, and the caller is the one that has to know the difference. Measured against a
+real page on 2026-08-13.

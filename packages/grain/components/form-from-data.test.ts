@@ -66,6 +66,14 @@ test("b-field binds every key the field spec carries", () => {
   // The surface binding is the reason a generated form is AI-operable at all: it lands as
   // data-surface="field:…" per item, which is what field.set resolves against.
   expect(html).toContain(`data-bind-data-surface="surface"`);
+  // WHERE it lands is the whole of it, and asserting only that the binding exists is what let this
+  // ship wrong. field.set resolves the address and then writes el.value, so the address has to be on
+  // the input. On the label it points at something with nothing to write into and the write is
+  // dropped in silence. Assert the binding sits on the input line, and that the label carries none.
+  const inputLine = html.split("\n").find((l) => l.includes("class=\"field__input\""))!;
+  expect(inputLine).toContain(`data-bind-data-surface="surface"`);
+  const labelLine = html.split("\n").find((l) => l.includes("class=\"field\""))!;
+  expect(labelLine).not.toContain(`data-bind-data-surface`);
   // Presentation IS form-wide, so these two stay config props on purpose.
   expect(html).toContain(`prop-attr-data-size="size"`);
   expect(html).toContain(`prop-attr-data-variant="variant"`);
@@ -74,4 +82,12 @@ test("b-field binds every key the field spec carries", () => {
 test("b-choice nests b-option over the item's own options array", () => {
   expect(read("b-choice")).toContain(`<b-option each="options">`);
   expect(read("b-option")).toContain(`data-bind-value="value"`);
+});
+
+test("b-choice addresses the select, matching b-field's control-not-label rule", () => {
+  const html = read("b-choice");
+  const selectLine = html.split("\n").find((l) => l.includes("class=\"field__select\""))!;
+  expect(selectLine).toContain(`data-bind-data-surface="surface"`);
+  const labelLine = html.split("\n").find((l) => l.includes("class=\"field\""))!;
+  expect(labelLine).not.toContain(`data-bind-data-surface`);
 });

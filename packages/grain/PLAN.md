@@ -34,29 +34,25 @@ Component work does not belong in the numbered list above, which tracks the AI-i
    companion to `card-grid` for pictures rather than facts, tuned by `--gallery-min` and
    `--gallery-ratio`, wired to `scripts/lightbox.js` by one group per gallery. Written because the
    portfolio's event pages could only carry a hero strip, which hides anything past the fifth tile.
-2. **Media card** (owner, 2026-08-12, next up). One image, a title, an optional description, an
-   optional row of CTA buttons. A `card` that leads with a picture, so it covers the two shapes the
-   portfolio currently hand-rolls.
+2. ~~**Media card.**~~ **BUILT** (2026-08-12) — `molecules/media-card`, a `card` that leads with a
+   picture: one image, a title, an optional description, an optional row of buttons, cropped to
+   `--media-ratio`. It reuses `card`'s vocabulary rather than a second one, and both optional rows
+   collapse to nothing when absent.
 
-   **Build it as `molecules/media-card`**, beside `card` and `gallery`, and reuse `card`'s vocabulary
-   rather than inventing a second one: hairline box, no fill, `data-pad` for padding, the whole tile
-   navigable when it is an `<a>`. Description and CTA row are both optional and both collapse to
-   nothing when absent, the way `feed-card` hides its empty rows.
+   Both consumers are satisfied. The plain photo that links somewhere is the default stacked
+   layout. The video poster that links out is `data-layout="overlay"`, which carries the centred
+   play badge and lays the title along the bottom on a scrim, and it keeps the one hard rule that
+   made the original worth copying: **it embeds nothing.** No iframe, no platform script, no JS at
+   all, so the no-JS case is the only case. `tjakoen.github.io/view/components/molecules/event-video`
+   retires into it and `content.ts` `renderVideoCard` composes the molecule instead of owning it.
 
-   **The two consumers to satisfy, and the second one is the real test:**
-   - a photo that links somewhere (the plain case);
-   - a **video poster** that links out to the platform the video lives on. That one exists today as
-     `tjakoen.github.io/view/components/molecules/event-video` and is rendered by `content.ts`
-     `renderVideoCard` off a flat `video:` frontmatter string. It carries a centred play badge over
-     a scrim, a label along the bottom, and one hard rule worth keeping: **it embeds nothing.** No
-     iframe, no platform script, no JS at all, so the no-JS case is the only case. If the media card
-     can wear that badge as a variant, `event-video` retires into it and the portfolio stops owning
-     design work it should not own.
+   **The open question is answered: one component, layout is an attribute.** The two shapes share
+   every rule they have apart from where the text sits, so two molecules would fork the box, the
+   crop, the hover, the badge and the pending edge to move one block of text. A beside-the-picture
+   layout is deliberately not shipped, because nothing asks for it yet and it is one more attribute
+   value when something does.
 
-   **Open question to settle while building:** whether image-above-text and image-beside-text is one
-   component with a variant attribute or two components. Decide it against the two consumers above,
-   not in the abstract.
-
-   **Trap, already paid for once:** `styles/vars-defined.test.ts` fails on any new `var(--knob)` a
-   stylesheet reads. A per-use knob has to be registered in its `EXTERNALLY_SET` map with a pointer
-   to the doc line that documents it (see `--gallery-min`).
+   Two new global tokens came with it, `--scrim` and `--on-scrim` in `styles/variables.css`. They
+   are the one pair that does **not** invert in the dark block, on purpose: a scrim darkens
+   somebody else's photograph so a label survives on top of it, and a photograph does not invert
+   with the palette.

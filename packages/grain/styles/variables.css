@@ -47,6 +47,14 @@
   --hairline:  #1C1B17;            /* solid rules (under headlines) */
   --line-soft: rgba(28, 27, 23, .14);  /* translucent border for quiet grouping */
 
+  /* the photo scrim, and the text that sits on it. Deliberately NOT part of the paper/ink pair
+     and deliberately NOT overridden in the dark block below: a scrim darkens somebody else's
+     photograph so a label survives on top of it, and a photograph does not invert with the
+     palette. Flip these with the color scheme and the light mode gets a dark scrim, the dark
+     mode a pale one, and the same picture reads two different ways for no reason. */
+  --scrim:     rgba(20, 19, 15, .72);  /* over a still, so a label on it holds in both modes */
+  --on-scrim:  #F4F2EA;                /* the only text color legible on that scrim */
+
   /* grade font families (clean = human, grain = AI / in-transit). Grain is grade 50 —
      one step up from the 35 working grade for more visible texture. */
   --font-smooth: "Redaction",    "Times New Roman", Georgia, serif;

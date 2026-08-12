@@ -48,7 +48,8 @@ Six results, all reproduced on 2026-08-13 against `batch/render/render.ts`.
 2. **A nested `each` renders a select's options** from the item's own array, so choices work at the
    same depth.
 3. **`data-bind-data-surface="surface"` sets `data-surface="field:name"` from data.** The AI half is
-   free, as above.
+   free, as above. **Corrected 2026-08-13 by building it: the binding works and the conclusion does
+   not.** See "What building it contradicted" below.
 4. **Config props and `each` coexist.** Literal attributes on the tag are collected as `childProps`
    and passed to *every* item (`render.ts:169` and `:176`). So `<b-field each="fields" size="sm">`
    applies one size to the whole form while per-item data drives the content. This is the clean
@@ -63,6 +64,37 @@ Six results, all reproduced on 2026-08-13 against `batch/render/render.ts`.
    spec therefore carries `"required": "required"`, which is valid HTML and renders
    `required="required"`. Bare `required` is reachable only through a config prop, and a config prop
    is form-wide, which is wrong for a per-field flag.
+
+### What building it contradicted
+
+The portfolio built the first real form on 2026-08-13 (its `/about` Contact tab, then the `/builder`
+demo), and the build contradicted result 3's conclusion. The binding works exactly as probed. The
+conclusion drawn from it does not.
+
+**`data-surface` lands on the wrapping `<label>`, and a label cannot be filled.** Both atoms carry
+`data-bind-data-surface="surface"` on the `.field` label, so a generated field's address resolves to
+the label rather than to the `<input>` or `<select>` inside it. Grain's own dispatcher resolves
+`document.querySelector('[data-surface=…]')` and then gates on `"value" in el`. A label has no
+`value`, so a `field.set` aimed at a generated field silently does nothing. Measured in the live
+page: all three addresses on `/about` resolve to `LABEL`, `"value" in el` false for every one.
+
+So **the AI half is not free after all**, and the sentence that says it is was the load-bearing claim
+of this whole spec. B1's `field:contact-message` never hit this because that surface sits on a bare
+`<textarea>` a page authored by hand, not on an atom rendered through `each`.
+
+The portfolio works around it in its own page, moving each address down onto its own control after
+render, and that workaround is deliberately **text inputs only**. The same `"value" in el` guard
+passes on a `<select>`, and assigning a select anything that is not one of its option values sets
+`.value` to the empty string, so the control goes blank with no warning at all. Measured the same
+day. Leaving a choice's address on its label makes a stray write inert instead of destructive, which
+is the safer of the two failure modes.
+
+**Three ways to close it, and the choice is the owner's.** Move the binding onto the control inside
+each atom, which is a one-line template change per atom and makes the original claim true. Or guard
+the dispatcher so a write to an element with no `value` reports rather than no-ops. Or leave both and
+let every consuming page carry the workaround, which is the option that quietly costs the most. This
+is recorded here rather than fixed because the atoms are committed and this pass was scoped out of
+grain's component source.
 
 ### A defect found on the way
 

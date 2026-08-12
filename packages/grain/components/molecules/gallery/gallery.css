@@ -1,0 +1,47 @@
+/* molecules/gallery — a captioned image grid. CSS-only (CONVENTIONS §4): composed by hand, nothing
+   data-binds it. The companion to card-grid, for pictures rather than facts: every tile is equal
+   weight, cropped to one ratio, and carries its caption under it.
+
+   Deliberately NOT a hero strip. A strip runs one photo big to carry a post; a gallery is the roll
+   that hero was picked from, so a reader can scan it and move on. Tile width tunes with
+   --gallery-min (default 15rem, same idiom as --card-min), the crop with --gallery-ratio.
+
+   Lightbox: wrap the grid in [data-lightbox-group] and mark each tile [data-lightbox] (scripts/
+   lightbox.js). One group per gallery, so prev/next never walks out of it into another strip on the
+   same page. Keep the trigger an <a href> pointing at the full image: that is the no-JS fallback. */
+.gallery {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(var(--gallery-min, 15rem), 1fr));
+}
+
+.gallery__item { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* fixed box per tile: a real roll mixes portrait and landscape, and a ragged grid reads like a
+   mistake. object-fit crops to the box; the box reserves the space, so a lazily-loaded photo cannot
+   shift the page under someone mid-scroll. */
+.gallery__link {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--paper-2);
+}
+.gallery__link img {
+  display: block; width: 100%; height: 100%;
+  aspect-ratio: var(--gallery-ratio, 3 / 2);
+  object-fit: cover;
+}
+a.gallery__link { transition: border-color 0.15s; }
+a.gallery__link:hover { border-color: var(--ink); }
+
+.gallery__caption {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+/* ---- AI / in-transit: a gallery the AI is still filling wears the dashed "terminal" edge on its
+   tiles, the same vocabulary card + badge + field use. */
+.gallery[data-commit="pending"] .gallery__link,
+[data-grade="grain"] .gallery__link { border-style: dashed; border-color: var(--ink); }

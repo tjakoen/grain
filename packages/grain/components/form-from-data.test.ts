@@ -1,12 +1,13 @@
 // grain/components/form-from-data.test.ts — conformance for the data-first form atoms.
 //
-// b-field / b-choice / b-option are the DATA-driven siblings of b-input / b-select: same control,
-// same CSS frame, bindings instead of config props. Two mistakes would quietly break that deal, and
-// both are the kind grain's CLAUDE.md says to design out rather than patch on the instance:
+// b-field / b-choice / b-option / b-memo are the DATA-driven siblings of b-input / b-select /
+// b-textarea: same control, same CSS frame, bindings instead of config props. Two mistakes would
+// quietly break that deal, and both are the kind grain's CLAUDE.md says to design out rather than
+// patch on the instance:
 //
 //   1. Shipping a stylesheet here. The whole reason these atoms exist without one is that the frame
-//      is b-input.css, so the sizes, the inline variant and the AI treatment cannot drift from the
-//      component they mirror. A second stylesheet describing the same control is how two components
+//      is b-input.css and the controls are b-select.css and b-textarea.css, so the sizes, the inline
+//      variant and the AI treatment cannot drift from the component they mirror. A second stylesheet describing the same control is how two components
 //      become two designs.
 //   2. Mixing config props and data bindings for the SAME key. `prop-*` resolves in PASS 0 from a
 //      LITERAL attribute on the tag, so it is identical for every item of an `each` — exactly what a
@@ -21,11 +22,17 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ATOMS = join(import.meta.dir, "atoms");
-const DATA_FIRST = ["b-field", "b-choice", "b-option"];
+const DATA_FIRST = ["b-field", "b-choice", "b-option", "b-memo"];
 const read = (name: string) => readFileSync(join(ATOMS, name, `${name}.html`), "utf8");
 
 // The per-item content keys. Each must arrive as a binding, never as a config prop.
 const CONTENT_KEYS = ["label", "name", "type", "placeholder", "value", "required", "selected"];
+
+/** The whole opening tag carrying `class="<cls>"`, attributes included, however many lines it is
+ *  wrapped across. The assertions below are about WHICH ELEMENT an attribute sits on, and a
+ *  line-by-line search answers that question only while the template happens to fit on one line. */
+const openTag = (html: string, cls: string): string =>
+  html.match(new RegExp(`<[a-zA-Z][a-zA-Z0-9]*[^>]*class="${cls}"[^>]*>`))?.[0] ?? "";
 
 test("the data-first form atoms ship no CSS (the frame is b-input.css)", () => {
   const withCss = DATA_FIRST.filter((n) => readdirSync(join(ATOMS, n)).some((f) => f.endsWith(".css")));
@@ -34,7 +41,8 @@ test("the data-first form atoms ship no CSS (the frame is b-input.css)", () => {
 
 test("every class they use is already declared by the components they mirror", () => {
   const frame = readFileSync(join(ATOMS, "b-input", "b-input.css"), "utf8")
-    + readFileSync(join(ATOMS, "b-select", "b-select.css"), "utf8");
+    + readFileSync(join(ATOMS, "b-select", "b-select.css"), "utf8")
+    + readFileSync(join(ATOMS, "b-textarea", "b-textarea.css"), "utf8");
   const unknown: string[] = [];
   for (const name of DATA_FIRST) {
     for (const m of read(name).matchAll(/\bclass="([^"]+)"/g)) {
@@ -69,11 +77,9 @@ test("b-field binds every key the field spec carries", () => {
   // WHERE it lands is the whole of it, and asserting only that the binding exists is what let this
   // ship wrong. field.set resolves the address and then writes el.value, so the address has to be on
   // the input. On the label it points at something with nothing to write into and the write is
-  // dropped in silence. Assert the binding sits on the input line, and that the label carries none.
-  const inputLine = html.split("\n").find((l) => l.includes("class=\"field__input\""))!;
-  expect(inputLine).toContain(`data-bind-data-surface="surface"`);
-  const labelLine = html.split("\n").find((l) => l.includes("class=\"field\""))!;
-  expect(labelLine).not.toContain(`data-bind-data-surface`);
+  // dropped in silence. Assert the binding sits on the input itself, and the label carries none.
+  expect(openTag(html, "field__input")).toContain(`data-bind-data-surface="surface"`);
+  expect(openTag(html, "field")).not.toContain(`data-bind-data-surface`);
   // Presentation IS form-wide, so these two stay config props on purpose.
   expect(html).toContain(`prop-attr-data-size="size"`);
   expect(html).toContain(`prop-attr-data-variant="variant"`);
@@ -86,8 +92,49 @@ test("b-choice nests b-option over the item's own options array", () => {
 
 test("b-choice addresses the select, matching b-field's control-not-label rule", () => {
   const html = read("b-choice");
-  const selectLine = html.split("\n").find((l) => l.includes("class=\"field__select\""))!;
-  expect(selectLine).toContain(`data-bind-data-surface="surface"`);
-  const labelLine = html.split("\n").find((l) => l.includes("class=\"field\""))!;
-  expect(labelLine).not.toContain(`data-bind-data-surface`);
+  expect(openTag(html, "field__select")).toContain(`data-bind-data-surface="surface"`);
+  expect(openTag(html, "field")).not.toContain(`data-bind-data-surface`);
+});
+
+test("b-memo addresses the textarea, matching the same control-not-label rule", () => {
+  const html = read("b-memo");
+  expect(openTag(html, "field__textarea")).toContain(`data-bind-data-surface="surface"`);
+  expect(openTag(html, "field")).not.toContain(`data-bind-data-surface`);
+});
+
+// The one way b-memo cannot copy b-field, and it is invisible in a diff: a textarea has no `value`
+// ATTRIBUTE. Its value is its content. `data-bind-value="value"` would render value="…" onto a
+// textarea, the browser would ignore it, and the box would come up empty with nothing warning —
+// exactly the shape of failure the label addressing had. So the value arrives through data-field
+// (setInnerContent) and the attribute binding must never appear here.
+test("b-memo binds its value as CONTENT, never as a value attribute", () => {
+  const html = read("b-memo");
+  // The markup only: this atom's own comment names the marker it must not use, and a scan that
+  // cannot tell a rule from its explanation would fail on a template that is entirely correct.
+  expect(html.replace(/<!--[\s\S]*?-->/g, "")).not.toContain(`data-bind-value`);
+  expect(openTag(html, "field__textarea")).toContain(`data-field="value"`);
+  for (const attr of ["name", "placeholder", "required"]) {
+    expect(html).toContain(`data-bind-${attr}="${attr}"`);
+  }
+  expect(html).toContain(`data-field="label"`);
+});
+
+// Height is presentation, so it is form-wide config like size and variant, not a per-item data key.
+// Binding it per item would be the first crack in the split the whole family rests on.
+test("b-memo takes its height as form-wide config, not as per-item data", () => {
+  const html = read("b-memo");
+  expect(html).toContain(`prop-attr-rows="rows"`);
+  expect(html).not.toContain(`data-bind-rows`);
+  expect(html).toContain(`prop-attr-data-size="size"`);
+  expect(html).toContain(`prop-attr-data-variant="variant"`);
+});
+
+// b-textarea is the authoring-time sibling that OWNS the control's stylesheet, the way b-select owns
+// .field__select for b-choice. If it ever stopped declaring the class, b-memo would render an
+// unstyled box and the test above would still pass, so the ownership is asserted here rather than
+// assumed.
+test("b-textarea declares the control class its data-first sibling reuses", () => {
+  const css = readFileSync(join(ATOMS, "b-textarea", "b-textarea.css"), "utf8");
+  expect(css).toContain(`.field__textarea`);
+  expect(readdirSync(join(ATOMS, "b-textarea")).filter((f) => f.endsWith(".css"))).toEqual(["b-textarea.css"]);
 });

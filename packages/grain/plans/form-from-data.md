@@ -196,14 +196,62 @@ a workaround, and it defers a vocabulary decision until something needs it.
 
 None of these block §2, and none of them should be smuggled into it. Each is its own small change:
 
-1. **A textarea atom.** `field.set` already targets `TEXTAREA`, and `.field` has no textarea rule at
-   all, so the op currently has a target the design system does not draw.
+1. **A textarea atom. BUILT 2026-08-13** (`b-textarea` + `b-memo`, see §5a below). `field.set`
+   already targeted `TEXTAREA`, and `.field` had no textarea rule at all, so the op had a target the
+   design system did not draw. The owner pulled this forward ahead of the rest of the list.
 2. **Checkbox and radio.** `b-switch` exists but is a switch, not a checkbox in a `.field` frame.
 3. **`.field__hint` and `.field__error`.** Validation today is `:user-invalid` bumping the border
    width, with nowhere to say what went wrong.
 4. **A required marker.** The attribute is bound; nothing shows the reader which fields are required.
 5. **A form-grid layout.** `.field` is `flex: 1` in a column and there is no component that lays
    several fields out.
+
+## 5a. The textarea, built (2026-08-13)
+
+Two atoms, not one, and the argument for that is the same one that made `b-input` and `b-field` two
+components rather than one clever one.
+
+**`b-textarea` is the authoring-time atom and it owns the stylesheet.** The actual gap was never a
+missing template, it was a missing *rule*: `.field` had nothing to say about a multi-line control, so
+a page that wanted a message box hand-authored a bare `<textarea>` with no frame, no sizes and no AI
+treatment, which is exactly what the portfolio's `/mail` compose panel does to this day. Somebody has
+to declare `.field__textarea`, and the data-first atoms cannot: they ship no CSS on purpose, and the
+conformance test that enforces it is the thing keeping two components from becoming two designs.
+`b-select` is the precedent, adding `.field__select` to a frame `b-input` owns.
+
+**`b-memo` is the data-first sibling and it ships no CSS,** the way `b-field` and `b-choice` do not.
+A single atom could not have covered both callers: config props resolve from a literal attribute on
+the tag and are therefore identical for every item of an `each`, which is precisely what a per-field
+label must not be. That collision is the whole reason this family is siblings rather than one
+retrofit.
+
+**Probed, not reasoned, on 2026-08-13 through `createRenderer`:**
+
+1. **A textarea's value is its CONTENT.** It has no `value` attribute, so the item's `value` binds
+   through `data-field` (`setInnerContent`), never `data-bind-value`. Bound as an attribute, the
+   browser renders a `value="…"` it ignores: the box comes up empty, nothing warns, and the spec
+   looks correct. Same shape of silent failure as the label addressing, and now a conformance test.
+2. **The address lands on the `<textarea>`**, matching the fix `b-field` and `b-choice` took. Verified
+   in the live page: `field.set` writes into a generated message box with nothing registered by hand.
+3. **Height is form-wide config.** `rows` rides on the tag (`prop-attr-rows`) alongside `size` and
+   `variant`, so it reaches every item of the `each` and never appears in the spec. A default of four
+   lines comes from the stylesheet, composed from the type tokens rather than a fixed height.
+4. **The null contract holds unchanged:** an explicit `null` value renders an empty box quietly, a
+   missing key logs `[render] unknown binding`. Escaping and newlines survive the content binding.
+5. **A message box has no select hazard.** Any string is a legal textarea value, so unlike a choice
+   there is nothing a caller can send that empties it. The dispatcher already typed into `TEXTAREA`
+   through the same branch as `INPUT`, so what was missing was only ever the control.
+
+**The portfolio consumed it the same day.** `field-matcher.ts` carried a refusal whose stated reason
+was this exact missing atom; the refusal was deleted rather than softened, a message entry joined the
+closed set as its own array (a component cannot choose which component it is, §4), the `/about`
+contact form grew a message box that its mail handoff now carries, and `/builder` renders one through
+`<b-memo each="messages" rows="6">`. A refusal that outlives its cause is worse than no refusal:
+it reads as a considered limit.
+
+**Open, and small:** the name. `b-memo` is the role name the family uses (a field, a choice, a memo)
+and it dodges `chat-message`, which a `b-message` would sit beside and read as a sibling of. Worth an
+owner's minute, cheap to rename while nothing is published.
 
 ## 6. What this deliberately does not do
 
@@ -297,8 +345,8 @@ not built.
    grain ship an example spec of its own for the catalog?
 3. **Whether `b-input` eventually retires.** This spec says no, both ship. The cost is two
    components documenting one control, and the `.md` files have to say plainly which is which.
-4. **Whether §5 item 1, the textarea, jumps the queue.** `field.set` targets textareas today and the
-   design system has no rule for them, which is a live gap rather than a future one.
+4. **Whether §5 item 1, the textarea, jumps the queue. ANSWERED yes, 2026-08-13,** and built the same
+   day: see §5a. What is left of this question is the naming call recorded there.
 5. **Whether the §8 demo is one candidate or two.** The roadmap's rule is one candidate per session,
    and the demo is really a matcher plus a page. Building the matcher against a committed spec
    first, then the page, keeps each half auditable; building both at once makes a bad run

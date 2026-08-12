@@ -1,0 +1,48 @@
+/* atoms/b-textarea — the field family's multi-line control; reuses .field/.field__label from
+   b-input and adds .field__textarea, exactly the way b-select adds .field__select. One class per
+   element (BEM, component-scoped); variants are attributes, same pattern as the input/select.
+   No custom scrollbar and no appearance reset: the platform's own is accessible, and a hand-drawn
+   one would need a hardcoded color, which the tokens-only rule does not allow. */
+.field__textarea {
+  width: 100%; box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--type-font); font-size: var(--text-base); line-height: var(--leading-relaxed);
+  color: var(--ink); background: transparent;
+  border: var(--border); border-radius: var(--radius-sm);   /* hard edge — you tap it, same as the input */
+  /* Vertical only: a person can grow the box, and the page can never be shoved sideways by it. */
+  resize: vertical;
+  /* The default height, in the only unit that means anything here: LINES of the body text it holds,
+     plus the padding declared above, since box-sizing is border-box. `rows` overrides it upward when
+     an author sets one; without this a textarea comes up two lines tall, which reads as a broken
+     input rather than a place to write a paragraph. Composed from tokens, so re-skinning the type
+     scale moves it too. */
+  min-height: calc(var(--text-base) * var(--leading-relaxed) * 4 + var(--space-2) * 2);
+}
+.field__textarea::placeholder { color: var(--ink-faint); }
+/* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
+   b-input) — never `autofocus`, which would steal focus + scroll the catalog on load. */
+.field__textarea:focus-visible, .field__textarea[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+/* invalid state — native, no JS. Monochrome: a heavier rule, not a red one. */
+.field__textarea:user-invalid { border-width: 2px; }
+
+/* ---- sizes (attribute, on .field, same as b-input) ---- */
+.field[data-size="sm"] .field__textarea { padding: var(--space-1) var(--space-2); font-size: var(--text-sm); }
+.field[data-size="lg"] .field__textarea { padding: var(--space-3) var(--space-4); font-size: var(--text-lg); }
+
+/* The inline variant (.field[data-variant="inline"]) is declared on .field itself in b-input.css and
+   works here for free. It is a poor fit for a multi-line box and the .md says so, rather than this
+   file quietly overriding a variant the frame offers. */
+
+/* ---- AI / in-transit: the non-text grain, same language as the input/select (AI-INTERFACE §5).
+   A textarea the AI is touching (live pending, or any grain ancestor) wears the dashed "terminal"
+   edge; the label + value already swap to the grain family via --type-font. EXCEPTION: while the AI
+   is actively COMPOSING, the dispatcher sets data-grade="smooth" on the textarea itself (clean ink,
+   real caret, like a human typing) — so that stays solid. The `:not([data-grade="smooth"])` guard
+   makes the exception explicit: a self-smooth textarea never matches the dashed rule, so the outcome
+   doesn't depend on stylesheet source order. This is the one place the textarea is NOT a copy of the
+   input: ai-dispatch.js types into INPUT and TEXTAREA through the same branch, so a missing rule
+   here would have meant the AI writing into a control that never showed it was being written to. */
+.field[data-commit="pending"] .field__textarea:not([data-grade="smooth"]),
+[data-grade="grain"] .field__textarea:not([data-grade="smooth"]) { border-style: dashed; }
+.field__textarea[data-grade="smooth"] { border-style: solid; }

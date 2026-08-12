@@ -1,0 +1,13 @@
+<!-- atoms/b-textarea — a labelled MULTI-LINE field: the long-answer sibling of b-input, and the
+     rule the .field frame was missing. field.set has always been able to type into a TEXTAREA
+     (ai-dispatch.js handles the tag by name), so the op had a target the design system never drew.
+     Config props: label, name, placeholder, required (bare boolean), rows, variant, size.
+     Usable self-closed. Unlike b-field's siblings this one DOES own a stylesheet, because it
+     contributes the .field__textarea rule nothing else declares — the same division b-select
+     makes when it adds .field__select to a frame b-input owns. -->
+<label class="field" prop-attr-data-variant="variant" prop-attr-data-size="size">
+  <span class="field__label" prop-text="label">Label</span>
+  <textarea class="field__textarea"
+    prop-attr-name="name" prop-attr-placeholder="placeholder"
+    prop-attr-required="required" prop-attr-rows="rows"></textarea>
+</label>

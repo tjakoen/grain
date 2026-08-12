@@ -34,8 +34,29 @@ Component work does not belong in the numbered list above, which tracks the AI-i
    companion to `card-grid` for pictures rather than facts, tuned by `--gallery-min` and
    `--gallery-ratio`, wired to `scripts/lightbox.js` by one group per gallery. Written because the
    portfolio's event pages could only carry a hero strip, which hides anything past the fifth tile.
-2. **Media card** (owner, 2026-08-12). One image, a title, an optional description, an optional row
-   of CTA buttons. A `card` that leads with a picture, so it covers the two shapes the portfolio
-   currently hand-rolls: a photo that links somewhere, and a video poster that links out to the
-   platform the video lives on (`event-video`). Open question to settle when it is built: whether the
-   image sits above the text or beside it is a variant attribute or two components.
+2. **Media card** (owner, 2026-08-12, next up). One image, a title, an optional description, an
+   optional row of CTA buttons. A `card` that leads with a picture, so it covers the two shapes the
+   portfolio currently hand-rolls.
+
+   **Build it as `molecules/media-card`**, beside `card` and `gallery`, and reuse `card`'s vocabulary
+   rather than inventing a second one: hairline box, no fill, `data-pad` for padding, the whole tile
+   navigable when it is an `<a>`. Description and CTA row are both optional and both collapse to
+   nothing when absent, the way `feed-card` hides its empty rows.
+
+   **The two consumers to satisfy, and the second one is the real test:**
+   - a photo that links somewhere (the plain case);
+   - a **video poster** that links out to the platform the video lives on. That one exists today as
+     `tjakoen.github.io/view/components/molecules/event-video` and is rendered by `content.ts`
+     `renderVideoCard` off a flat `video:` frontmatter string. It carries a centred play badge over
+     a scrim, a label along the bottom, and one hard rule worth keeping: **it embeds nothing.** No
+     iframe, no platform script, no JS at all, so the no-JS case is the only case. If the media card
+     can wear that badge as a variant, `event-video` retires into it and the portfolio stops owning
+     design work it should not own.
+
+   **Open question to settle while building:** whether image-above-text and image-beside-text is one
+   component with a variant attribute or two components. Decide it against the two consumers above,
+   not in the abstract.
+
+   **Trap, already paid for once:** `styles/vars-defined.test.ts` fails on any new `var(--knob)` a
+   stylesheet reads. A per-use knob has to be registered in its `EXTERNALLY_SET` map with a pointer
+   to the doc line that documents it (see `--gallery-min`).

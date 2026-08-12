@@ -25,3 +25,17 @@
    `ai-content-retrieval-layer`).
 5. **Workflow / actions registry.** Named higher-level workflows composed from the atomic verbs, plus a
    discoverable "what the AI can do" list (memory `actions-workflow-registry-idea`).
+
+## Components
+
+Component work does not belong in the numbered list above, which tracks the AI-interaction layer.
+
+1. ~~**Gallery.**~~ **BUILT** (2026-08-12) — `molecules/gallery`, a captioned image grid: the
+   companion to `card-grid` for pictures rather than facts, tuned by `--gallery-min` and
+   `--gallery-ratio`, wired to `scripts/lightbox.js` by one group per gallery. Written because the
+   portfolio's event pages could only carry a hero strip, which hides anything past the fifth tile.
+2. **Media card** (owner, 2026-08-12). One image, a title, an optional description, an optional row
+   of CTA buttons. A `card` that leads with a picture, so it covers the two shapes the portfolio
+   currently hand-rolls: a photo that links somewhere, and a video poster that links out to the
+   platform the video lives on (`event-video`). Open question to settle when it is built: whether the
+   image sits above the text or beside it is a variant attribute or two components.

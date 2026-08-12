@@ -55,6 +55,8 @@ const EXTERNALLY_SET = new Map<string, string>([
   ["--cmdk-width",     "runtime: grain/scripts/cmdk.js setProperty"],
   ["--seg",            "instance knob: components/atoms/b-meter/b-meter.md:5,16"],
   ["--card-min",       "instance knob: components/molecules/card/card.md:4"],
+  ["--gallery-min",    "instance knob: components/molecules/gallery/gallery.md:8,48"],
+  ["--gallery-ratio",  "instance knob: components/molecules/gallery/gallery.md:8,48"],
   ["--rail-icon-col",  "instance knob: components/molecules/nav-item/nav-item.md:4"],
   ["--draw-len",       "instance knob: components/organisms/presentation/presentation.md:82"],
 ]);

@@ -220,10 +220,26 @@ The shape of the page:
   generator that can also operate its own output is a different demo from a code generator, and it
   costs nothing extra because §1 result 3 already delivered it.
 
-**Tier 1 ships with no model** and a rule-based mapping, labelled as scripted per the honesty
-doctrine. **Tier 2 lands after M★**, when the live model picks from the same closed set and an
-invalid key is a reported no-op rather than a broken page. The renderer is the validator either
-way: a key the spec invents warns, and a kind that does not exist has no component to render.
+**The model is not the blocker, and this is the part that dates the old framing.** `DEMO-PLAN.md`
+put the model tier after M★, but the desk has run a real in-browser Qwen2.5-0.5B since 2026-07-24,
+and B1 already drives `field.set` from it on the portfolio's compose panel. So the demo is buildable
+now, provided it obeys the rule that model has earned: **deterministic code selects, the model only
+composes text.** A 0.5B that is allowed to enumerate invents slugs, and a field spec is a list of
+slugs by another name. The honest split for this demo:
+
+- **Deterministic code owns the spec.** Which kinds a description maps to, the `name` keys, the
+  `type` values and every `surface` are chosen by a matcher over a closed set, the same way notes
+  filtering picks tags and navigation picks routes. Widening the matcher beats tuning the prompt,
+  which is the lesson that survived the whole desk retune.
+- **The model owns the wording.** Labels, placeholders and the drafted values it later fills in.
+  That is composition, which is what it is good at, and it is grain-graded ink when it lands.
+- **The renderer is the validator.** A key the spec invents warns, and a kind that does not exist
+  has no component to render, so an over-reaching run degrades to a missing field rather than a
+  broken page.
+
+A run driven this way is not a scripted run, so it does not need the scripted label. What it does
+need is the audit scenario every desk candidate ships with, plus a fake-engine e2e, per the roadmap
+bar. Track the flakiness honestly: the model tail varies run to run and always has.
 
 **Say plainly what it does not do.** There is nothing to submit to, on this site or in this stack
 (§6). The demo generates a form and prefills it; it never sends. That limit is the honest half of
@@ -245,9 +261,10 @@ not built.
    components documenting one control, and the `.md` files have to say plainly which is which.
 4. **Whether §5 item 1, the textarea, jumps the queue.** `field.set` targets textareas today and the
    design system has no rule for them, which is a live gap rather than a future one.
-5. **Whether the §8 demo waits for the model.** Tier 1 is honest and buildable now; Tier 2 is the
-   one people remember. Shipping Tier 1 first means labelling a scripted run on a showcase page,
-   which the doctrine allows and the owner has approved before.
+5. **Whether the §8 demo is one candidate or two.** The roadmap's rule is one candidate per session,
+   and the demo is really a matcher plus a page. Building the matcher against a committed spec
+   first, then the page, keeps each half auditable; building both at once makes a bad run
+   ambiguous.
 
 ## Rollout (after approval)
 

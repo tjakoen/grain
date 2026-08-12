@@ -173,9 +173,11 @@ None of these block §2, and none of them should be smuggled into it. Each is it
   and BATCH's `http/` has no POST, no formData and no CSRF helper. A form on a static Pages site has
   nothing to submit to; the portfolio's `/mail` builds a `mailto:` in an inline script.
 - **No validation engine.** Native constraints only, as today.
-- **No schema-driven form builder.** Wrong layer. A generator producing markup could not author that
-  markup in the binding vocabulary without becoming a second parallel system, and the thing people
-  reach for a builder to get, N fields from one description, is what §2 already does in three files.
+- **No schema-driven form builder that emits markup.** Wrong layer. A generator producing markup
+  could not author that markup in the binding vocabulary without becoming a second parallel system,
+  and the thing people reach for a builder to get, N fields from one description, is what §2 already
+  does in three files. A builder that emits the **spec** instead of the markup is a different animal
+  and it belongs in the portfolio, not here: see §8.
 - **No new render op and no contract change.** `field.set` and `fill` cover the AI side unchanged.
 
 ## 7. Tests
@@ -192,7 +194,47 @@ None of these block §2, and none of them should be smuggled into it. Each is it
 - **`tokens.test`:** nothing new to check, since no CSS ships, and that is worth asserting once so
   the next person does not add a stylesheet here by reflex.
 
-## 8. Open questions for the owner
+## 8. The demo this owes the portfolio: a form builder
+
+These atoms are not finished when they render. They are finished when someone watches a form appear
+from a sentence, and that demo belongs in the portfolio, where the desk persona lives. The engine
+stays persona-neutral in grain, the showcase page does not.
+
+**It is `DEMO-PLAN.md` piece 4, Tier 1, and it is the cheapest instance that plan has.** That piece
+argues for a composition generator over a text generator: GRAIN's components are a closed,
+machine-readable vocabulary, so "a contact card with mail and GitHub" is a **selection** problem
+rather than a writing problem. A form is the purest case of it, because the thing the generator has
+to emit **is not markup at all**. It is the JSON of §3. The page already knows how to turn that into
+controls, so the generator's whole job is picking field kinds, labels, types and surfaces, which is
+a list of choices from a closed set. Nothing has to write a `<label>`.
+
+The shape of the page:
+
+- **The prompt.** "A contact form with a name, an email and what they want to talk about."
+- **The spec it produced,** shown as JSON, because the honest claim is that a small model chose keys
+  from a closed set rather than that it wrote a form.
+- **The form itself,** rendered live from that spec through `b-field` and `b-choice`, next to the
+  one tag that rendered it. The tag never changes between runs, which is the point worth seeing.
+- **The close, and this is the part that only GRAIN can do:** the desk then fills in the form it
+  just generated, through `field.set`, against the `data-surface` values the spec carried. A
+  generator that can also operate its own output is a different demo from a code generator, and it
+  costs nothing extra because §1 result 3 already delivered it.
+
+**Tier 1 ships with no model** and a rule-based mapping, labelled as scripted per the honesty
+doctrine. **Tier 2 lands after M★**, when the live model picks from the same closed set and an
+invalid key is a reported no-op rather than a broken page. The renderer is the validator either
+way: a key the spec invents warns, and a kind that does not exist has no component to render.
+
+**Say plainly what it does not do.** There is nothing to submit to, on this site or in this stack
+(§6). The demo generates a form and prefills it; it never sends. That limit is the honest half of
+the pitch, and hiding it would be the one thing that makes the rest untrustworthy.
+
+Sibling backlog item, for whoever schedules this: the theme builder, `DEMO-PLAN.md` piece 5, is the
+other half of the same idea, a closed set of token slots driven by a human or an AI through one
+vocabulary. Both are listed in the portfolio's `docs/architecture/PLAN.md` backlog as captured and
+not built.
+
+## 9. Open questions for the owner
 
 1. **Names.** `b-field` / `b-choice` / `b-option`, or plural collection atoms in the `b-list` shape?
    The plural shape is what `b-list` was reaching for, and probe result 1 shows the singular shape
@@ -203,11 +245,15 @@ None of these block §2, and none of them should be smuggled into it. Each is it
    components documenting one control, and the `.md` files have to say plainly which is which.
 4. **Whether §5 item 1, the textarea, jumps the queue.** `field.set` targets textareas today and the
    design system has no rule for them, which is a live gap rather than a future one.
+5. **Whether the §8 demo waits for the model.** Tier 1 is honest and buildable now; Tier 2 is the
+   one people remember. Shipping Tier 1 first means labelling a scripted run on a showcase page,
+   which the doctrine allows and the owner has approved before.
 
 ## Rollout (after approval)
 
 grain: `b-field` + `b-choice` + `b-option` templates and their `.md` catalog docs, then the render
 tests, then the catalog entries. No CSS, no contract change, no version-sensitive surface, so this
-is a normal grain change followed by the usual bump and publish. The portfolio side, a real form
-built from JSON, is separate and later, and it is the thing that will find whatever this spec got
-wrong.
+is a normal grain change followed by the usual bump and publish. Then the portfolio, in two steps
+that are worth keeping apart: first a real form built from a committed JSON spec, which is what will
+find whatever this spec got wrong, and only then the §8 builder demo, which should be built on a
+form that already works rather than debugging both at once.

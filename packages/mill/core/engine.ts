@@ -14,10 +14,12 @@ export const escapeHtml = (s: string): string =>
 function makeContext(adapter: RenderAdapter): RenderContext {
   const escape = adapter.escape ?? escapeHtml;
   const resolveLink = adapter.resolveLink ?? ((href: string) => href);
+  const linkAttrs = adapter.linkAttrs ?? (() => "");
 
   const ctx: RenderContext = {
     escape,
     resolveLink,
+    linkAttrs,
     renderInline(nodes: InlineNode[]): string {
       return nodes.map(n => {
         const handler = adapter.inline[n.type] as (node: InlineNode, c: RenderContext) => string;

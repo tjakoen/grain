@@ -23,6 +23,7 @@ const here = new URL(".", import.meta.url).pathname;
 // resolve for anyone who mounted the package the way the README says to.
 const SHIPPED_ASSETS = new Set([
   "/assets/figure-sample.svg",
+  "/assets/doc-sample.pdf",
   "/scripts/terminal.js",
 ]);
 

@@ -1,6 +1,6 @@
 // mill/adapters/grain/grain-adapter.test.ts — the reference BATCH+GRAIN adapter.
 import { test, expect } from "bun:test";
-import { createGrainAdapter, renderGrainDocument } from "./grain-adapter.ts";
+import { createGrainAdapter, renderGrainDocument, externalLinkAttrs } from "./grain-adapter.ts";
 import { renderDocument } from "../../core/engine.ts";
 import { findGrainViolation } from "../../core/grade.ts";
 import type { LayoutFn } from "../../core/types.ts";
@@ -118,4 +118,43 @@ test("table renders as .table inside a .table-scroll wrapper (th/td split)", () 
   expect(html).toContain(`<div class="table-scroll"><table class="table">`);
   expect(html).toContain("<thead><tr><th>a</th><th>b</th></tr></thead>");
   expect(html).toContain("<tbody><tr><td>c</td><td>d</td></tr></tbody>");
+});
+
+// ---- linkAttrs: MILL renders links, the consumer decides which ones leave the site --------
+
+test("no linkAttrs ⇒ a bare anchor, exactly as before", () => {
+  const { html } = renderGrainDocument("[out](https://example.com)");
+  expect(html).toContain(`<a href="https://example.com">out</a>`);
+});
+
+test("linkAttrs is spliced into the anchor, and sees the RESOLVED href", () => {
+  const { html } = renderGrainDocument("[in](note:x)", {
+    linkAttrs: (href) => href === "/notes/x" ? ` data-seen="resolved"` : ` data-seen="raw"`,
+  });
+  expect(html).toContain(`<a href="/notes/x" data-seen="resolved">in</a>`);
+});
+
+test("externalLinkAttrs sends off-site links to a new tab and leaves the rest alone", () => {
+  const attrs = externalLinkAttrs("https://tjakoen.github.io");
+  expect(attrs("https://example.com/deck")).toBe(` target="_blank" rel="noopener noreferrer"`);
+  expect(attrs("https://tjakoen.github.io/notes")).toBe("");   // same host, same tab
+  expect(attrs("/media/decks/x.pdf")).toBe("");                // root-relative
+  expect(attrs("#section")).toBe("");                          // in-page
+  expect(attrs("mailto:someone@example.com")).toBe("");        // a mail client is not a tab
+  expect(attrs("tel:+31000000000")).toBe("");
+});
+
+test("externalLinkAttrs with no usable origin treats every absolute URL as external", () => {
+  const attrs = externalLinkAttrs("");
+  expect(attrs("https://example.com")).toBe(` target="_blank" rel="noopener noreferrer"`);
+  expect(attrs("/local")).toBe("");
+});
+
+test("end to end: an off-site link in prose opens in a new tab, a sibling note does not", () => {
+  const { html } = renderGrainDocument(
+    "[out](https://example.com) and [in](note:x)",
+    { linkAttrs: externalLinkAttrs("https://tjakoen.github.io") },
+  );
+  expect(html).toContain(`<a href="https://example.com" target="_blank" rel="noopener noreferrer">out</a>`);
+  expect(html).toContain(`<a href="/notes/x">in</a>`);
 });

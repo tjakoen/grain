@@ -82,7 +82,10 @@ const inline: InlineHandlers = {
   strong: (n, ctx) => `<strong>${ctx.renderInline(n.children)}</strong>`,
   em: (n, ctx) => `<em>${ctx.renderInline(n.children)}</em>`,
   codeSpan: (n, ctx) => `<code class="code-inline">${ctx.escape(n.value)}</code>`,
-  link: (n, ctx) => `<a href="${ctx.escape(ctx.resolveLink(n.href))}">${ctx.renderInline(n.children)}</a>`,
+  link: (n, ctx) => {
+    const href = ctx.resolveLink(n.href);
+    return `<a href="${ctx.escape(href)}"${ctx.linkAttrs(href)}>${ctx.renderInline(n.children)}</a>`;
+  },
   image: (n, ctx) => `<img src="${ctx.escape(ctx.resolveLink(n.src))}" alt="${ctx.escape(n.alt)}">`,
 };
 
@@ -112,6 +115,10 @@ export interface GrainAdapterOptions {
   defaultLayout?: LayoutFn;
   /** override internal link/asset resolution (default = `note:slug` → `/notes/slug`) */
   resolveLink?: (href: string) => string;
+  /** extra attributes per rendered link, spliced into the `<a>` as-is (lead with a space).
+   *  MILL renders links; which of them leave the site is the consumer's policy, so this is a
+   *  hook and not a setting. `externalLinkAttrs(origin)` below is the usual answer. */
+  linkAttrs?: (href: string) => string;
   /** override individual block handlers (the consumer's block-map overrides) */
   blockOverrides?: Partial<BlockHandlers>;
   /** override individual inline handlers */
@@ -131,6 +138,24 @@ export function createGrainAdapter(options: GrainAdapterOptions = {}): RenderAda
     layout: (input) => (layouts[input.type] ?? fallback)(input),
     escape: escapeHtml,
     resolveLink: options.resolveLink ?? defaultResolveLink,
+    linkAttrs: options.linkAttrs,
+  };
+}
+
+// The usual `linkAttrs`: send off-site links to a new tab. Supplied here so every consumer
+// agrees on what "external" means instead of each inventing it — an absolute http(s) URL whose
+// host is not the site's own. Root-relative paths, in-page anchors, and non-web schemes
+// (mailto:, tel:) are all left alone: a mail client opening in a torn-off tab is a bug, and a
+// same-site link that steals a tab defeats the point of having them.
+export function externalLinkAttrs(siteOrigin: string): (href: string) => string {
+  let host = "";
+  try { host = new URL(siteOrigin).host; } catch { /* no origin ⇒ nothing counts as internal */ }
+  return (href) => {
+    if (!/^https?:\/\//i.test(href)) return "";
+    let target = "";
+    try { target = new URL(href).host; } catch { return ""; }
+    if (!target || target === host) return "";
+    return ` target="_blank" rel="noopener noreferrer"`;
   };
 }
 

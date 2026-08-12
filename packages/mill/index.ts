@@ -3,7 +3,7 @@
 // consumer imports only ./core and supplies its own adapter.
 export * from "./core/index.ts";
 export {
-  createGrainAdapter, renderGrainDocument,
+  createGrainAdapter, renderGrainDocument, externalLinkAttrs,
 } from "./adapters/grain/grain-adapter.ts";
 export type { GrainAdapterOptions } from "./adapters/grain/grain-adapter.ts";
 export { createMillRoutes, dirSource, packageDocsSource } from "./serve.ts";

@@ -48,6 +48,10 @@ export interface RenderContext {
   escape(text: string): string;
   /** resolve an internal link/asset href (e.g. `note:slug`) to a URL */
   resolveLink(href: string): string;
+  /** extra attributes for a rendered link, as a ready-to-splice string (leading space
+   *  included, or "" for none). The policy is the consumer's: MILL renders links, it does
+   *  not decide which of them leave the site. */
+  linkAttrs(href: string): string;
 }
 
 type NodeOfType<T extends MillNode["type"]> = Extract<MillNode, { type: T }>;
@@ -81,6 +85,8 @@ export interface RenderAdapter {
   escape?: (text: string) => string;
   /** optional: resolve internal links (default = identity) */
   resolveLink?: (href: string) => string;
+  /** optional: extra attributes per link (default = none) */
+  linkAttrs?: (href: string) => string;
 }
 
 // The engine's output: the rendered document plus the parsed pieces a consumer needs

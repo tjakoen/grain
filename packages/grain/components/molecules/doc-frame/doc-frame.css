@@ -1,0 +1,52 @@
+/* molecules/doc-frame — a document rendered INSIDE the page instead of replacing it. CSS-only
+   (CONVENTIONS §4), composed by hand, nothing data-binds it.
+
+   Why it exists: a link straight to a PDF hands the tab to the browser's viewer and the site is
+   gone, chrome and all. Pointed at a route that composes this, the document becomes an ordinary
+   page, which means it becomes an ordinary open tab (scripts/tabs.js projects visited paths), which
+   means the reader can close it and still be where they were.
+
+   <object> and not <iframe>: same element, better failure. A browser that cannot render the type
+   inline renders the element's CHILDREN instead, so the fallback is markup rather than a script
+   sniffing for support. Same origin only — this is for documents the site itself serves, and it is
+   emphatically not a hole for third-party embeds.
+
+   The escape hatch below the frame is NOT redundant with that fallback, and this is the part worth
+   remembering: iOS Safari neither renders a multi-page PDF inline nor triggers the fallback. It
+   draws page one in a dead box and stops. So the direct link is always visible, for everybody.
+
+   Height is a knob (--doc-frame-height) because a slide deck and a two-column paper want different
+   boxes; the default is most of the viewport, floored so a short window still shows a page. */
+.doc-frame { margin: 0; }
+
+.doc-frame__object {
+  display: block;
+  width: 100%;
+  height: var(--doc-frame-height, max(28rem, 78vh));
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--paper-2);
+}
+
+/* the <object>'s own children: shown only when the browser refuses the document inline */
+.doc-frame__fallback {
+  margin: 0;
+  padding: var(--space-6);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+/* always visible, under the frame: the plain link out, plus whatever the consumer puts beside it */
+.doc-frame__escape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.doc-frame[data-commit="pending"] .doc-frame__object,
+[data-grade="grain"] .doc-frame__object { border-style: dashed; border-color: var(--ink); }

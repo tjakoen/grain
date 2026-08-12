@@ -1,0 +1,71 @@
+/* molecules/attachment — a document hanging off a page: a deck, a paper, a slide set. CSS-only
+   (CONVENTIONS §4), composed by hand, nothing data-binds it.
+
+   The shape is deliberately quiet and horizontal. An attachment is not the page's content, it is
+   the thing the page is about, offered on the way in — so it announces itself in one row near the
+   top and then gets out of the way. That is the whole reason it is not a media-card: a poster-sized
+   tile at the top of a note reads as the subject rather than the appendix.
+
+   The whole row is the link. Composed as an <a> with <span> children, so every child that must sit
+   on its own line declares display, because a <span> inside an <a> does not get one for free. Owns
+   no outer margin: where an attachment sits is the consumer's layout decision. */
+.attachment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-fg);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.attachment:hover { background: var(--paper-2); border-color: var(--ink); }
+
+/* the kind chip: PDF, DECK, SLIDES. Monospace and small, so it reads as a file type rather than
+   a heading, and fixed-width enough that a row of attachments lines up down the left. */
+.attachment__kind {
+  flex: none;
+  min-width: 3.5rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.attachment__body { flex: 1 1 12rem; min-width: 10rem; }
+.attachment__title { display: block; font-size: var(--text-base); overflow-wrap: anywhere; }
+.attachment__meta {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+/* the affordance on the right: says what the click does. Hidden on narrow screens, where the row
+   is obviously tappable and the words cost more than they carry.
+
+   The row WRAPS rather than squeezing (flex-wrap above, and a 12rem basis on the body). Without
+   that, a narrow container — the component catalog's preview column is the one that caught it —
+   crushes the title to one word per line while the chip and this label sit comfortably beside it.
+   A viewport media query cannot fix that: the viewport is wide, the box is not. */
+.attachment__action {
+  flex: none;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.attachment:hover .attachment__action { color: var(--color-fg); }
+@media (max-width: 32rem) {
+  .attachment__action { display: none; }
+}
+
+/* ---- AI / in-transit: an attachment the AI is still producing wears the dashed terminal edge,
+   the same vocabulary card, badge and field use. */
+.attachment[data-commit="pending"],
+[data-grade="grain"] .attachment { border-style: dashed; border-color: var(--ink); }

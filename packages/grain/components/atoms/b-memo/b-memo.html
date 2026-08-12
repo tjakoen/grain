@@ -1,0 +1,19 @@
+<!-- atoms/b-memo — a labelled MULTI-LINE field built from DATA: the data-first sibling of
+     b-textarea, exactly as b-field is b-input's and b-choice is b-select's. Use it with each= over
+     a field spec (`<b-memo each="messages" rows="6">`). Per-item DATA: label, name, placeholder,
+     value, required ("required", not ""), surface. Form-wide CONFIG props: size, variant, rows —
+     a literal attribute on the tag reaches every item of the each. No .css: the frame is
+     b-input.css and the control is b-textarea.css.
+     Two rules this atom cannot drop. The surface binds to the TEXTAREA, not to the label around
+     it: field.set resolves the address and then writes el.value, so an address on a label points
+     at something with nothing to write into and the write is dropped without a word (measured on
+     2026-08-13, and the reason b-field and b-choice were fixed). And the value arrives as CONTENT
+     through data-field, never as data-bind-value: a textarea has no value attribute, so a bound
+     one would render an attribute the browser ignores and the box would come up empty with
+     nothing warning. -->
+<label class="field" prop-attr-data-size="size" prop-attr-data-variant="variant">
+  <span class="field__label" data-field="label">Label</span>
+  <textarea class="field__textarea" data-bind-data-surface="surface"
+    data-bind-name="name" data-bind-placeholder="placeholder"
+    data-bind-required="required" prop-attr-rows="rows" data-field="value"></textarea>
+</label>

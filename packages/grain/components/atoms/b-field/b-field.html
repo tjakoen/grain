@@ -2,11 +2,14 @@
      Use it with each= over a field spec (`<b-field each="fields">`); use b-input when the
      field is known at authoring time. Per-item DATA: label, name, type, placeholder, value,
      required ("required", not ""), surface. Form-wide CONFIG props: size, variant — a literal
-     attribute on the tag reaches every item of the each. No .css: the frame is b-input.css. -->
-<label class="field" prop-attr-data-size="size" prop-attr-data-variant="variant"
-       data-bind-data-surface="surface">
+     attribute on the tag reaches every item of the each. No .css: the frame is b-input.css.
+     The surface binds to the INPUT, not to the label around it: field.set resolves the address
+     and then writes el.value, so an address on a label points at something with nothing to
+     write into, and the write is dropped without a word. That is how this shipped on
+     2026-08-13 and what the portfolio's first real form found. -->
+<label class="field" prop-attr-data-size="size" prop-attr-data-variant="variant">
   <span class="field__label" data-field="label">Label</span>
-  <input class="field__input"
+  <input class="field__input" data-bind-data-surface="surface"
          data-bind-name="name" data-bind-type="type" data-bind-value="value"
          data-bind-placeholder="placeholder" data-bind-required="required">
 </label>

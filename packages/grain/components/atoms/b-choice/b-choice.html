@@ -1,11 +1,14 @@
 <!-- atoms/b-choice — the select sibling of b-field, also built from DATA. Options come from
      the item's own `options` array through a nested each on b-option. Per-item DATA: label,
      name, options, surface. Form-wide CONFIG props: size, variant. No .css: the .field frame
-     and .field__select come from b-input.css and b-select.css. -->
-<label class="field" prop-attr-data-size="size" prop-attr-data-variant="variant"
-       data-bind-data-surface="surface">
+     and .field__select come from b-input.css and b-select.css.
+     The surface binds to the SELECT, matching b-field, so a generated choice is addressable
+     the same way every other control is. Read the note in b-choice.md before writing to one:
+     a select accepts a write that a text input would, and anything that is not one of its
+     option values empties it instead of failing. -->
+<label class="field" prop-attr-data-size="size" prop-attr-data-variant="variant">
   <span class="field__label" data-field="label">Label</span>
-  <select class="field__select" data-bind-name="name">
+  <select class="field__select" data-bind-data-surface="surface" data-bind-name="name">
     <b-option each="options"></b-option>
   </select>
 </label>

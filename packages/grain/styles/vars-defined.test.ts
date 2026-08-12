@@ -57,6 +57,7 @@ const EXTERNALLY_SET = new Map<string, string>([
   ["--card-min",       "instance knob: components/molecules/card/card.md:4"],
   ["--gallery-min",    "instance knob: components/molecules/gallery/gallery.md:8,48"],
   ["--gallery-ratio",  "instance knob: components/molecules/gallery/gallery.md:8,48"],
+  ["--media-ratio",    "instance knob: components/molecules/media-card/media-card.md:6,76"],
   ["--rail-icon-col",  "instance knob: components/molecules/nav-item/nav-item.md:4"],
   ["--draw-len",       "instance knob: components/organisms/presentation/presentation.md:82"],
 ]);

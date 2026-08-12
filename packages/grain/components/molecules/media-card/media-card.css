@@ -1,0 +1,90 @@
+/* molecules/media-card — a card that leads with a picture. CSS-only (CONVENTIONS §4): composed by
+   hand, nothing data-binds it. Card's vocabulary, not a second one: hairline box, no fill, no
+   shadow (DESIGN-SYSTEM §2), data-pad for padding, and the whole tile navigable when the root is
+   an <a>. Description and action row are both optional and both collapse to nothing when absent.
+
+   Layout is an attribute, not a second component. The default stacks the text under the picture;
+   [data-layout="overlay"] lays it over the bottom of the picture on a scrim. Those are the two
+   shapes with a real consumer today, and they share every other rule they have: the box, the
+   crop, the hover, the badge, the pending edge. Splitting them into two molecules would fork all
+   five to move one block of text. A beside-the-picture layout is the same decision again and is
+   deliberately not shipped until something asks for it: it is one more attribute value here, not
+   a new component.
+
+   It embeds nothing. The video poster consumer is one anchor over a still we host ourselves, so
+   there is no iframe, no platform script, and no JS in this component at all, which makes the
+   no-JS case the only case. The play badge is decorative (mark it aria-hidden); the title carries
+   the meaning for a screen reader.
+
+   Crop tunes with --media-ratio (default 16 / 9, the same idiom as --gallery-ratio). */
+.media-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+/* fixed box for the picture: the ratio reserves the space, so a lazily-loaded still cannot shift
+   the page under someone mid-scroll, and object-fit crops whatever it is handed to that box. */
+.media-card__media { display: block; position: relative; background: var(--paper-2); }
+.media-card__image {
+  display: block; width: 100%; height: 100%;
+  aspect-ratio: var(--media-ratio, 16 / 9);
+  object-fit: cover;
+}
+
+.media-card__body { padding: var(--space-5); }
+.media-card[data-pad="sm"] .media-card__body { padding: var(--space-4); }
+
+/* both rows are display: block because the navigable form composes them as <span>. Inside an <a>
+   the whole tile is the link, and a <span> is the neutral element to reach for there; left inline
+   it would run the title and the description together on one line, which is what happens the first
+   time anyone copies the example. Declaring it here means the markup can be spans or an <h3> and a
+   <p>, and both stack. */
+.media-card__title { display: block; font-size: var(--text-base); margin: 0; }
+.media-card__text  { display: block; color: var(--color-muted); font-size: var(--text-sm);
+  line-height: var(--leading-normal); margin: var(--space-2) 0 0; }
+
+/* the action row: buttons composed by hand, wrapping rather than overflowing on a narrow tile */
+.media-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin: var(--space-4) 0 0; }
+
+/* a navigable tile: the whole card is the link, so the tap target is the picture. Quiet at rest,
+   the edge picks up ink on hover, the way a gallery tile does. */
+a.media-card { text-decoration: none; color: var(--color-fg); }
+a.media-card:hover { border-color: var(--ink); }
+a.media-card[aria-disabled="true"] { pointer-events: none; opacity: 0.6; }
+
+/* the play badge sits centred over the picture, carrying its own scrim disc so it survives a
+   bright frame. Decorative: the title is what a screen reader gets. */
+.media-card__play {
+  position: absolute; inset: 0; margin: auto;
+  width: 4rem; height: 4rem;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--scrim); color: var(--on-scrim);
+  font-size: var(--text-2xl); line-height: 1; padding-left: .15em;
+}
+a.media-card:hover .media-card__play { background: var(--ink); }
+
+/* ---- overlay: the text sits on the picture rather than under it. The gradient is the readability
+   device, not decoration: a label over an arbitrary photograph has no contrast guarantee without
+   it. Both scrim tokens hold their value across color schemes on purpose (variables.css). */
+.media-card[data-layout="overlay"] .media-card__body {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: var(--space-4);
+  color: var(--on-scrim);
+  background: linear-gradient(to top, var(--scrim), transparent);
+}
+.media-card[data-layout="overlay"] .media-card__text { color: var(--on-scrim); opacity: 0.85; }
+
+@media (prefers-reduced-motion: no-preference) {
+  a.media-card { transition: border-color 0.15s; }
+  .media-card__play { transition: background 0.15s; }
+}
+
+/* ---- AI / in-transit: a media card the AI is still composing wears the dashed "terminal" edge,
+   the same vocabulary card + gallery + badge + field use. */
+.media-card[data-commit="pending"],
+[data-grade="grain"] .media-card { border-style: dashed; border-color: var(--ink); }

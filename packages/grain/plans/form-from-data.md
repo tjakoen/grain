@@ -328,6 +328,17 @@ So the atom ships unaddressable, the absence is a conformance test with the reas
 it, and the real fix is **a new verb, which is a contract change and therefore an owner's call.**
 Something in the shape of a `field.toggle` that sets `checked` rather than `value`. Not taken here.
 
+**ANSWERED 2026-08-13: add the verb.** The owner chose to grow the vocabulary rather than leave the
+tick box out of the AI's reach. It is a separate unit of work and deliberately not smuggled into this
+one, because it reaches further than any atom: `ai/contract.ts` gains the verb and decides which
+surface kind accepts it, `scripts/ai-dispatch.js` gains a branch that sets `checked` and fires the
+events a form listens for, the manifest starts advertising it, and only then does `b-check` get its
+address and lose the test that asserts it has none. The order matters: the atom is the LAST step, not
+the first, because an address that lands before the verb exists is the same false promise in the
+other direction. Whoever takes it should also decide whether the verb accepts a `field` surface or
+earns a kind of its own, since `field.set` and it would then both accept the same kind and only one
+of them would work on any given control.
+
 **Tests.** Eight new assertions in `form-from-data.test.ts`, each proved by mutation before it was
 kept: the two literal types with no prop able to shadow them, `b-check` taking its type from data
 with no literal to shadow the binding, the deliberate missing surface, both slots present in every

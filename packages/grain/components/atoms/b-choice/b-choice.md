@@ -1,18 +1,21 @@
 # Choice (from data)
 
-The select sibling of the [Field](../b-field/b-field.md), for when the options are data too. Its
-own template nests an `each` over the item's `options` array, so one tag renders every choice in
-the form and every option inside each one:
+The select sibling of the [Field](../b-field/b-field.md), for when the options are data too. Its own
+template nests an each over the item's options array, so one tag renders every choice in the form and
+every option inside each one. That nesting is what earns it a component of its own: a select cannot
+be built from a flat field spec without a second array.
 
-```
-<form><b-choice each="choices"></b-choice></form>
-```
+The item shape is label, name, surface, hint, error and an options array of value, label and
+selected. Like [Select](../b-select/b-select.md) it contributes no frame of its own, and the native
+dropdown arrow is kept, so nothing here needs a color.
 
-The item shape is label, name, surface, hint, error and an `options` array of
-`{ value, label, selected }`. Nesting is what earns this a component of its own: a select cannot be
-built from a flat field spec without a second array, and the nested `each` handles it at the same
-depth as everything else. The two message slots behave as they do everywhere in the family: per-item
-data, collapsed when null.
+**One caller rule.** A select accepts a write that a text input would, and anything that is not one
+of its option values does not fail: it sets the value to an empty string, so the control goes blank
+and nothing is logged. Send option values, never labels. Measured against a real page on 2026-08-13.
+
+## What it renders
+
+One item of the spec, and the markup it becomes:
 
 ```json
 { "surface": "field:contact-topic", "label": "About", "name": "topic",
@@ -20,12 +23,6 @@ data, collapsed when null.
   "options": [ { "value": "grain", "label": "GRAIN", "selected": null },
                { "value": "hiring", "label": "Hiring", "selected": "selected" } ] }
 ```
-
-Like [Select](../b-select/b-select.md), it contributes no frame of its own: the `.field` label and
-`.field__select` rules live in `b-input.css` and `b-select.css`, and the native dropdown arrow is
-kept, so nothing here needs a color.
-
-## What it renders
 
 ```html
 <label class="field">
@@ -36,12 +33,3 @@ kept, so nothing here needs a color.
   </select>
 </label>
 ```
-
-## Writing to one, and why it is not the same as writing to a field
-
-The address sits on the select, so a choice is addressable exactly like a text field. What it is not
-is safe to write to carelessly. A select passes the same check a text input does, and assigning it a
-string that is not one of its option values does not fail: it sets the value to the empty string, so
-the control goes blank and nothing is logged. Anything writing to a choice has to send an option
-value, never a label, and the caller is the one that has to know the difference. Measured against a
-real page on 2026-08-13.

@@ -230,6 +230,67 @@ test("the frame declares both slots, hides them when empty, and marks a required
   expect(css).not.toMatch(/\.field__error[^{]*\{[^}]*color:\s*(red|#)/);
 });
 
+// ---- what the catalog does with a doc, which is not what the file looks like ------------------
+//
+// Measured against the rendered page on 2026-08-13, and all three of these are silent:
+//
+//   1. EVERY prose line before the first `## ` is joined into ONE paragraph. Four paragraphs of
+//      rationale render as one wall, which is what the owner sent this back for.
+//   2. Prose under a `## ` is DROPPED — parseDoc only collects prose while no group is open. But
+//      the heading is still emitted, so a prose-only section renders as a heading with nothing
+//      beneath it. Worse than losing the text, because it looks broken rather than absent.
+//   3. Only a ```html fence becomes a panel. A ```json fence under a group is dropped quietly; the
+//      same fence BEFORE the first `## ` has its lines swept into the intro as prose, which is how
+//      raw JSON braces ended up mid-sentence in two shipped docs.
+//
+// So a doc in this family is: a short intro, then groups that each hold at least one html fence.
+// Anything else either leaks into the intro or renders as an empty heading. The rule is asserted for
+// the FAMILY THIS FILE OWNS rather than estate-wide, because six other components carry the same
+// defect (presentation.md alone has seven empty headings) and fixing those is a different piece of
+// work than this one. The list below is the scope, and the honest reading of a green run here is
+// "the field family is clean", not "the catalog is".
+const FAMILY_DOCS = [
+  ["atoms", "b-input"], ["atoms", "b-field"], ["atoms", "b-select"], ["atoms", "b-choice"],
+  ["atoms", "b-textarea"], ["atoms", "b-memo"], ["atoms", "b-checkbox"], ["atoms", "b-radio"],
+  ["atoms", "b-check"], ["molecules", "form-grid"],
+] as const;
+const COMPONENTS = join(import.meta.dir);
+const readDoc = (layer: string, name: string) =>
+  readFileSync(join(COMPONENTS, layer, name, `${name}.md`), "utf8");
+
+/** Everything before the first `## `, which is the whole of what the catalog prints as the intro. */
+const introOf = (md: string): string =>
+  md.split("\n").slice(0, md.split("\n").findIndex((l) => l.startsWith("## ")) + 1 || undefined)
+    .filter((l) => !l.startsWith("#") && !l.startsWith("## ") && l.trim()).join(" ");
+
+test("a family doc's intro stays readable as one paragraph, because that is what it becomes", () => {
+  // The catalog median sits near 600 characters. 1100 is generous rather than tight, and the four
+  // docs that prompted this were between 1400 and 2100.
+  const tooLong = FAMILY_DOCS
+    .map(([layer, name]) => [name, introOf(readDoc(layer, name)).length] as const)
+    .filter(([, n]) => n > 1100);
+  expect(tooLong).toEqual([]);
+});
+
+test("no fence sits before the first heading, or its lines are swept into the intro as prose", () => {
+  const offenders: string[] = [];
+  for (const [layer, name] of FAMILY_DOCS) {
+    const head = readDoc(layer, name).split(/^## /m)[0]!;
+    if (head.includes("```")) offenders.push(`${name}: a fence before the first heading`);
+  }
+  expect(offenders).toEqual([]);
+});
+
+test("every group in a family doc holds a live panel, or it renders as an empty heading", () => {
+  const offenders: string[] = [];
+  for (const [layer, name] of FAMILY_DOCS) {
+    for (const part of readDoc(layer, name).split(/^## /m).slice(1)) {
+      if (!part.includes("```html")) offenders.push(`${name}: "${part.split("\n")[0]!.trim()}"`);
+    }
+  }
+  expect(offenders).toEqual([]);
+});
+
 // ---- the layout ------------------------------------------------------------------------------
 test("form-grid is CSS only, and its auto-fit floor cannot overflow a narrow viewport", () => {
   const dir = join(import.meta.dir, "molecules", "form-grid");

@@ -1,33 +1,19 @@
 # Form grid
 
-The layout the field family never had. A field is told to grow inside a column, which is a rule about
-how one control behaves and says nothing about how several sit together, so until now every form laid
-itself out by hand and no two of them agreed. This is one class that wraps them and settles it.
+The layout the field family never had. A field is told to grow inside a column, which says nothing
+about how several sit together, so every form so far laid itself out by hand. CSS only, so there is
+no tag: put the class on whatever holds the controls, hand-authored or generated, and it asks nothing
+of its own parent.
 
-It is CSS only, so there is no tag to write. Put the class on the element that holds the controls,
-whether those are hand-authored inputs or a generated set rendered through
-[Field](../../atoms/b-field/b-field.md), [Choice](../../atoms/b-choice/b-choice.md),
-[Memo](../../atoms/b-memo/b-memo.md) and [Check](../../atoms/b-check/b-check.md). It asks nothing of
-its own parent.
+Columns are found rather than declared by default, flowing into as many tracks as fit down to a
+minimum width a page can raise. A fixed count is an attribute, and it collapses to one column on a
+narrow screen. Two rules make one mistake unmakeable: a message box takes the full width without
+being asked, and fields align to the top so one carrying a hint cannot drag its neighbours down.
 
-By default the columns are found rather than declared: fields flow into as many tracks as fit, down
-to a minimum width a page can raise for unusually long labels. A fixed count is available as an
-attribute, for a form whose shape is a design decision rather than a consequence of the width it
-happens to have, and a fixed count collapses to one column on a narrow screen, because two columns of
-form fields on a phone is not a smaller version of that design but a different and worse one.
-
-One limit, stated plainly because it is easy to trip over. The collapse on a narrow screen keys off
-the viewport rather than off the container, so a fixed column count put inside a narrow panel keeps
-its columns and the fields inside get cramped. The default found columns do not have this problem,
-because their floor is a width rather than a count. If the container can be much narrower than the
-window, prefer the default.
-
-Two rules are there to make a specific mistake unmakeable. A message box spans the full width without
-being asked, because a paragraph in a half-width column is the layout error this grid exists to
-prevent, and the rule keys off the control being present so it holds for a hand-authored box and a
-generated one alike. Anything else can span the full width by asking. Fields also align to the top
-rather than stretching, so one field carrying a hint cannot drag every neighbouring control's border
-down to match it.
+**One limit.** That collapse keys off the viewport rather than the container, so a fixed count inside
+a narrow panel keeps its columns and the fields get cramped. The found columns have no such problem,
+because their floor is a width rather than a count. Prefer them wherever the container can be much
+narrower than the window.
 
 ## Found columns (the default)
 

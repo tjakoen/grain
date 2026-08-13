@@ -1,0 +1,17 @@
+<!-- atoms/b-radio — one radio button in the .field frame: b-checkbox's twin, and a separate file for
+     one measured reason rather than for symmetry. A `type` config prop cannot turn a checkbox into a
+     radio: PASS 0 appends the prop's attribute next to the literal instead of replacing it, so
+     type="checkbox" type="radio" reaches the browser and the first one wins, silently. Two templates
+     that each state their own type are the only shape that cannot get this wrong.
+     Config props: label, name, value, checked (bare boolean), required (bare boolean), hint, error,
+     size. Usable self-closed. No .css: the frame is b-input.css and the control is b-checkbox.css.
+     Radios are a GROUP: every radio meant to be mutually exclusive with another carries the same
+     `name`, and the group's own question is a heading the page writes above them. -->
+<label class="field" prop-attr-data-size="size">
+  <input type="radio" class="field__box"
+         prop-attr-name="name" prop-attr-value="value"
+         prop-attr-checked="checked" prop-attr-required="required">
+  <span class="field__label" prop-text="label">Label</span>
+  <span class="field__hint" prop-text="hint"></span>
+  <span class="field__error" prop-text="error"></span>
+</label>

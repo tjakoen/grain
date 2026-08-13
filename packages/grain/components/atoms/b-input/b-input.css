@@ -16,6 +16,26 @@
 /* invalid state — native, no JS. Monochrome: a heavier rule, not a red one. */
 .field__input:user-invalid { border-width: 2px; }
 
+/* ---- the two message slots, declared HERE because they belong to the frame rather than to any one
+   control: an input, a select, a textarea and a checkbox all want somewhere to say a thing, and a
+   per-control copy of these rules is how one frame becomes four. Both hide when empty, which is what
+   makes them safe to put in every template: a slot with nothing in it must not open a gap in the
+   column, and an optional slot nobody fills is the common case, not the exception. */
+.field__hint { font-size: var(--text-xs); color: var(--ink-faint); line-height: var(--leading-normal); }
+/* An error is NOT a red one. Status is weight, not hue (DESIGN-SYSTEM §2): the message reads at full
+   ink against a hint's faint, and --color-danger is hueless by default so a flavor that DOES own a
+   hue can reach it without this file ever naming a color. */
+.field__error { font-size: var(--text-xs); color: var(--color-danger); line-height: var(--leading-normal); }
+.field__hint:empty, .field__error:empty { display: none; }
+
+/* ---- the required marker. No markup carries it and no author can forget it: the frame reads the
+   `required` attribute the control already has to have anyway, so the marker cannot drift from the
+   constraint the browser actually enforces. Decorative by construction — the semantics are native,
+   and a screen reader announces the control as required with or without this glyph. */
+.field:has(:required) .field__label::after {
+  content: "*"; margin-inline-start: var(--space-1); color: var(--color-accent);
+}
+
 /* ---- variants (attribute) ---- */
 .field[data-variant="inline"] { flex-direction: row; align-items: center; gap: var(--space-3); }
 .field[data-variant="inline"] .field__label { flex: 0 0 auto; }

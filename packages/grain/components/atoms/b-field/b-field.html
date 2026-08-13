@@ -1,7 +1,7 @@
 <!-- atoms/b-field — a labelled text field built from DATA: the data-first sibling of b-input.
      Use it with each= over a field spec (`<b-field each="fields">`); use b-input when the
      field is known at authoring time. Per-item DATA: label, name, type, placeholder, value,
-     required ("required", not ""), surface. Form-wide CONFIG props: size, variant — a literal
+     required ("required", not ""), surface, hint, error. Form-wide CONFIG props: size, variant — a literal
      attribute on the tag reaches every item of the each. No .css: the frame is b-input.css.
      The surface binds to the INPUT, not to the label around it: field.set resolves the address
      and then writes el.value, so an address on a label points at something with nothing to
@@ -12,4 +12,6 @@
   <input class="field__input" data-bind-data-surface="surface"
          data-bind-name="name" data-bind-type="type" data-bind-value="value"
          data-bind-placeholder="placeholder" data-bind-required="required">
+  <span class="field__hint" data-field="hint"></span>
+  <span class="field__error" data-field="error"></span>
 </label>

@@ -1,0 +1,23 @@
+<!-- atoms/b-check — a tick box built from DATA: the data-first sibling of b-checkbox and b-radio, the
+     way b-field is b-input's and b-memo is b-textarea's. One atom covers both controls because here
+     the type arrives as a BINDING rather than as a config prop, and a binding replaces rather than
+     appends: `<b-check each="options" name-shared-by-the-group>` renders a radio group when every
+     item carries type "radio", and independent tick boxes when they carry "checkbox".
+     Per-item DATA: label, name, type, value, checked ("checked", not ""), required, hint, error.
+     Form-wide CONFIG props: size. No .css: the frame is b-input.css and the control is b-checkbox.css.
+     There is deliberately NO literal type here. A literal would win over the binding (PASS 0 appends,
+     the browser honors the first attribute), so the type has to come from the item and every item has
+     to carry it — a null one renders a text input, which is ugly rather than silent, and dev warns on
+     a key left out entirely.
+     And there is deliberately NO surface binding. Read b-check.md before adding one: field.set is the
+     only verb the vocabulary has for a field, it writes el.value, and a checkbox's value is what the
+     form SUBMITS rather than whether it is ticked. An address here would advertise an operation that
+     changes the form's meaning without moving the control. -->
+<label class="field" prop-attr-data-size="size">
+  <input class="field__box" data-bind-type="type"
+         data-bind-name="name" data-bind-value="value"
+         data-bind-checked="checked" data-bind-required="required">
+  <span class="field__label" data-field="label">Label</span>
+  <span class="field__hint" data-field="hint"></span>
+  <span class="field__error" data-field="error"></span>
+</label>

@@ -1,0 +1,17 @@
+<!-- atoms/b-checkbox — a labelled tick box in the .field frame. Config props: label, name, value,
+     checked (bare boolean), required (bare boolean), hint, error, size. Usable self-closed.
+     This atom OWNS b-checkbox.css, which declares .field__box and the check row; b-radio and b-check
+     both reuse it, the same division b-textarea makes for b-memo.
+     The type is a LITERAL here and there is deliberately no `type` prop, because a prop cannot
+     override it: PASS 0 APPENDS the prop's attribute rather than replacing the literal, so a tag
+     asking for a radio renders type="checkbox" type="radio" and the browser honors the first one.
+     Measured on 2026-08-13. One control per atom is the only shape that cannot lie about which
+     control it is, so the radio is its own file. -->
+<label class="field" prop-attr-data-size="size">
+  <input type="checkbox" class="field__box"
+         prop-attr-name="name" prop-attr-value="value"
+         prop-attr-checked="checked" prop-attr-required="required">
+  <span class="field__label" prop-text="label">Label</span>
+  <span class="field__hint" prop-text="hint"></span>
+  <span class="field__error" prop-text="error"></span>
+</label>

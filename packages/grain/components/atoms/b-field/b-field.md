@@ -22,9 +22,16 @@ The spec is JSON, and every item carries every key. A key left out logs an unkno
 in dev; a key set to `null` renders nothing and stays quiet. `required` is the one that surprises
 people: bind it as the string `"required"`, because an empty bound value drops the attribute.
 
+Two more keys arrive with the frame's message slots, `hint` and `error`. Both are per-item data
+rather than form-wide, because what to say about one field is the least form-wide thing there is, and
+both collapse to nothing when null, which is what makes it safe for a generator to emit them on every
+item without deciding anything. A required item also needs no marker in the spec: the frame reads the
+attribute and marks the label itself.
+
 ```json
 { "surface": "field:contact-name", "label": "Name", "name": "name",
-  "type": "text", "placeholder": "Jane", "value": null, "required": "required" }
+  "type": "text", "placeholder": "Jane", "value": null, "required": "required",
+  "hint": null, "error": null }
 ```
 
 There is no CSS here. The frame, the sizes, the inline variant and the AI treatment all come from

@@ -1,8 +1,13 @@
-<!-- atoms/b-input — labelled text field. Config props: name, type, placeholder,
-     required (bare boolean), variant, size. Usable self-closed. -->
+<!-- atoms/b-input — labelled text field. Config props: label, name, type, placeholder,
+     required (bare boolean), hint, error, variant, size. Usable self-closed.
+     The two message slots start EMPTY on purpose. A prop-text whose prop is not supplied leaves the
+     template's own text in place (measured), so a slot with a fallback would print that fallback on
+     every field nobody wrote a hint for. Empty, they collapse under .field__hint:empty. -->
 <label class="field" prop-attr-data-variant="variant" prop-attr-data-size="size">
   <span class="field__label" prop-text="label">Label</span>
   <input class="field__input"
          prop-attr-name="name" prop-attr-type="type"
          prop-attr-placeholder="placeholder" prop-attr-required="required">
+  <span class="field__hint" prop-text="hint"></span>
+  <span class="field__error" prop-text="error"></span>
 </label>

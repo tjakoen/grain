@@ -8,12 +8,15 @@ the form and every option inside each one:
 <form><b-choice each="choices"></b-choice></form>
 ```
 
-The item shape is label, name, surface and an `options` array of `{ value, label, selected }`.
-Nesting is what earns this a component of its own: a select cannot be built from a flat field spec
-without a second array, and the nested `each` handles it at the same depth as everything else.
+The item shape is label, name, surface, hint, error and an `options` array of
+`{ value, label, selected }`. Nesting is what earns this a component of its own: a select cannot be
+built from a flat field spec without a second array, and the nested `each` handles it at the same
+depth as everything else. The two message slots behave as they do everywhere in the family: per-item
+data, collapsed when null.
 
 ```json
 { "surface": "field:contact-topic", "label": "About", "name": "topic",
+  "hint": null, "error": null,
   "options": [ { "value": "grain", "label": "GRAIN", "selected": null },
                { "value": "hiring", "label": "Hiring", "selected": "selected" } ] }
 ```

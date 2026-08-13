@@ -199,12 +199,18 @@ None of these block §2, and none of them should be smuggled into it. Each is it
 1. **A textarea atom. BUILT 2026-08-13** (`b-textarea` + `b-memo`, see §5a below). `field.set`
    already targeted `TEXTAREA`, and `.field` had no textarea rule at all, so the op had a target the
    design system did not draw. The owner pulled this forward ahead of the rest of the list.
-2. **Checkbox and radio.** `b-switch` exists but is a switch, not a checkbox in a `.field` frame.
-3. **`.field__hint` and `.field__error`.** Validation today is `:user-invalid` bumping the border
-   width, with nowhere to say what went wrong.
-4. **A required marker.** The attribute is bound; nothing shows the reader which fields are required.
-5. **A form-grid layout.** `.field` is `flex: 1` in a column and there is no component that lays
-   several fields out.
+2. **Checkbox and radio. BUILT 2026-08-13** (`b-checkbox` + `b-radio` + `b-check`, see §5b).
+   `b-switch` exists but is a switch, not a checkbox in a `.field` frame.
+3. **`.field__hint` and `.field__error`. BUILT 2026-08-13.** Validation today is `:user-invalid`
+   bumping the border width, with nowhere to say what went wrong.
+4. **A required marker. BUILT 2026-08-13.** The attribute is bound; nothing shows the reader which
+   fields are required.
+5. **A form-grid layout. BUILT 2026-08-13.** `.field` is `flex: 1` in a column and there is no
+   component that lays several fields out.
+
+The owner asked for all four in one answer on 2026-08-13 ("Lets cover all controls"), so they were
+built as one bundle rather than as four small changes. The line above about not smuggling them into
+§2 still holds and is the reason they came after it rather than with it.
 
 ## 5a. The textarea, built (2026-08-13)
 
@@ -252,6 +258,84 @@ it reads as a considered limit.
 **Open, and small:** the name. `b-memo` is the role name the family uses (a field, a choice, a memo)
 and it dodges `chat-message`, which a `b-message` would sit beside and read as a sibling of. Worth an
 owner's minute, cheap to rename while nothing is published.
+
+## 5b. The rest of the controls, built (2026-08-13)
+
+The four remaining §5 gaps, in one bundle. Three new components, three rules added to the frame, one
+new layout molecule, and one finding that stops the family's AI half short of the last control.
+
+**Probed, not reasoned, through `createRenderer` before a line was written.** Four results, and two
+of them decided the shape of what shipped:
+
+1. **A config prop APPENDS its attribute; it does not replace a literal one already in the
+   template.** `<b-checkbox type="radio">` over a template carrying a literal `type="checkbox"`
+   renders `type="checkbox" type="radio"`, and the browser honors the first attribute and drops the
+   second without complaint. So the obvious design, one tick-box atom with a `type` prop, produces a
+   radio that is silently a checkbox. **This is why `b-checkbox` and `b-radio` are two files.** Each
+   states its own type as a literal and neither offers a `type` prop at all.
+2. **A DATA BINDING replaces, where a config prop appends.** `data-bind-type` lands the item's own
+   type cleanly, so the data-first side does in one atom what the authoring side needs two for.
+   `b-check` covers both controls, and a radio group is simply every item carrying the same `name`
+   and a type of radio. That inversion between the two markers is worth remembering: it is the first
+   case where the data-first side is the simpler of the two.
+3. **A `prop-text` whose prop is not supplied leaves the template's own text in place.** So a hint
+   slot carrying fallback text would print that fallback on every field nobody wrote a hint for. The
+   slots ship with empty content and collapse under `:empty`, which is what makes it safe to put them
+   in every template unconditionally. Invisible in a diff, so it is a conformance test now.
+4. **The null contract holds unchanged for the new keys.** An explicit `null` hint renders an empty
+   span that the stylesheet hides; a key left out entirely logs `[render] unknown binding`.
+
+**What shipped.** `b-checkbox` is the authoring-time tick box and it owns `b-checkbox.css`, which
+declares `.field__box` and the check row, the same division `b-textarea` makes for `b-memo` and
+`b-select` for `b-choice`. `b-radio` is its twin and adds no rule of its own. `b-check` is the
+data-first sibling and ships no CSS. The row layout keys off `.field:has(> .field__box)` rather than
+off a modifier class, so composing the markup correctly is enough to get it and there is no variant
+to forget. The native control is kept as the platform draws it, on the same argument `b-select` makes
+about the dropdown arrow: it is accessible, it already distinguishes a tick from a dot, and drawing a
+replacement would need a hardcoded color. The tap target is the whole row, because the label wraps
+the input, and the row carries the ≥44px floor since a box and a line of text come to about half of it.
+
+`.field__hint` and `.field__error` are declared in `b-input.css`, because they belong to the frame
+rather than to any one control, and both hide when empty. An error is not a red one: status is weight
+against the hint's fade, and `--color-danger` is hueless by default so a flavor that owns a hue can
+reach it without the component naming a color. The required marker is `.field:has(:required)
+.field__label::after`, which means no markup carries it, no author can forget it, every atom in the
+family got it at once, and it cannot drift from the constraint the browser actually enforces.
+
+`form-grid` is a CSS-only molecule. Auto-fit columns by default with a `min()` floor, because a bare
+`minmax` floor wider than the screen scrolls a phone sideways and that bug only ever shows on a real
+device. A fixed column count is an attribute and collapses to one column on a narrow screen. A message
+box spans the full width without being asked, keyed off the control being present so it holds for a
+hand-authored textarea and a generated one alike.
+
+### The finding: the AI half stops at the tick box
+
+**`b-check` carries no `surface` binding, and that is the honest answer rather than an oversight.**
+Every other atom in this family is addressable because `field.set` can operate its control: it
+resolves the address and writes `el.value`. A checkbox has a `value` too, and that is exactly the
+problem. A checkbox's value is **what the form submits when the box is ticked**, not whether it is
+ticked. So a `field.set` aimed at one passes the dispatcher's `"value" in el` guard, lands, reports
+success, changes what the form means, and leaves the control looking untouched.
+
+That is strictly worse than the select hazard recorded above, where a bad write at least blanks the
+control visibly. And it cannot be fixed by moving the binding, the way the label addressing was:
+there is no element to move it to. `field.set` is the only verb the vocabulary has that accepts a
+`field` surface, and an address advertises in the manifest that the verbs for its kind are legal on
+it. Addressing a tick box would be a documented promise the mechanism cannot render, which is
+precisely what lesson 9 says never to ship.
+
+So the atom ships unaddressable, the absence is a conformance test with the reason written next to
+it, and the real fix is **a new verb, which is a contract change and therefore an owner's call.**
+Something in the shape of a `field.toggle` that sets `checked` rather than `value`. Not taken here.
+
+**Tests.** Eight new assertions in `form-from-data.test.ts`, each proved by mutation before it was
+kept: the two literal types with no prop able to shadow them, `b-check` taking its type from data
+with no literal to shadow the binding, the deliberate missing surface, both slots present in every
+framed template, the empty-fallback rule, the frame declaring the collapse and the marker, and
+form-grid shipping CSS only with its overflow floor intact. Gates: 600 unit green, `check` green.
+
+**Open for the owner, and small:** the name `b-check` for the data-first atom, alongside the `b-memo`
+naming question §5a already left open. The family now reads field, choice, memo, check.
 
 ## 6. What this deliberately does not do
 

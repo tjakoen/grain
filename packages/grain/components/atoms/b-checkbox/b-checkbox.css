@@ -1,0 +1,55 @@
+/* atoms/b-checkbox — the field family's tick box, and the stylesheet b-radio and b-check both reuse.
+   It adds .field__box to the frame b-input.css owns, exactly the way b-select adds .field__select and
+   b-textarea adds .field__textarea. One class per element (BEM, component-scoped).
+
+   No appearance reset. The platform's own checkbox and radio are accessible, they already draw the
+   difference between a square tick and a round dot, and a hand-drawn one would need a hardcoded color
+   to fill — which the tokens-only rule does not allow. `accent-color` is the whole styling budget
+   here, and it is a token.
+
+   Not to be confused with b-switch, which is a drawn track-and-thumb for a setting the user flips.
+   This is a checkbox in a form: something submitted, not something switched. */
+.field__box {
+  flex: none; margin: 0;
+  inline-size: var(--text-lg); block-size: var(--text-lg);
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+/* The row. A .field is a column — label above, control below — and that is right for every control
+   whose value shows inside it. A tick box has no inside, so its label sits beside it and reads as the
+   thing being agreed to. Keyed off the CONTROL being present rather than off a modifier class, so a
+   caller cannot compose the markup correctly and still get the column: the layout follows from what
+   is in the frame, which is the one thing that cannot be forgotten. */
+.field:has(> .field__box) {
+  flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  /* The tap target is the whole row, because the label wraps the input — which is also why the box
+     itself is allowed to stay small. The row is what has to clear the ≥44px floor
+     (DESIGN-SYSTEM §7); a 17px box and a 21px line of text would not, and a checkbox nobody can
+     reliably hit on a phone is the one control where that failure is invisible on a desktop. */
+  min-block-size: 2.75rem;
+}
+/* In a column the label captions a control that shows its own value, so it is muted. In a check row
+   the label IS the value — the sentence the tick agrees to — so it reads at full ink. Size is
+   unchanged, so a row of checks still lines up with the fields above it. */
+.field:has(> .field__box) .field__label { color: var(--ink); }
+/* The message slots would otherwise land beside the box on the same row. Send them under it, across
+   the whole frame, where a hint about a checkbox actually reads. */
+.field:has(> .field__box) .field__hint,
+.field:has(> .field__box) .field__error { flex-basis: 100%; }
+
+/* ---- sizes (attribute, on .field, same as b-input) ---- */
+.field[data-size="sm"] .field__box { inline-size: var(--text-base); block-size: var(--text-base); }
+.field[data-size="lg"] .field__box { inline-size: var(--text-xl); block-size: var(--text-xl); }
+
+/* ---- AI / in-transit: the non-text grain, same language as the rest of the family
+   (AI-INTERFACE §5). A box has no border of its own to dash, so the dashed "terminal" edge arrives
+   as an outline instead of a border-style. The focus ring is declared AFTER this on purpose: both
+   rules write `outline` on the same element, and a keyboard user's ring must win over the ambient
+   AI treatment rather than depend on which selector happens to be more specific. */
+.field[data-commit="pending"] .field__box,
+[data-grade="grain"] .field__box { outline: 1px dashed var(--ink); outline-offset: 2px; }
+
+/* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
+   b-input) — never `autofocus`, which would steal focus + scroll the catalog on load. */
+.field__box:focus-visible, .field__box[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 2px; }

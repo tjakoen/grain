@@ -4,7 +4,7 @@ The data-first sibling of the [Textarea](../b-textarea/b-textarea.md), and the t
 family [Field](../b-field/b-field.md) and [Choice](../b-choice/b-choice.md) started. Reach for
 `b-textarea` when you know the box is there while you are typing the page; reach for `b-memo` when
 the fields arrive as data: `<form><b-memo each="messages" rows="6" size="sm"></b-memo></form>`.
-The item shape is label, name, placeholder, value, required and surface. There is no `type`, because
+The item shape is label, name, placeholder, value, required, hint, error and surface. There is no `type`, because
 a textarea has none, and there is no `rows` either: height is presentation, so it is a form-wide
 config prop on the tag alongside `size` and `variant`, the same split every atom in this family
 makes. Every item carries every key, `null` where unset, or a missing one logs an unknown-binding

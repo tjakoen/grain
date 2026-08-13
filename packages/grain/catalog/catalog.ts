@@ -11,8 +11,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 interface Panel { label: string; code: string; flat?: boolean; }
-interface Group { label: string; panels: Panel[]; }
-interface Doc { name: string; slug: string; intro: string; groups: Group[]; }
+// `prose` is the paragraphs written under a `## ` heading. They used to be dropped on the floor
+// while the heading was still emitted, so a section explaining a caller rule rendered as a heading
+// with nothing beneath it — worse than losing the text, because it reads as broken rather than
+// absent. Both intro and group prose are PARAGRAPHS rather than one joined string: joining them was
+// what turned four paragraphs of a component doc into a single wall.
+interface Group { label: string; prose: string[]; panels: Panel[]; }
+interface Doc { name: string; slug: string; intro: string[]; groups: Group[]; }
 interface Component { layer: string; slug: string; name: string; human: Doc; ai: Doc | null; }
 
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -27,7 +32,14 @@ const inline = (s: string) => esc(s)
   .replace(/`([^`]+)`/g, "<code>$1</code>")
   .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
   .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
-  .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|\/[^)]*|#[^)]*)\)/g, '<a href="$2">$1</a>');
+  .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|\/[^)]*|#[^)]*)\)/g, '<a href="$2">$1</a>')
+  // A link the rule above did NOT take is a RELATIVE one, and the commonest by far is a sibling
+  // doc: [Radio](../b-radio/b-radio.md). It cannot become an anchor, because a .md path on disk is
+  // not a route this site serves and doc-links.test.ts exists to stop docs inventing routes. But
+  // leaving it whole printed the raw markdown mid-sentence in every doc that referenced a sibling.
+  // Keep the text, drop the target: the reader gets a name, and the file keeps a link that works
+  // wherever the markdown is read directly.
+  .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
 
 // atomic-design layers render in this order; unknown dirs fall to the end.
 const LAYER_ORDER = ["atoms", "molecules", "organisms"];
@@ -40,16 +52,27 @@ const rank = (layer: string) => { const i = LAYER_ORDER.indexOf(layer); return i
 // demonstrating itself inside its box. Default stays live — flat is the exception a doc asks for.
 function parseDoc(md: string): Doc {
   const lines = md.split("\n");
-  const doc: Doc = { name: "Untitled", slug: "untitled", intro: "", groups: [] };
+  const doc: Doc = { name: "Untitled", slug: "untitled", intro: [], groups: [] };
   let group: Group | null = null;
   let pendingLabel = "";
   const intro: string[] = [];
   let i = 0;
 
+  /** Collect prose into the open group, or into the intro when none is open. A BLANK line ends the
+   *  paragraph; consecutive non-blank lines are one paragraph re-joined, because these files are
+   *  hard-wrapped and a wrap is not a paragraph break. */
+  const pushProse = (line: string) => {
+    const into = group ? group.prose : intro;
+    const text = line.trim();
+    if (!text) { if (into.length && into[into.length - 1] !== "") into.push(""); return; }
+    if (!into.length || into[into.length - 1] === "") into.push(text);
+    else into[into.length - 1] += ` ${text}`;
+  };
+
   while (i < lines.length) {
     const line = lines[i];
     if (line.startsWith("# ")) { doc.name = line.slice(2).trim(); doc.slug = slugify(doc.name); i++; continue; }
-    if (line.startsWith("## ")) { group = { label: line.slice(3).trim(), panels: [] }; doc.groups.push(group); pendingLabel = ""; i++; continue; }
+    if (line.startsWith("## ")) { group = { label: line.slice(3).trim(), prose: [], panels: [] }; doc.groups.push(group); pendingLabel = ""; i++; continue; }
     if (line.startsWith("### ")) { pendingLabel = line.slice(4).trim(); i++; continue; }
     if (line.startsWith("```html")) {
       const flat = /\bflat\b/.test(line.slice(7));
@@ -57,14 +80,24 @@ function parseDoc(md: string): Doc {
       i++;
       while (i < lines.length && !lines[i].startsWith("```")) { body.push(lines[i]); i++; }
       i++; // skip closing fence
-      if (!group) { group = { label: "", panels: [] }; doc.groups.push(group); }
+      if (!group) { group = { label: "", prose: [], panels: [] }; doc.groups.push(group); }
       group.panels.push({ label: pendingLabel, code: body.join("\n").trim(), flat });
       continue;
     }
-    if (!group && line.trim()) intro.push(line.trim());
+    // Any OTHER fence (```json, a bare ```) is skipped whole rather than read as prose. Falling
+    // through used to sweep a spec block's braces into the surrounding paragraph, which is how raw
+    // JSON ended up mid-sentence in two shipped intros.
+    if (line.startsWith("```")) {
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) i++;
+      i++;
+      continue;
+    }
+    pushProse(line);
     i++;
   }
-  doc.intro = intro.join(" ");
+  doc.intro = intro.filter(Boolean);
+  for (const g of doc.groups) g.prose = g.prose.filter(Boolean);
   return doc;
 }
 
@@ -145,12 +178,15 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
     </figure>`;
   }
 
+  const paras = (cls: string, ps: string[]) => ps.map((p) => `<p class="${cls}">${inline(p)}</p>`).join("");
+
   const renderGroups = (groups: Group[]) => groups.map(g => `
     ${g.label ? `<h3 class="cat-group">${esc(g.label)}</h3>` : ""}
-    <div class="panel-grid">${g.panels.map(renderPanel).join("")}</div>`).join("");
+    ${paras("cat-note", g.prose)}
+    ${g.panels.length ? `<div class="panel-grid">${g.panels.map(renderPanel).join("")}</div>` : ""}`).join("");
 
   const renderView = (doc: Doc, view: "smooth" | "grain") => `<div class="cat-doc__view" data-view="${view}">
-    ${doc.intro ? `<p class="cat-intro">${inline(doc.intro)}</p>` : ""}
+    ${paras("cat-intro", doc.intro)}
     ${renderGroups(doc.groups)}
   </div>`;
 
@@ -271,11 +307,17 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
      the global [data-grade] rule would cascade, then re-apply grain to .panel__live. */
   .cat-doc[data-grade="grain"] { --type-font: var(--font-smooth); }
   .cat-doc__view[data-view="grain"] .panel__live { --type-font: var(--font-grain); }
-  .cat-intro { color: var(--color-muted); margin: 0 0 var(--space-6); }
-  .cat-intro code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em;
+  /* Intro paragraphs sit close together and the LAST one opens the gap before the first group, so a
+     three-paragraph intro reads as three paragraphs rather than as one block with a hole after it. */
+  .cat-intro { color: var(--color-muted); margin: 0 0 var(--space-3); }
+  .cat-intro:last-of-type { margin-bottom: var(--space-6); }
+  /* Prose written under a section heading: the caller rules, the limits, the why. Same voice as the
+     intro, and measure-capped so it does not read as one column with the panels below it. */
+  .cat-note { color: var(--color-muted); margin: 0 0 var(--space-3); max-inline-size: 68ch; }
+  .cat-intro code, .cat-note code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em;
     background: var(--paper-2); padding: 0 0.3em; border-radius: 2px; color: var(--ink); }
-  .cat-intro strong { color: var(--ink); font-weight: var(--font-weight-semibold); }
-  .cat-intro a { color: var(--ink); }
+  .cat-intro strong, .cat-note strong { color: var(--ink); font-weight: var(--font-weight-semibold); }
+  .cat-intro a, .cat-note a { color: var(--ink); }
   .cat-group { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.05em;
     color: var(--color-muted); margin: var(--space-6) 0 var(--space-3); }
   .panel-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }

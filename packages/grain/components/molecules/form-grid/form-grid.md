@@ -16,6 +16,12 @@ attribute, for a form whose shape is a design decision rather than a consequence
 happens to have, and a fixed count collapses to one column on a narrow screen, because two columns of
 form fields on a phone is not a smaller version of that design but a different and worse one.
 
+One limit, stated plainly because it is easy to trip over. The collapse on a narrow screen keys off
+the viewport rather than off the container, so a fixed column count put inside a narrow panel keeps
+its columns and the fields inside get cramped. The default found columns do not have this problem,
+because their floor is a width rather than a count. If the container can be much narrower than the
+window, prefer the default.
+
 Two rules are there to make a specific mistake unmakeable. A message box spans the full width without
 being asked, because a paragraph in a half-width column is the layout error this grid exists to
 prevent, and the rule keys off the control being present so it holds for a hand-authored box and a

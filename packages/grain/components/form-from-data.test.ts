@@ -230,62 +230,68 @@ test("the frame declares both slots, hides them when empty, and marks a required
   expect(css).not.toMatch(/\.field__error[^{]*\{[^}]*color:\s*(red|#)/);
 });
 
-// ---- what the catalog does with a doc, which is not what the file looks like ------------------
+// ---- what the catalog does with a doc, which was not what the file looked like ------------------
 //
-// Measured against the rendered page on 2026-08-13, and all three of these are silent:
+// Measured against the RENDERED page on 2026-08-13, not read off the source. Three silent faults,
+// and the first two are now fixed in catalog.ts rather than worked around here:
 //
-//   1. EVERY prose line before the first `## ` is joined into ONE paragraph. Four paragraphs of
-//      rationale render as one wall, which is what the owner sent this back for.
-//   2. Prose under a `## ` is DROPPED — parseDoc only collects prose while no group is open. But
-//      the heading is still emitted, so a prose-only section renders as a heading with nothing
-//      beneath it. Worse than losing the text, because it looks broken rather than absent.
-//   3. Only a ```html fence becomes a panel. A ```json fence under a group is dropped quietly; the
-//      same fence BEFORE the first `## ` has its lines swept into the intro as prose, which is how
-//      raw JSON braces ended up mid-sentence in two shipped docs.
+//   1. Every prose line before the first heading was joined into ONE paragraph, so four paragraphs
+//      of rationale arrived as one wall. The parser keeps paragraphs now.
+//   2. Prose under a heading was DROPPED while the heading was still emitted, so a section
+//      explaining a caller rule rendered as a heading with nothing beneath it — worse than losing
+//      the text, because it reads as broken rather than absent. Groups carry their prose now.
+//   3. A fence that is not html fell through to the prose collector when it sat before the first
+//      heading, which is how raw JSON braces ended up mid-sentence in two shipped intros. Any
+//      non-html fence is skipped whole now.
 //
-// So a doc in this family is: a short intro, then groups that each hold at least one html fence.
-// Anything else either leaks into the intro or renders as an empty heading. The rule is asserted for
-// the FAMILY THIS FILE OWNS rather than estate-wide, because six other components carry the same
-// defect (presentation.md alone has seven empty headings) and fixing those is a different piece of
-// work than this one. The list below is the scope, and the honest reading of a green run here is
-// "the field family is clean", not "the catalog is".
-const FAMILY_DOCS = [
-  ["atoms", "b-input"], ["atoms", "b-field"], ["atoms", "b-select"], ["atoms", "b-choice"],
-  ["atoms", "b-textarea"], ["atoms", "b-memo"], ["atoms", "b-checkbox"], ["atoms", "b-radio"],
-  ["atoms", "b-check"], ["molecules", "form-grid"],
-] as const;
-const COMPONENTS = join(import.meta.dir);
-const readDoc = (layer: string, name: string) =>
-  readFileSync(join(COMPONENTS, layer, name, `${name}.md`), "utf8");
+// What no parser can fix is a single paragraph that is simply too long, so that is what is asserted,
+// across EVERY component doc rather than just this family.
+// Two of the three are now designed out rather than asserted: the parser renders a group's prose and
+// skips a non-html fence whole, so a prose-only section is legitimate and a spec block can no longer
+// leak. What is left is the part no parser can fix, which is how long a single paragraph is.
+function allDocs(dir = import.meta.dir, out: string[] = []): string[] {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) allDocs(full, out);
+    else if (e.name.endsWith(".md")) out.push(full);
+  }
+  return out;
+}
 
-/** Everything before the first `## `, which is the whole of what the catalog prints as the intro. */
-const introOf = (md: string): string =>
-  md.split("\n").slice(0, md.split("\n").findIndex((l) => l.startsWith("## ")) + 1 || undefined)
-    .filter((l) => !l.startsWith("#") && !l.startsWith("## ") && l.trim()).join(" ");
+/** Every paragraph the catalog will print, fences and headings removed, hard wraps rejoined. */
+const paragraphs = (md: string): string[] =>
+  md.replace(/```[\s\S]*?```/g, "").split(/\n\s*\n/)
+    .map((p) => p.split("\n").filter((l) => !l.startsWith("#")).join(" ").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
 
-test("a family doc's intro stays readable as one paragraph, because that is what it becomes", () => {
-  // The catalog median sits near 600 characters. 1100 is generous rather than tight, and the four
-  // docs that prompted this were between 1400 and 2100.
-  const tooLong = FAMILY_DOCS
-    .map(([layer, name]) => [name, introOf(readDoc(layer, name)).length] as const)
-    .filter(([, n]) => n > 1100);
-  expect(tooLong).toEqual([]);
-});
+// Three docs predate the rule and are not this change's to rewrite: they belong to components
+// nobody asked about, and shortening someone else's prose is a separate judgment call. Named rather
+// than excluded silently, and this list is a debt to shrink. It must never grow.
+const LONG_PARAGRAPH_LEGACY = new Set(["console.md", "app-shell.md", "app-window.md"]);
 
-test("no fence sits before the first heading, or its lines are swept into the intro as prose", () => {
+test("no component doc has a paragraph long enough to read as a wall", () => {
+  // Median across the catalog is under 400 characters and only a handful clear 700, so 800 is a
+  // ceiling on the genuinely unreadable rather than a house style. The docs that prompted this ran
+  // to 2100 as a single joined block.
   const offenders: string[] = [];
-  for (const [layer, name] of FAMILY_DOCS) {
-    const head = readDoc(layer, name).split(/^## /m)[0]!;
-    if (head.includes("```")) offenders.push(`${name}: a fence before the first heading`);
+  for (const file of allDocs()) {
+    const name = file.split("/").pop()!;
+    if (LONG_PARAGRAPH_LEGACY.has(name)) continue;
+    const longest = Math.max(0, ...paragraphs(readFileSync(file, "utf8")).map((p) => p.length));
+    if (longest > 800) offenders.push(`${name}: ${longest} characters in one paragraph`);
   }
   expect(offenders).toEqual([]);
 });
 
-test("every group in a family doc holds a live panel, or it renders as an empty heading", () => {
+test("no section heading is truly empty: it has prose, a panel, or it should not exist", () => {
   const offenders: string[] = [];
-  for (const [layer, name] of FAMILY_DOCS) {
-    for (const part of readDoc(layer, name).split(/^## /m).slice(1)) {
-      if (!part.includes("```html")) offenders.push(`${name}: "${part.split("\n")[0]!.trim()}"`);
+  for (const file of allDocs()) {
+    for (const part of readFileSync(file, "utf8").split(/^## /m).slice(1)) {
+      const label = part.split("\n")[0]!.trim();
+      const body = part.slice(label.length);
+      if (!body.includes("```html") && !paragraphs(body).length) {
+        offenders.push(`${file.split("/").pop()}: "${label}"`);
+      }
     }
   }
   expect(offenders).toEqual([]);

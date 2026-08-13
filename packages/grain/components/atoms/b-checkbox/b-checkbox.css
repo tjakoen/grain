@@ -32,7 +32,13 @@
 /* In a column the label captions a control that shows its own value, so it is muted. In a check row
    the label IS the value — the sentence the tick agrees to — so it reads at full ink. Size is
    unchanged, so a row of checks still lines up with the fields above it. */
-.field:has(> .field__box) .field__label { color: var(--ink); }
+.field:has(> .field__box) .field__label {
+  color: var(--ink);
+  /* Take the rest of the row, so a long sentence wraps INSIDE the label beside the box rather than
+     wrapping the label itself onto the line under it. A tick box whose text has fallen below it
+     reads as two controls, and the sentence a checkbox agrees to is usually long. */
+  flex: 1;
+}
 /* The message slots would otherwise land beside the box on the same row. Send them under it, across
    the whole frame, where a hint about a checkbox actually reads. */
 .field:has(> .field__box) .field__hint,

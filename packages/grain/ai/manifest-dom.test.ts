@@ -149,13 +149,63 @@ test("manifestForReasoner: deterministic, prompt-ready text — same fixed DOM i
   // behaviour hints ride along in braces so the reasoner can retry/choose safely
   expect(first).toContain("- note.replace [light] (text*:string (markdown)) — Rewrite the whole notepad from one markdown body. {destructive, idempotent}");
   expect(first).toContain("- navigate [light] (href*:string (root-relative path, e.g. /notes)) — Change screens — same-origin, root-relative href only (validated at the door). {read");
-  // the targets tail is exact and comes after the actions block
+  // the targets tail is exact and comes after the actions block. `console` accepts no verb, so it
+  // is NOT listed — the count says two of three so the omission is stated rather than hidden.
   expect(first.endsWith(
-    "targets: (3)\n" +
+    "targets: (2 of 3 accept a verb)\n" +
     "- item:ITM-1 [item] -> item.archive\n" +
-    "- chat-log [chat-log] -> chat.send\n" +
-    "- console [console] -> (no verb currently targets this)"
+    "- chat-log [chat-log] -> chat.send"
   )).toBe(true);
+  expect(first).not.toContain("console");
+});
+
+test("manifestForReasoner: a screen with nothing push-only is byte-identical to before the narrowing", () => {
+  // The fleet guarantee. Narrowing must be a no-op wherever there was no noise to cut, which is why
+  // the count keeps its bare "(n)" form when nothing was omitted.
+  const doc = {
+    body: el({ "data-screen": "notes" }),
+    querySelectorAll: () => [
+      el({ "data-surface": "item:ITM-1", "data-kind": "item", "data-accepts": "item.archive" }),
+      el({ "data-surface": "chat-log" }),
+    ],
+  };
+  expect(manifestForReasoner(doc).endsWith(
+    "targets: (2)\n" +
+    "- item:ITM-1 [item] -> item.archive\n" +
+    "- chat-log [chat-log] -> chat.send"
+  )).toBe(true);
+});
+
+test("manifestForReasoner: chat messages pile up in domManifest and never reach the prompt", () => {
+  // The measured case, in miniature. On /builder 17 of 53 targets were chat-msg ids: `chat-msg` is
+  // no registered SurfaceKind, so every one is push-only, and the 0.5B picked out of that list
+  // rather than the blocks. The JSON manifest still carries them (validation reads that one).
+  const surfaces = [
+    el({ "data-surface": "block:b1", "data-kind": "block" }),
+    ...Array.from({ length: 5 }, (_, i) => el({ "data-surface": `chat-msg:run-${i}` })),
+  ];
+  const doc = { body: el({ "data-screen": "builder" }), querySelectorAll: () => surfaces };
+
+  expect(domManifest(doc).targets).toHaveLength(6);          // the whole page, for validation
+  const text = manifestForReasoner(doc);
+  expect(text).not.toContain("chat-msg");                    // none of them in the prompt
+  expect(text).toContain("targets: (1 of 6 accept a verb)");
+  expect(text).toContain("- block:b1 [block] -> block.remove, block.span, block.move");
+});
+
+test("manifestForReasoner: surfaces but no verbs — says so, and still reads their state", () => {
+  // A page can declare surfaces that no verb reaches. "(none)" would claim it declares nothing,
+  // which is a different sentence, and `in view` must survive: push-only is not unreadable.
+  const doc = {
+    body: el({ "data-screen": "log" }),
+    querySelectorAll: () => [
+      el({ "data-surface": "console", "data-read": "" }, "build finished"),
+      el({ "data-surface": "plan" }),
+    ],
+  };
+  const text = manifestForReasoner(doc);
+  expect(text).toContain("targets: (0 of 2 accept a verb — nothing on this page can be acted on)");
+  expect(text).toContain('in view: (1)\n- console [console] "build finished"');
 });
 
 test("manifestForReasoner: a screen-kind surface lists navigate among its accepted verbs", () => {

@@ -123,7 +123,11 @@ test("manifestForReasoner: renders an 'in view' block for data-read surfaces", (
     ],
   };
   const text = manifestForReasoner(doc);
-  expect(text).toContain('in view: (1)\n- reflection [reflection] "Noted: buy milk"');
+  expect(text).toContain('in view: (1) — current state only; these are NOT targets and no verb acts on them\n  reflection = "Noted: buy milk"');
+  // shaped so it cannot be read as another target line. `- reflection [reflection]` is legitimately
+  // in the TARGETS list (reflection is a registered kind), so the check is on the state line's own
+  // shape: a dash-and-bracket line ending in quoted text is the collision, and it is gone.
+  expect(text).not.toMatch(/^- .+ \[.+] ".*"$/m);
 });
 
 test("manifestForReasoner: deterministic, prompt-ready text — same fixed DOM in, same string out", () => {
@@ -205,7 +209,7 @@ test("manifestForReasoner: surfaces but no verbs — says so, and still reads th
   };
   const text = manifestForReasoner(doc);
   expect(text).toContain("targets: (0 of 2 accept a verb — nothing on this page can be acted on)");
-  expect(text).toContain('in view: (1)\n- console [console] "build finished"');
+  expect(text).toContain('  console = "build finished"');
 });
 
 test("manifestForReasoner: a screen-kind surface lists navigate among its accepted verbs", () => {

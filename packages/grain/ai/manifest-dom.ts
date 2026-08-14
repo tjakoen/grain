@@ -200,10 +200,19 @@ export function manifestToText(m: Manifest): string {
   // verb acts on it, which is the opposite of saying it is not worth reading: a console feed, a
   // status line and a summary are all push-only and all worth reading before deciding. `data-read`
   // is already the author's opt-in, and it is the one that governs this block.
+  //
+  // It is FORMATTED so it cannot be misread as a target list, which is not a hypothetical. With the
+  // targets narrowed to eight on /builder, the 0.5B stopped picking a wrong target and started
+  // answering with `builder-said` instead — an id that appears nowhere but here (measured
+  // 2026-08-15). An old in-view line read `- id [kind] "text"` against a target's `- id [kind] ->
+  // verbs`: same dash, same brackets, differing only in what follows. So the dash and the brackets
+  // go, the heading says in words that these are not targets, and the kind goes with them — it is
+  // recoverable from the targets list for any surface that has one, and for a push-only surface it
+  // only ever repeated the id.
   const readable = (m.inView.readable as ReadableSurface[] | undefined) ?? [];
   if (readable.length) {
-    lines.push(`in view: (${readable.length})`);
-    for (const r of readable) lines.push(`- ${r.id} [${r.kind}] "${r.text}"`);
+    lines.push(`in view: (${readable.length}) — current state only; these are NOT targets and no verb acts on them`);
+    for (const r of readable) lines.push(`  ${r.id} = "${r.text}"`);
   }
   return lines.join("\n");
 }

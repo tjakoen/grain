@@ -115,3 +115,39 @@ test("a navigate op with an unsafe href is never assigned to location — assert
   expect(re.test("//evil.example")).toBe(false);
   expect(re.test("/\\evil.example")).toBe(false);
 });
+
+// The block ops' own drift guard. ai-dispatch.js ships to the browser with no imports, so the
+// contract's closed span list has to be re-stated there; this is what keeps the copy honest, the
+// same way the FIELD_VALUE_CAP and CHECKED_STATE guards above do for their verbs.
+test("the dispatcher's BLOCK_SPANS matches contract.ts's, word for word", async () => {
+  const dispatch = await Bun.file(new URL("./ai-dispatch.js", import.meta.url)).text();
+  const contract = await Bun.file(new URL("../ai/contract.ts", import.meta.url)).text();
+  const inDispatch = dispatch.match(/const BLOCK_SPANS = new Set\(\[([^\]]+)\]\)/)?.[1];
+  const inContract = contract.match(/export const BLOCK_SPANS = \[([^\]]+)\] as const/)?.[1];
+  expect(inDispatch).toBeTruthy();
+  expect(inContract).toBeTruthy();
+  const words = (s: string) => s.split(",").map((w) => w.trim().replace(/["']/g, "")).filter(Boolean);
+  expect(words(inDispatch!)).toEqual(words(inContract!));
+});
+
+// A block op that mutated the DOM and told nobody would look exactly like it worked and be undone
+// by the next repaint, because the page holds the composition and the dispatcher holds the element.
+// The bubbling `change` is the handshake, and it is the whole reason these are ops rather than a
+// back channel into the page's own module.
+test("both block ops fire a bubbling change so the page can derive its state back", async () => {
+  const dispatch = await Bun.file(new URL("./ai-dispatch.js", import.meta.url)).text();
+  for (const kind of ["span", "move"]) {
+    const body = dispatch.split(`case "${kind}":`)[1]?.split("return;")[0] ?? "";
+    expect(body, `${kind} must announce itself`).toContain('new Event("change", { bubbles: true })');
+    expect(body, `${kind} must wear AI ink`).toContain('setAttribute("data-grade", "grain")');
+  }
+});
+
+// Clamped, never wrapped: the first block's "up" is a no-op, matching the arrows a human presses.
+test("move refuses to wrap: no sibling means no move", async () => {
+  const dispatch = await Bun.file(new URL("./ai-dispatch.js", import.meta.url)).text();
+  const body = dispatch.split('case "move":')[1]?.split("return;")[0] ?? "";
+  expect(body).toContain("previousElementSibling");
+  expect(body).toContain("nextElementSibling");
+  expect(body).toContain("if (sib)");
+});

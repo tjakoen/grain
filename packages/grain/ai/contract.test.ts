@@ -4,7 +4,10 @@
 // closed ACTIONS vocabulary (so it shows up in the manifest, see manifest-dom.test.ts), an
 // unsafe/external href is rejected, and a same-origin root-relative one is accepted.
 import { test, expect, describe } from "bun:test";
-import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref, isValidChoiceList, isSafeFieldValue, isCheckedState, FIELD_VALUE_CAP } from "./contract.ts";
+import {
+  ACTIONS, BLOCK_SPANS, MOVE_DIRECTIONS, isAction, actionsForKind, isBlockSpan, isCheckedState,
+  isMoveDirection, isSafeFieldValue, isSafeNavigateHref, isValidChoiceList, FIELD_VALUE_CAP,
+} from "./contract.ts";
 
 describe("navigate: registered in the closed ACTIONS vocabulary", () => {
   test("is a real action, light depth, accepts the screen kind", () => {
@@ -194,5 +197,49 @@ describe("isValidChoiceList: 1–6 options, each a non-empty label", () => {
     expect(isValidChoiceList([{ label: "A", value: 3 as unknown }])).toBe(false);// non-string value
     expect(isValidChoiceList("nope" as unknown)).toBe(false);
     expect(isValidChoiceList(null)).toBe(false);
+  });
+});
+
+// The three block verbs (plans/block-verbs.md). A block is a kind of its own for the reason a check
+// is: a kind is a promise about which verbs work, and a block's real state is the composition
+// holding it rather than the element showing it.
+describe("the block verbs: registered, closed-payload, and honest about idempotence", () => {
+  test("all three are registered against the block kind and nothing else", () => {
+    expect(actionsForKind("block").toSorted()).toEqual(["block.move", "block.remove", "block.span"]);
+    for (const name of ["block.remove", "block.span", "block.move"] as const) {
+      expect(ACTIONS[name].accepts).toEqual(["block"]);
+      expect(isAction(name)).toBe(true);
+    }
+  });
+
+  // The whole small-model argument: a payload description that NAMES its legal values is the
+  // difference between a 0.5B picking one and a 0.5B guessing.
+  test("each payload names its closed word list in the description the manifest carries", () => {
+    expect(ACTIONS["block.span"].payload.span).toMatchObject({ type: "string", required: true });
+    expect(ACTIONS["block.span"].payload.span!.note).toContain("full");
+    expect(ACTIONS["block.span"].payload.span!.note).toContain("third");
+    expect(ACTIONS["block.move"].payload.direction!.note).toContain("up");
+    expect(ACTIONS["block.remove"].payload).toEqual({});
+  });
+
+  // move is the one that is NOT idempotent, and saying so is the point: a replayed move shifts a
+  // second place, where a replayed remove or span lands exactly where the first one did.
+  test("remove and span claim idempotence; move does not", () => {
+    expect(ACTIONS["block.remove"].hints.idempotent).toBe(true);
+    expect(ACTIONS["block.span"].hints.idempotent).toBe(true);
+    expect(ACTIONS["block.move"].hints.idempotent).toBeUndefined();
+  });
+
+  // There is deliberately no verb that ADDS a block: adding goes through field.set on the page's
+  // own prompt, which is what keeps the model from ever naming a component.
+  test("no verb adds a block", () => {
+    expect(Object.keys(ACTIONS).filter((a) => /^block\.(add|create|insert)/.test(a))).toEqual([]);
+  });
+
+  test("the closed word lists refuse everything outside them", () => {
+    for (const ok of BLOCK_SPANS) expect(isBlockSpan(ok)).toBe(true);
+    for (const no of ["wide", "FULL", "", "1/2", 3, null, undefined]) expect(isBlockSpan(no)).toBe(false);
+    for (const ok of MOVE_DIRECTIONS) expect(isMoveDirection(ok)).toBe(true);
+    for (const no of ["top", "Up", "", 1, null]) expect(isMoveDirection(no)).toBe(false);
   });
 });

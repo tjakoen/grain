@@ -66,6 +66,12 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // report a success nobody can see — the same class of silent lie that kept `field.set` away from
   // tick boxes in the first place. The type is what actually decides whether a box can be ticked.
   const TICKABLE_TYPES = new Set(["checkbox", "radio"]);
+  // ---- span: block.span's closed word list — mirrors ai/contract.ts's BLOCK_SPANS EXACTLY --------
+  // Same self-contained copy as the guards above, and the same reason: this file ships to the
+  // browser with no imports, so the contract's closed set has to be re-stated here and kept honest
+  // by the drift-guard test rather than by anyone remembering. A fourth word reaching a stylesheet
+  // that has no rule for it would lay the block out at some default width and report success.
+  const BLOCK_SPANS = new Set(["full", "half", "third"]);
   // A `navigate` op tears the page down — irreversible, so give any in-flight settle (the
   // spotlight's glide off, a caret's last frame) a beat to read before that happens, instead of a
   // bare synchronous location.assign mid-render. Named per CLAUDE.md lesson #9 (a magic number
@@ -351,6 +357,38 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
           // listener below reads (and the one `fill` already dispatches).
           el.dispatchEvent(new Event("input", { bubbles: true }));
           el.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        return;
+      // The two BLOCK ops. Both mutate the addressed element and nothing else, and both fire a
+      // bubbling `change` so the page that owns the composition can derive its state back off the
+      // DOM. That handshake is the whole reason these are ops rather than a back channel into the
+      // page's module: the dispatcher stays the single writer, and the page stays the single source
+      // of truth about what it holds. Without the event a block op would look exactly like it
+      // worked and reappear on the next repaint, which is the failure `tick` was invented to close
+      // one control over.
+      case "span":                                   // AI sets one block's width word (block.span)
+        if (el && BLOCK_SPANS.has(op.span)) {
+          el.setAttribute("data-span", op.span);
+          el.setAttribute("data-grade", "grain");     // AI ink, same treatment a fill or a tick gets
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (el) {
+          console.error("[ai-dispatch] refused a span outside the closed three", op.span, op.target);
+        }
+        return;
+      case "move":                                   // AI shifts one block one place (block.move)
+        // Clamped rather than wrapped, matching moveBlock's own rule and the arrows a human presses:
+        // the first block's "up" is a no-op, not a jump to the bottom. Refused out loud when the
+        // direction is not one of the two, on the navigate precedent.
+        if (el && (op.direction === "up" || op.direction === "down")) {
+          const sib = op.direction === "up" ? el.previousElementSibling : el.nextElementSibling;
+          if (sib) {
+            if (op.direction === "up") el.parentNode.insertBefore(el, sib);
+            else el.parentNode.insertBefore(sib, el);
+            el.setAttribute("data-grade", "grain");
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        } else if (el) {
+          console.error("[ai-dispatch] refused a move that is neither up nor down", op.direction, op.target);
         }
         return;
       case "log":                                    // one entry into the interaction TIMELINE (§5g)

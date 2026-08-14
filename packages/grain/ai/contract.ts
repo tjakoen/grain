@@ -28,7 +28,18 @@ export type Surface = string;                       // e.g. "item:ITM-1", "refle
 // write that lands, reports success, changes the form's meaning and leaves the control looking
 // untouched. Two kinds keep each control advertising only the verb that can actually operate it
 // (plans/check-set-op.md).
-export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad" | "field" | "check";
+// `block` is one BLOCK in a composed page — a component the human (or the AI) can drop, resize or
+// reorder inside an ordered list. A kind of its own for the reason `check` is one: a kind is a
+// PROMISE about which verbs work. The generic `remove` op deletes an ELEMENT, and a block's real
+// state is the composition holding it, so a block advertising only DOM verbs would take a delete
+// that lands, reports success, and comes back on the next repaint. The three block verbs below say
+// what a block can actually be told, and every one of their payloads is a closed enum, because the
+// model this vocabulary is aimed at is a small one: choosing from three words is what it does
+// reliably, and inventing a fourth is what it must never be given room to do.
+// Note what is NOT here: there is no verb that ADDS a block. Adding goes through `field.set` on the
+// page's own prompt plus a build, so the closed component set stays closed and the model never
+// names a component (plans/site-builder.md).
+export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad" | "field" | "check" | "block";
 export const surface = (kind: SurfaceKind, id?: string): Surface => (id ? `${kind}:${id}` : kind);
 export const surfaceKind = (s: Surface): SurfaceKind => (s.split(":")[0] ?? "") as SurfaceKind;
 export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":");
@@ -45,10 +56,17 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //                   submits (the AI never submits — no submit verb exists to call)
 //   check.set     — tick or clear a registered tick box; the sibling field.set cannot do, because
 //                   a tick box's state is `checked` and its `value` is what it submits
+//   block.remove  — drop one block from a composed page
+//   block.span    — set one block's width word: full, half or third, and there is no fourth
+//   block.move    — shift one block one place, up or down, clamped at the ends
+// The three block verbs land together because a page you can add to and never edit is not a page
+// you are building, it is one you are re-rolling. There is deliberately no verb that ADDS: adding
+// goes through field.set on the page's own prompt, so the model never names a component.
 // The full product vocabulary lives at https://tjakoen.github.io/grain/docs/ai-interface.
 export type ActionName =
   | "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send"
-  | "note.append" | "note.replace" | "navigate" | "field.set" | "check.set";
+  | "note.append" | "note.replace" | "navigate" | "field.set" | "check.set"
+  | "block.remove" | "block.span" | "block.move";
 export type Depth = "light" | "heavy";
 
 // ---- Payload schema: the machine-readable INPUT shape a verb expects -------------
@@ -136,6 +154,24 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
     description: "Tick or clear a registered tick box (checkbox or radio) — the human reviews and submits; the AI never submits.",
     payload: { checked: REQ("boolean", "true ticks the box, false clears it") },
     hints: { destructive: true, idempotent: true } },   // REPLACES a state the human may have set; same payload → same end state
+  // The three block verbs. Each one is a SET rather than a nudge, for the reason check.set is: a
+  // toggle or a cycle lands somewhere different on a replay, and the `idempotent` hint below would
+  // then be a lie the reasoner's retry logic believes.
+  "block.remove": { name: "block.remove", depth: "light", accepts: ["block"],
+    description: "Drop one block from the composed page. The page keeps every other block's id, so a later verb still names what it means.",
+    payload: {}, hints: { destructive: true, idempotent: true } },   // removing a block already gone is the same end state
+  "block.span":   { name: "block.span",   depth: "light", accepts: ["block"],
+    description: "Set how wide one block sits: full, half or third. The whole layout vocabulary, and there is no fourth word.",
+    payload: { span: REQ("string", "one of: full, half, third") },
+    hints: { idempotent: true } },   // same word → same width; no cycling, so a replay is safe
+  // A DIRECTION rather than a target index, and the difference is the small model this is aimed at.
+  // An index is a number to compute against a list length, which is where a 0.5B drifts; up and down
+  // are the two words already written on the buttons a human presses. The arithmetic stays in code,
+  // where it is already tested, and the verb looks like the affordance rather than like the array.
+  "block.move":   { name: "block.move",   depth: "light", accepts: ["block"],
+    description: "Move one block one place earlier or later in the page. Clamped at the ends rather than wrapped.",
+    payload: { direction: REQ("string", "one of: up, down") },
+    hints: {} },   // NOT idempotent: each move shifts one more place
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);
@@ -195,7 +231,16 @@ export interface Intent {
 // branches on which of two payload fields arrived is two ops sharing a name, and the dispatcher
 // would have to guess which one it was handed. `tick` carries `checked` and nothing else, so the
 // wire says what it means and each op stays conformance-testable as its own vocabulary word.
-export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices" | "fill" | "tick";
+// `span` — block.span's effect: assign a block's width word. Its own kind rather than a generic
+// attribute write, because an op that can set any attribute is a hole in a vocabulary whose whole
+// point is that it is closed.
+// `move` — block.move's effect: shift a block one place. Its own kind rather than a `replace` of the
+// whole canvas, because a reasoner that had to hand back rendered markup would be a second renderer,
+// which is the one thing this design refuses.
+// `block.remove` deliberately emits the EXISTING `remove` op rather than a fourth kind: deleting the
+// element is exactly the effect, and a new kind that did the same thing would be vocabulary for its
+// own sake.
+export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices" | "fill" | "tick" | "span" | "move";
 export type Provenance = "user" | "ai" | "system";
 export type Commit = "pending" | "committed";   // grade = commit state (DESIGN-SYSTEM §3)
 
@@ -217,6 +262,8 @@ export interface RenderOp {
   prompt?: string;             // choices: the question shown above the buttons (optional)
   choices?: Choice[];          // choices: the options the human picks from (validated — isValidChoiceList)
   checked?: boolean;           // tick: the state to assign to a registered tick box (validated — isCheckedState)
+  span?: BlockSpan;            // span: the width word to assign to a block (validated — isBlockSpan)
+  direction?: MoveDirection;   // move: which way to shift a block (validated — isMoveDirection)
   provenance: Provenance;
   commit: Commit;
 }
@@ -259,6 +306,21 @@ export const isSafeFieldValue = (v: unknown): v is string =>
 // is truthy, so a model that sends the word instead of the value would tick every box it aimed at,
 // and a silent coercion is exactly the failure this whole verb exists to avoid.
 export const isCheckedState = (v: unknown): v is boolean => typeof v === "boolean";
+
+// ---- the block verbs' closed word lists -----------------------------------------
+// Both are exported as arrays as well as types, because the manifest advertises them to the model:
+// a payload description that can NAME its three legal values is the difference between a small
+// model picking one and a small model guessing. A free string here would put the closed set back in
+// prose, where nothing can check it.
+export const BLOCK_SPANS = ["full", "half", "third"] as const;
+export type BlockSpan = (typeof BLOCK_SPANS)[number];
+export const isBlockSpan = (v: unknown): v is BlockSpan =>
+  typeof v === "string" && (BLOCK_SPANS as readonly string[]).includes(v);
+
+export const MOVE_DIRECTIONS = ["up", "down"] as const;
+export type MoveDirection = (typeof MOVE_DIRECTIONS)[number];
+export const isMoveDirection = (v: unknown): v is MoveDirection =>
+  typeof v === "string" && (MOVE_DIRECTIONS as readonly string[]).includes(v);
 
 // ---- The reasoner's verdict ------------------------------------------------------
 export interface Decision {

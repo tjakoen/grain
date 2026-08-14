@@ -30,6 +30,8 @@ export const RENDER_OP_KINDS: readonly { kind: string; means: string }[] = [
   { kind: "choices", means: "the AI asks the human to pick — a chat bubble with a row of choice buttons (each a chat.send)" },
   { kind: "fill", means: "prefill a registered form field's value — persists for human review (the AI never submits)" },
   { kind: "tick", means: "set a registered tick box's checked state — persists for human review (a radio may only be ticked, never cleared)" },
+  { kind: "span", means: "set one block's width word on a composed page — full, half or third, and there is no fourth" },
+  { kind: "move", means: "shift one block one place on a composed page — up or down, clamped at the ends rather than wrapped" },
 ];
 
 // The one door's HTTP surface (AI-INTERFACE.md) — guarded by vocab-reference.test.ts

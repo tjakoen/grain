@@ -4,7 +4,7 @@
 // closed ACTIONS vocabulary (so it shows up in the manifest, see manifest-dom.test.ts), an
 // unsafe/external href is rejected, and a same-origin root-relative one is accepted.
 import { test, expect, describe } from "bun:test";
-import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref, isValidChoiceList, isSafeFieldValue, FIELD_VALUE_CAP } from "./contract.ts";
+import { ACTIONS, isAction, actionsForKind, isSafeNavigateHref, isValidChoiceList, isSafeFieldValue, isCheckedState, FIELD_VALUE_CAP } from "./contract.ts";
 
 describe("navigate: registered in the closed ACTIONS vocabulary", () => {
   test("is a real action, light depth, accepts the screen kind", () => {
@@ -137,6 +137,46 @@ describe("isSafeFieldValue: plain text, capped, no control chars", () => {
     expect(isSafeFieldValue(null)).toBe(false);
     expect(isSafeFieldValue(42)).toBe(false);
     expect(isSafeFieldValue(["a"])).toBe(false);
+  });
+});
+
+describe("check.set: the tick-box verb, and the kind that keeps it apart from field.set", () => {
+  test("is a real action, light depth, accepts the check kind, requires checked:boolean", () => {
+    expect(isAction("check.set")).toBe(true);
+    expect(ACTIONS["check.set"]).toMatchObject({ name: "check.set", depth: "light", accepts: ["check"] });
+    expect(ACTIONS["check.set"].payload.checked).toMatchObject({ type: "boolean", required: true });
+  });
+  test("destructive + idempotent — it REPLACES a state the human may have set; same payload → same end state", () => {
+    expect(ACTIONS["check.set"].hints).toMatchObject({ destructive: true, idempotent: true });
+  });
+  // The point of the whole design, and the one assertion worth reading twice: each control kind
+  // advertises ONLY the verb that can operate it. Were both verbs on one kind, the manifest would
+  // tell a reasoner that field.set is legal on a tick box — and field.set writes el.value, which on
+  // a tick box is what the form SUBMITS rather than whether it is ticked. The write would land,
+  // report success, change the form's meaning and leave the control looking untouched.
+  test("the two kinds do not overlap: a field advertises no tick verb, a tick box no field verb", () => {
+    expect(actionsForKind("check")).toEqual(["check.set"]);
+    expect(actionsForKind("field")).toEqual(["field.set"]);
+  });
+  test("a set, not a toggle — a toggle could not honestly carry the idempotent flag", () => {
+    for (const name of Object.keys(ACTIONS)) expect(name).not.toMatch(/toggle/i);
+  });
+});
+
+describe("isCheckedState: a real boolean, and nothing that merely looks like one", () => {
+  test("accepts both booleans", () => {
+    expect(isCheckedState(true)).toBe(true);
+    expect(isCheckedState(false)).toBe(true);
+  });
+  // "false" is a truthy string, so a coercing guard would TICK the box a reasoner asked to clear.
+  test("rejects the strings, the numbers and the absent value a model might send instead", () => {
+    expect(isCheckedState("true")).toBe(false);
+    expect(isCheckedState("false")).toBe(false);
+    expect(isCheckedState("checked")).toBe(false);
+    expect(isCheckedState(1)).toBe(false);
+    expect(isCheckedState(0)).toBe(false);
+    expect(isCheckedState(undefined)).toBe(false);
+    expect(isCheckedState(null)).toBe(false);
   });
 });
 

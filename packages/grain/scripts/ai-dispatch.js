@@ -56,6 +56,16 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
   // eslint-disable-next-line no-control-regex
   const FIELD_VALUE_BAD_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/;
   const SAFE_FIELD_VALUE = (v) => typeof v === "string" && v.length <= FIELD_VALUE_CAP && !FIELD_VALUE_BAD_CHARS.test(v);
+
+  // ---- tick: a check.set state's guard — mirrors ai/contract.ts's isCheckedState EXACTLY ---------
+  // Same self-contained copy as the two above, drift-guarded by ai-dispatch.test.ts.
+  const CHECKED_STATE = (v) => typeof v === "boolean";
+  // WHICH elements a tick may touch, and this is the load-bearing half of the op. `"checked" in el`
+  // would be the obvious guard and it is the wrong one: EVERY input carries a `checked` property, so
+  // a tick aimed at a text field would pass it, assign a property the control does not render, and
+  // report a success nobody can see — the same class of silent lie that kept `field.set` away from
+  // tick boxes in the first place. The type is what actually decides whether a box can be ticked.
+  const TICKABLE_TYPES = new Set(["checkbox", "radio"]);
   // A `navigate` op tears the page down — irreversible, so give any in-flight settle (the
   // spotlight's glide off, a caret's last frame) a beat to read before that happens, instead of a
   // bare synchronous location.assign mid-render. Named per CLAUDE.md lesson #9 (a magic number
@@ -324,6 +334,25 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
           el.dispatchEvent(new Event("input", { bubbles: true }));   // page validation/counters stay honest
         }
         return;
+      case "tick":                                   // AI sets a tick box's state; it PERSISTS for human review (never a submit)
+        // No focus steal, no submit, no form access — el.checked and nothing else. A radio may only
+        // be TICKED: clearing one leaves its group with nothing selected, which is a state no click
+        // can reach, so the AI must not be able to put a form there either. Refused out loud, on the
+        // navigate precedent, because a silent refusal is indistinguishable from a broken op.
+        if (el && TICKABLE_TYPES.has(el.type) && CHECKED_STATE(op.checked)) {
+          if (el.type === "radio" && op.checked === false) {
+            console.error("[ai-dispatch] refused to clear a radio — no click can reach that state", op.target);
+            return;
+          }
+          el.checked = op.checked;
+          el.setAttribute("data-grade", "grain");    // AI ink until the human touches it (trusted-input settle below)
+          // BOTH events, because a real tick fires both and a page listening for either stays honest:
+          // `change` is the one a form listens to for a tick box, `input` is the one the settle
+          // listener below reads (and the one `fill` already dispatches).
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        return;
       case "log":                                    // one entry into the interaction TIMELINE (§5g)
         if (el && typeof op.html === "string") {
           el.insertAdjacentHTML("beforeend", op.html);
@@ -545,10 +574,13 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
     if (ev.key === "Escape" && isActing()) { ev.preventDefault(); interrupt(); }
   });
 
-  // A `fill`ed field wears data-grade="grain" (AI ink) until the human TOUCHES it: the first
-  // TRUSTED input event settles it clean (the human edited — the ink is theirs now). Synthetic
-  // events (including fill's own bubbling `input` above) are not a human touch, so they never
-  // settle it. Delegated once — grain's grade-as-signal reaching a form control (DESIGN-SYSTEM §3).
+  // A `fill`ed field — or a `tick`ed box — wears data-grade="grain" (AI ink) until the human
+  // TOUCHES it: the first TRUSTED input event settles it clean (the human edited — the ink is
+  // theirs now). Synthetic events (including fill's and tick's own bubbling `input` above) are not
+  // a human touch, so they never settle it. A tick box needs no special case here: clicking one
+  // fires a trusted `input` like any other control, and `"value" in el` holds for it (a tick box
+  // has a value — it is just not the state, which is the whole reason `tick` exists).
+  // Delegated once — grain's grade-as-signal reaching a form control (DESIGN-SYSTEM §3).
   document.addEventListener("input", (ev) => {
     if (!ev.isTrusted) return;
     const el = ev.target;

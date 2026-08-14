@@ -7,10 +7,10 @@
 // PLUMBING, never faked judgment (MVP §"Build Order").
 
 import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
-import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref, isSafeFieldValue, FIELD_VALUE_CAP } from "./contract.ts";
+import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref, isSafeFieldValue, isCheckedState, FIELD_VALUE_CAP } from "./contract.ts";
 // The reusable reasoner primitives — the stub DOGFOODS them so the exported kit (what a consumer's
 // real model composes with) and the shipped chat markup can never drift apart.
-import { esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp, fillOp } from "./reasoner-kit.ts";
+import { esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp, fillOp, tickOp } from "./reasoner-kit.ts";
 
 // The scoped capabilities the reasoner is allowed to use — its tool surface. The
 // real reasoner reaches storage through least-privilege tools exactly like this.
@@ -156,6 +156,29 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         narrate("fills", `prefilling ${surfaceId(intent.surface) || intent.surface} — yours to review and send`);
         return { ok: true, reply: "Drafted it into the field — review and send when ready.",
                  ops: [fillOp(intent.surface, value)] };
+      }
+
+      // --- check.set: set a registered tick box's state (plans/check-set-op.md). field.set's
+      //     sibling, and the reason it is a sibling rather than the same verb: a tick box's state
+      //     is `checked`, and its `value` is what the form submits. The payload is a real boolean
+      //     or nothing — a truthy string is refused rather than coerced, because "false" would tick
+      //     the box the reasoner asked to clear, silently, which is the failure this verb exists to
+      //     close. The door already brackets an ai-sourced intent with spotlight ops + timeline
+      //     entries; nothing extra needed here. ---
+      if (intent.action === "check.set") {
+        const checked = intent.payload.checked;
+        if (!isCheckedState(checked)) {
+          return {
+            ok: false,
+            reason: `check.set checked rejected: must be a boolean, got ${typeof checked}`,
+            ops: [{ target: intent.surface, op: "flash", message: "Couldn't set that tick box.",
+                     provenance: "system", commit: "committed" }],
+          };
+        }
+        const name = surfaceId(intent.surface) || intent.surface;
+        narrate("ticks", `${checked ? "ticking" : "clearing"} ${name} — yours to review and send`);
+        return { ok: true, reply: `${checked ? "Ticked" : "Cleared"} it — review and send when ready.`,
+                 ops: [tickOp(intent.surface, checked)] };
       }
 
       // --- chat.send: the assistant conversation. Your message settles CLEAN (human), then

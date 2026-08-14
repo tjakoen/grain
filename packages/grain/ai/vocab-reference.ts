@@ -29,6 +29,7 @@ export const RENDER_OP_KINDS: readonly { kind: string; means: string }[] = [
   { kind: "navigate", means: "change the browser's location (href) — same-origin, root-relative only" },
   { kind: "choices", means: "the AI asks the human to pick — a chat bubble with a row of choice buttons (each a chat.send)" },
   { kind: "fill", means: "prefill a registered form field's value — persists for human review (the AI never submits)" },
+  { kind: "tick", means: "set a registered tick box's checked state — persists for human review (a radio may only be ticked, never cleared)" },
 ];
 
 // The one door's HTTP surface (AI-INTERFACE.md) — guarded by vocab-reference.test.ts

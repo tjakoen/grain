@@ -21,7 +21,14 @@ export type Surface = string;                       // e.g. "item:ITM-1", "refle
 // TEXTAREA); a field is addressable ONLY if the page marked it `data-surface="field:…"`, so
 // refusal on anything else is free (plans/field-set-op.md). The AI prefills; it never submits —
 // structurally: no submit verb exists in the vocabulary.
-export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad" | "field";
+// `check` is a registered TICK BOX (check.set) — a checkbox or a radio, and deliberately NOT the
+// `field` kind even though both are form controls. A kind is a PROMISE about which verbs work: were
+// a tick box a `field`, the manifest would advertise `field.set` on it, and `field.set` writes
+// `el.value`, which on a tick box is what the form SUBMITS rather than whether it is ticked — a
+// write that lands, reports success, changes the form's meaning and leaves the control looking
+// untouched. Two kinds keep each control advertising only the verb that can actually operate it
+// (plans/check-set-op.md).
+export type SurfaceKind = "item" | "reflection" | "say-stream" | "screen" | "chat-log" | "notepad" | "field" | "check";
 export const surface = (kind: SurfaceKind, id?: string): Surface => (id ? `${kind}:${id}` : kind);
 export const surfaceKind = (s: Surface): SurfaceKind => (s.split(":")[0] ?? "") as SurfaceKind;
 export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":");
@@ -36,10 +43,12 @@ export const surfaceId = (s: Surface): string => s.split(":").slice(1).join(":")
 //   navigate      — a control (or a reasoner's own decision) asks to change screens; see below
 //   field.set     — prefill a registered form field with drafted text; the human reviews and
 //                   submits (the AI never submits — no submit verb exists to call)
+//   check.set     — tick or clear a registered tick box; the sibling field.set cannot do, because
+//                   a tick box's state is `checked` and its `value` is what it submits
 // The full product vocabulary lives at https://tjakoen.github.io/grain/docs/ai-interface.
 export type ActionName =
   | "item.archive" | "say.set" | "say.stream" | "demo.run" | "desk.stop" | "chat.send"
-  | "note.append" | "note.replace" | "navigate" | "field.set";
+  | "note.append" | "note.replace" | "navigate" | "field.set" | "check.set";
 export type Depth = "light" | "heavy";
 
 // ---- Payload schema: the machine-readable INPUT shape a verb expects -------------
@@ -119,6 +128,14 @@ export const ACTIONS: Record<ActionName, ActionDef> = {
     description: "Prefill a registered form field with drafted text — the human reviews and submits; the AI never submits.",
     payload: { value: REQ("string", "plain text; replaces the field's current value") },
     hints: { destructive: true, idempotent: true } },   // REPLACES what the field holds (may be human-typed); same value → same end state
+  // A SET, not a toggle, and the distinction is the reason this verb is safe to retry: a toggle
+  // flips whatever is there, so a replay lands in the opposite state and the `idempotent` flag
+  // below would be a lie. The reasoner does not read the box before writing it; it states the
+  // state it wants. Same shape as field.set, one kind over.
+  "check.set":    { name: "check.set",    depth: "light", accepts: ["check"],
+    description: "Tick or clear a registered tick box (checkbox or radio) — the human reviews and submits; the AI never submits.",
+    payload: { checked: REQ("boolean", "true ticks the box, false clears it") },
+    hints: { destructive: true, idempotent: true } },   // REPLACES a state the human may have set; same payload → same end state
 };
 
 export const isAction = (s: string): s is ActionName => Object.hasOwn(ACTIONS, s);
@@ -173,7 +190,12 @@ export interface Intent {
 // `type`'s INPUT/TEXTAREA branch appends tokens and CLEARS on `done` (composer-submit physics — a
 // prefill must PERSIST for review), and `replace` swaps outerHTML (a field's value is state, not
 // markup — replacing the element would drop listeners and focus). Reuses the existing `text` field.
-export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices" | "fill";
+// `tick` — check.set's effect: assign a tick box's `checked` state. A separate kind from `fill`
+// rather than a boolean mode on it, for the reason `fill` is separate from `type`: an op that
+// branches on which of two payload fields arrived is two ops sharing a name, and the dispatcher
+// would have to guess which one it was handed. `tick` carries `checked` and nothing else, so the
+// wire says what it means and each op stays conformance-testable as its own vocabulary word.
+export type RenderOpKind = "replace" | "append" | "remove" | "flash" | "type" | "spotlight" | "log" | "navigate" | "choices" | "fill" | "tick";
 export type Provenance = "user" | "ai" | "system";
 export type Commit = "pending" | "committed";   // grade = commit state (DESIGN-SYSTEM §3)
 
@@ -194,6 +216,7 @@ export interface RenderOp {
   href?: string;                // navigate: where to (validated — isSafeNavigateHref, below)
   prompt?: string;             // choices: the question shown above the buttons (optional)
   choices?: Choice[];          // choices: the options the human picks from (validated — isValidChoiceList)
+  checked?: boolean;           // tick: the state to assign to a registered tick box (validated — isCheckedState)
   provenance: Provenance;
   commit: Commit;
 }
@@ -228,6 +251,14 @@ export const FIELD_VALUE_CAP = 2000;
 const FIELD_VALUE_BAD_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/;
 export const isSafeFieldValue = (v: unknown): v is string =>
   typeof v === "string" && v.length <= FIELD_VALUE_CAP && !FIELD_VALUE_BAD_CHARS.test(v);
+
+// ---- check.set's state validator — a real boolean, and nothing that merely looks like one -------
+// A one-line guard rather than an inline `typeof`, for the same reason the two above are named: the
+// reasoner's rejection message, the dispatcher's last-line re-check and the drift-guard test all
+// need to mean the same thing by "a valid checked state". Strings are rejected on purpose — "false"
+// is truthy, so a model that sends the word instead of the value would tick every box it aimed at,
+// and a silent coercion is exactly the failure this whole verb exists to avoid.
+export const isCheckedState = (v: unknown): v is boolean => typeof v === "boolean";
 
 // ---- The reasoner's verdict ------------------------------------------------------
 export interface Decision {

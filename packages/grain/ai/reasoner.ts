@@ -7,10 +7,16 @@
 // PLUMBING, never faked judgment (MVP §"Build Order").
 
 import type { Intent, Decision, Surface, RenderOp } from "./contract.ts";
-import { ACTIONS, PUSH_SURFACES, surfaceId, isSafeNavigateHref, isSafeFieldValue, isCheckedState, FIELD_VALUE_CAP } from "./contract.ts";
+import {
+  ACTIONS, BLOCK_SPANS, MOVE_DIRECTIONS, PUSH_SURFACES, surfaceId, isBlockSpan, isCheckedState,
+  isMoveDirection, isSafeFieldValue, isSafeNavigateHref, FIELD_VALUE_CAP,
+} from "./contract.ts";
 // The reusable reasoner primitives — the stub DOGFOODS them so the exported kit (what a consumer's
 // real model composes with) and the shipped chat markup can never drift apart.
-import { esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp, fillOp, tickOp } from "./reasoner-kit.ts";
+import {
+  esc, chatBubble, narrationLine, navigateOp, noteAppendOp, noteReplaceOp, fillOp, tickOp,
+  removeBlockOp, spanOp, moveOp,
+} from "./reasoner-kit.ts";
 
 // The scoped capabilities the reasoner is allowed to use — its tool surface. The
 // real reasoner reaches storage through least-privilege tools exactly like this.
@@ -179,6 +185,50 @@ export function makeStubReasoner(opts: StubOptions = {}): Reasoner {
         narrate("ticks", `${checked ? "ticking" : "clearing"} ${name} — yours to review and send`);
         return { ok: true, reply: `${checked ? "Ticked" : "Cleared"} it — review and send when ready.`,
                  ops: [tickOp(intent.surface, checked)] };
+      }
+
+      // --- the three block verbs: operate ONE block of a composed page (plans/block-verbs.md).
+      //     Deterministic and model-free, exactly like check.set: the payload is a closed word list,
+      //     so there is nothing here for a reasoner to be clever about. The rejection echoes the
+      //     legal words rather than saying "invalid", because the model this is aimed at is small
+      //     and a rejection it can act on is the difference between a retry and a dead end
+      //     (AI-INTERFACE §0, informative rejections).
+      //
+      //     What none of them do is touch the page's own state directly. Each returns an op the
+      //     dispatcher applies to the addressed cell, and the page derives its composition back off
+      //     the DOM — because a reasoner that reached into a module's variables would be the
+      //     privileged AI-to-DOM back channel this whole architecture exists to refuse. ---
+      if (intent.action === "block.remove") {
+        narrate("edits", `removing ${surfaceId(intent.surface) || intent.surface} from the page`);
+        return { ok: true, reply: "Dropped that block.", ops: [removeBlockOp(intent.surface)] };
+      }
+
+      if (intent.action === "block.span") {
+        const span = intent.payload.span;
+        if (!isBlockSpan(span)) {
+          return {
+            ok: false,
+            reason: `block.span rejected: span must be one of ${BLOCK_SPANS.join(", ")}, got ${JSON.stringify(span)}`,
+            ops: [{ target: intent.surface, op: "flash", message: `A block is full, half or third wide.`,
+                     provenance: "system", commit: "committed" }],
+          };
+        }
+        narrate("edits", `setting ${surfaceId(intent.surface) || intent.surface} to ${span} width`);
+        return { ok: true, reply: `Set it to ${span} width.`, ops: [spanOp(intent.surface, span)] };
+      }
+
+      if (intent.action === "block.move") {
+        const direction = intent.payload.direction;
+        if (!isMoveDirection(direction)) {
+          return {
+            ok: false,
+            reason: `block.move rejected: direction must be one of ${MOVE_DIRECTIONS.join(", ")}, got ${JSON.stringify(direction)}`,
+            ops: [{ target: intent.surface, op: "flash", message: "A block moves up or down.",
+                     provenance: "system", commit: "committed" }],
+          };
+        }
+        narrate("edits", `moving ${surfaceId(intent.surface) || intent.surface} ${direction}`);
+        return { ok: true, reply: `Moved it ${direction}.`, ops: [moveOp(intent.surface, direction)] };
       }
 
       // --- chat.send: the assistant conversation. Your message settles CLEAN (human), then

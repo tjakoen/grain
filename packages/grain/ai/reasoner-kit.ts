@@ -5,8 +5,11 @@
 // primitives first-class and EXPORTED; the stub dogfoods them (reasoner.ts), so the kit and the
 // shipped behaviour can never diverge. CLIENT-SAFE (§19.2): pure, no DOM, relative import only.
 
-import type { RenderOp, Surface } from "./contract.ts";
-import { PUSH_SURFACES, isSafeNavigateHref, isSafeFieldValue, isCheckedState, FIELD_VALUE_CAP } from "./contract.ts";
+import type { BlockSpan, MoveDirection, RenderOp, Surface } from "./contract.ts";
+import {
+  BLOCK_SPANS, MOVE_DIRECTIONS, PUSH_SURFACES, isBlockSpan, isCheckedState, isMoveDirection,
+  isSafeFieldValue, isSafeNavigateHref, FIELD_VALUE_CAP,
+} from "./contract.ts";
 // Imported for the notepad markup helpers below (they render markdown source to sanitized HTML) AND
 // re-exported so a consumer building on the kit finds settle-time markdown rendering right next to
 // the op-builders it pairs with, without a second import path to remember. Canonical home + tests:
@@ -140,6 +143,31 @@ export const tickOp = (target: Surface, checked: boolean): RenderOp => {
   if (!isCheckedState(checked))
     throw new Error(`tickOp: checked must be a boolean, got ${JSON.stringify(checked)}`);
   return { target, op: "tick", checked, provenance: "ai", commit: "committed" };
+};
+
+/** Drop one block from a composed page — the existing `remove` op, aimed at a `block:` surface.
+ *  No new op kind: deleting the element IS the effect, and a second kind that did the same thing
+ *  would be vocabulary for its own sake. `committed` because the delete is complete in one op. */
+export const removeBlockOp = (target: Surface): RenderOp =>
+  ({ target, op: "remove", provenance: "ai", commit: "committed" });
+
+/** Set one block's width word — the `span` op. Throws on a word outside the closed three RIGHT
+ *  HERE, at the compose point, like fillOp and tickOp above (lesson #3/#5 — the dispatcher's own
+ *  guard is defense-in-depth, not the first line). A fourth word reaching a stylesheet that has no
+ *  rule for it would render a block at some default width and report success. */
+export const spanOp = (target: Surface, span: BlockSpan): RenderOp => {
+  if (!isBlockSpan(span))
+    throw new Error(`spanOp: span must be one of ${BLOCK_SPANS.join(", ")}, got ${JSON.stringify(span)}`);
+  return { target, op: "span", span, provenance: "ai", commit: "committed" };
+};
+
+/** Move one block one place — the `move` op. Throws on anything but up or down at the compose
+ *  point, for the reason spanOp does. Deliberately NOT idempotent and the op says so by omission:
+ *  each move shifts one more place, so a replay is a second move rather than the same one. */
+export const moveOp = (target: Surface, direction: MoveDirection): RenderOp => {
+  if (!isMoveDirection(direction))
+    throw new Error(`moveOp: direction must be one of ${MOVE_DIRECTIONS.join(", ")}, got ${JSON.stringify(direction)}`);
+  return { target, op: "move", direction, provenance: "ai", commit: "committed" };
 };
 
 /** Replace a bubble body with the animated "thinking" dots, pending — the AI is working but hasn't a

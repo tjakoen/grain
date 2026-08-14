@@ -225,3 +225,58 @@ test("note.append with empty text: rejected with a flash, nothing written (never
   expect(d.ok).toBe(false);
   expect(d.ops[0]!.op).toBe("flash");
 });
+
+// The three block verbs, deterministic and model-free — the same shape check.set has, one kind over.
+// A block is a kind of its own because a kind is a promise about which verbs work, and a block's
+// real state is the composition holding it rather than the element showing it.
+const blockIntent = (action: Intent["action"], payload: Record<string, unknown>, id = "b2") =>
+  intent({ action, surface: `block:${id}`, payload });
+
+test("block.remove emits the EXISTING remove op rather than a fourth kind", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(blockIntent("block.remove", {}), tools);
+  expect(d.ok).toBe(true);
+  expect(d.ops.filter((o) => o.op !== "spotlight" && o.op !== "log").map((o) => o.op)).toEqual(["remove"]);
+});
+
+test("block.span sets the width word it was given, on the block it was aimed at", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(blockIntent("block.span", { span: "full" }, "b3"), tools);
+  expect(d.ok).toBe(true);
+  expect(d.ops.find((o) => o.op === "span")).toMatchObject({ target: "block:b3", span: "full", provenance: "ai" });
+});
+
+// The rejection ECHOES the legal words rather than saying "invalid": the model this is aimed at is
+// small, and a rejection it can act on is the difference between a retry and a dead end.
+test("a fourth width word is refused, and the refusal names the three that exist", async () => {
+  const { tools } = fakeTools();
+  const d = await reasoner.decide(blockIntent("block.span", { span: "wide" }), tools);
+  expect(d.ok).toBe(false);
+  expect(d.reason).toContain("full");
+  expect(d.reason).toContain("third");
+  expect(d.ops.some((o) => o.op === "flash")).toBe(true);
+});
+
+test("block.move takes a DIRECTION, and refuses the index a model might reach for", async () => {
+  const { tools } = fakeTools();
+  const ok = await reasoner.decide(blockIntent("block.move", { direction: "up" }), tools);
+  expect(ok.ok).toBe(true);
+  expect(ok.ops.find((o) => o.op === "move")).toMatchObject({ direction: "up" });
+
+  const byIndex = await reasoner.decide(blockIntent("block.move", { direction: 2 }), tools);
+  expect(byIndex.ok).toBe(false);
+  expect(byIndex.reason).toContain("up");
+});
+
+// A reasoner that had to hand back rendered markup for a move would be a second renderer, which is
+// the one thing this design refuses.
+test("no block op carries markup", async () => {
+  const { tools } = fakeTools();
+  for (const [action, payload] of [
+    ["block.remove", {}], ["block.span", { span: "half" }], ["block.move", { direction: "down" }],
+  ] as const) {
+    const d = await reasoner.decide(blockIntent(action, payload), tools);
+    for (const op of d.ops.filter((o) => ["remove", "span", "move"].includes(o.op)))
+      expect(op.html).toBeUndefined();
+  }
+});

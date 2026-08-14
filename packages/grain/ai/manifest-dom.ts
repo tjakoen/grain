@@ -136,7 +136,11 @@ export function domManifest(doc: DomDoc): Manifest {
  *  this is just its prose form). Built ON `domManifest`, not a second harvest: one truth, two
  *  shapes (JSON for code, text for a prompt). Deterministic: the same DOM in always yields the
  *  same string out — target order follows `harvestTargets`' DOM walk (document order), never a
- *  Set/Map/Object whose iteration order could vary across engines. Pure — no DOM writes, no I/O. */
+ *  Set/Map/Object whose iteration order could vary across engines. Pure — no DOM writes, no I/O.
+ *
+ *  NARROWER than `domManifest`: only targets that accept at least one verb are listed, because a
+ *  target no verb reaches is not a move a reasoner can make and a long list of them is what a small
+ *  model picks out of. See `manifestToText` for the measurement that prompted it. */
 export function manifestForReasoner(doc: DomDoc): string {
   return manifestToText(domManifest(doc));
 }
@@ -163,14 +167,27 @@ export function manifestToText(m: Manifest): string {
     lines.push(`- ${a.name} [${a.depth}] (${args}) — ${a.description}${hints}`);
   }
 
-  if (!m.targets.length) {
-    lines.push("targets: (none — this page declares no [data-surface] elements)");
-    return lines.join("\n");
-  }
-  lines.push(`targets: (${m.targets.length})`);
-  for (const t of m.targets) {
-    const verbs = t.accepts.length ? t.accepts.join(", ") : "(no verb currently targets this)";
-    lines.push(`- ${t.id} [${t.kind}] -> ${verbs}`);
+  // TARGETS, NARROWED TO THE OPERABLE ONES. A target whose accepts list is empty cannot be a legal
+  // move: `validateMove` refuses any target that does not carry the verb, so a reasoner that picks
+  // one has lost the turn before it starts. Listing it can only mislead, and the cost is not
+  // theoretical — measured on /builder 2026-08-14, 17 of 53 targets were `chat-msg:` ids, and the
+  // 0.5B reliably answered with a plausible-looking surface that accepts nothing rather than a
+  // block. Chat messages are the surface whose count grows without bound, so the noise grows with
+  // the conversation. This narrows the PROMPT only: `domManifest` still carries every target, so
+  // validation, the x-ray overlay, the terminal's `context` command and the MCP tool's JSON all
+  // still see the whole page. A screen with nothing push-only emits the exact string it did before.
+  const operable = m.targets.filter((t) => t.accepts.length > 0);
+  const omitted = m.targets.length - operable.length;
+
+  if (!operable.length) {
+    // Said plainly rather than silently: a page with surfaces but no verbs is a real state, and
+    // "(none)" alone would read as "this page declares nothing", which is a different claim.
+    lines.push(m.targets.length
+      ? `targets: (0 of ${m.targets.length} accept a verb — nothing on this page can be acted on)`
+      : "targets: (none — this page declares no [data-surface] elements)");
+  } else {
+    lines.push(omitted ? `targets: (${operable.length} of ${m.targets.length} accept a verb)` : `targets: (${operable.length})`);
+    for (const t of operable) lines.push(`- ${t.id} [${t.kind}] -> ${t.accepts.join(", ")}`);
   }
 
   // IN VIEW: the current readable STATE of every surface that opted in with data-read (the MCP
@@ -178,6 +195,11 @@ export function manifestToText(m: Manifest): string {
   // yields the exact same string as before, so the block never adds noise where there's no state.
   // This is the "read the result" half of the observe loop: after acting, the reasoner sees not
   // just what it can do next but what the surfaces now SAY.
+  //
+  // The target narrowing above deliberately does NOT reach here. A surface being push-only says no
+  // verb acts on it, which is the opposite of saying it is not worth reading: a console feed, a
+  // status line and a summary are all push-only and all worth reading before deciding. `data-read`
+  // is already the author's opt-in, and it is the one that governs this block.
   const readable = (m.inView.readable as ReadableSurface[] | undefined) ?? [];
   if (readable.length) {
     lines.push(`in view: (${readable.length})`);

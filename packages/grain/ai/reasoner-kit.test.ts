@@ -3,7 +3,7 @@
 import { test, expect, describe } from "bun:test";
 import {
   esc, chatBubble, chatBody, narrationLine, thinkingDots, choiceGroup,
-  userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp, fillOp,
+  userMessageOp, aiBubbleOp, typeToken, settleOp, replaceBodyOp, narrateOp, spotlightOp, navigateOp, fillOp, tickOp,
   thinkingOp, choicesOp,
   notepadEntry, notepadBody, noteAppendOp, noteReplaceOp,
   renderMarkdown,
@@ -70,6 +70,16 @@ describe("op-builders", () => {
   test("fillOp: an unsafe value throws here, at compose time — not later, silently, at the dispatcher", () => {
     expect(() => fillOp("field:contact-message", "x".repeat(2001))).toThrow();
     expect(() => fillOp("field:contact-message", "null\x00byte")).toThrow();
+  });
+  test("tickOp: a boolean becomes a committed ai tick op — the state persists for human review", () => {
+    expect(tickOp("check:newsletter", true))
+      .toMatchObject({ target: "check:newsletter", op: "tick", checked: true, provenance: "ai", commit: "committed" });
+    expect(tickOp("check:newsletter", false)).toMatchObject({ op: "tick", checked: false });
+  });
+  test("tickOp: a non-boolean throws here, at compose time — a truthy string would tick what it meant to clear", () => {
+    expect(() => tickOp("check:newsletter", "false" as unknown as boolean)).toThrow();
+    expect(() => tickOp("check:newsletter", 1 as unknown as boolean)).toThrow();
+    expect(() => tickOp("check:newsletter", undefined as unknown as boolean)).toThrow();
   });
   test("renderMarkdown is re-exported from the kit (same module ai/markdown.ts exports)", () => {
     expect(renderMarkdown("**hi**")).toContain("<strong>hi</strong>");

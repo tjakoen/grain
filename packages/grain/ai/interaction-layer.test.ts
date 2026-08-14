@@ -268,3 +268,61 @@ test("an AI field.set is bracketed by a spotlight on the field surface (AI as ac
   expect(spots.some((o) => o.active === true)).toBe(true);
   expect(spots.some((o) => o.active === false)).toBe(true);
 });
+
+// --- check.set at the door: kind validation, state validation, the tick op (plans/check-set-op.md) ---
+test("check.set on a check kind: validates, the reasoner emits a committed ai tick op", async () => {
+  const { layer, pushed } = makeLayer();
+  const d = await layer.handleIntent(intent({ source: "ai", surface: "check:newsletter",
+    action: "check.set", payload: { checked: true } }));
+  expect(d.ok).toBe(true);
+  const tick = ops(pushed).find((o) => o.op === "tick");
+  expect(tick).toMatchObject({ target: "check:newsletter", checked: true, provenance: "ai", commit: "committed" });
+});
+
+// The two rejections below are the design, stated as behaviour rather than as a comment: neither
+// verb can reach the other's control, so the manifest never promises a write that would land
+// silently wrong. Deleting the two kinds and merging them would turn both of these green-to-red.
+test("check.set on a FIELD surface: rejected with the accepts echo — a text field is not a tick box", async () => {
+  const { layer } = makeLayer();
+  const d = await layer.handleIntent(intent({ surface: "field:contact-message",
+    action: "check.set", payload: { checked: true } }));
+  expect(d.ok).toBe(false);
+  expect(d.ops[0]?.op).toBe("flash");
+  expect(d.reason).toContain("field:contact-message rejects check.set");
+  expect(d.reason).toContain("field.set");   // the verb that surface DOES accept, echoed back
+});
+
+test("field.set on a CHECK surface: rejected the same way — the write that would have lied", async () => {
+  const { layer } = makeLayer();
+  const d = await layer.handleIntent(intent({ surface: "check:newsletter",
+    action: "field.set", payload: { value: "yes" } }));
+  expect(d.ok).toBe(false);
+  expect(d.reason).toContain("check:newsletter rejects field.set");
+  expect(d.reason).toContain("check.set");
+});
+
+test("check.set with a non-boolean: rejected, and nothing reaches the box", async () => {
+  const { layer, pushed } = makeLayer();
+  const d = await layer.handleIntent(intent({ source: "ai", surface: "check:newsletter",
+    action: "check.set", payload: { checked: "false" } }));
+  expect(d.ok).toBe(false);
+  expect(d.reason).toContain("check.set checked rejected");
+  expect(ops(pushed).find((o) => o.op === "tick")).toBeUndefined();
+});
+
+test("check.set clearing a box is a legal move at the door — the radio limit is the dispatcher's", async () => {
+  const { layer, pushed } = makeLayer();
+  const d = await layer.handleIntent(intent({ source: "ai", surface: "check:newsletter",
+    action: "check.set", payload: { checked: false } }));
+  expect(d.ok).toBe(true);
+  expect(ops(pushed).find((o) => o.op === "tick")).toMatchObject({ checked: false });
+});
+
+test("an AI check.set is bracketed by a spotlight on the check surface (AI as actor)", async () => {
+  const { layer, pushed } = makeLayer();
+  await layer.handleIntent(intent({ source: "ai", surface: "check:newsletter",
+    action: "check.set", payload: { checked: true } }));
+  const spots = ops(pushed).filter((o) => o.op === "spotlight" && o.target === "check:newsletter");
+  expect(spots.some((o) => o.active === true)).toBe(true);
+  expect(spots.some((o) => o.active === false)).toBe(true);
+});

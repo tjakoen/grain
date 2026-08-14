@@ -6,7 +6,7 @@
 // shipped behaviour can never diverge. CLIENT-SAFE (§19.2): pure, no DOM, relative import only.
 
 import type { RenderOp, Surface } from "./contract.ts";
-import { PUSH_SURFACES, isSafeNavigateHref, isSafeFieldValue, FIELD_VALUE_CAP } from "./contract.ts";
+import { PUSH_SURFACES, isSafeNavigateHref, isSafeFieldValue, isCheckedState, FIELD_VALUE_CAP } from "./contract.ts";
 // Imported for the notepad markup helpers below (they render markdown source to sanitized HTML) AND
 // re-exported so a consumer building on the kit finds settle-time markdown rendering right next to
 // the op-builders it pairs with, without a second import path to remember. Canonical home + tests:
@@ -130,6 +130,16 @@ export const fillOp = (target: Surface, value: string): RenderOp => {
   if (!isSafeFieldValue(value))
     throw new Error(`fillOp: unsafe value — must be a string ≤ ${FIELD_VALUE_CAP} chars with no control characters`);
   return { target, op: "fill", text: value, provenance: "ai", commit: "committed" };
+};
+
+/** Set a registered tick box's state (`check:` surface) — the `tick` op. Same contract as fillOp
+ *  one kind over: the state PERSISTS for human review and the AI never submits. Throws on a
+ *  non-boolean RIGHT HERE rather than letting a truthy string reach the dispatcher and tick a box
+ *  the reasoner meant to clear (lesson #3/#5 — the dispatcher's guard is defense-in-depth). */
+export const tickOp = (target: Surface, checked: boolean): RenderOp => {
+  if (!isCheckedState(checked))
+    throw new Error(`tickOp: checked must be a boolean, got ${JSON.stringify(checked)}`);
+  return { target, op: "tick", checked, provenance: "ai", commit: "committed" };
 };
 
 /** Replace a bubble body with the animated "thinking" dots, pending — the AI is working but hasn't a

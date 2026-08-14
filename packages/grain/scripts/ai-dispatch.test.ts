@@ -70,6 +70,38 @@ test("fill sets .value + a grain grade and dispatches a bubbling input event; a 
   expect(dispatch).toMatch(/isTrusted\)\s*return/);                 // …synthetic events never do
 });
 
+test("the tick state guard in ai-dispatch.js matches contract.ts's isCheckedState verbatim", async () => {
+  const [dispatch, contract] = await Promise.all([read("./ai-dispatch.js"), read("../ai/contract.ts")]);
+  expect(dispatch).toContain('const CHECKED_STATE = (v) => typeof v === "boolean";');
+  expect(contract).toContain('export const isCheckedState = (v: unknown): v is boolean => typeof v === "boolean";');
+});
+
+test("tick sets .checked on a checkbox or radio ONLY, grades it grain, and fires input + change", async () => {
+  // Source-text assertions, the same bar the fill case is held to above (the IIFE can't be
+  // imported — file header). The element guard is the one that matters: EVERY input carries a
+  // `checked` property, so `"checked" in el` would let a tick land on a text field, assign a
+  // property nothing renders, and report a success nobody can see.
+  const dispatch = await read("./ai-dispatch.js");
+  const tickCase = dispatch.match(/case "tick":([\s\S]*?)\n        return;/)?.[1] ?? "";
+  expect(tickCase).toContain("TICKABLE_TYPES.has(el.type)");        // the type decides, not the property
+  expect(tickCase).not.toContain('"checked" in el');                // the guard that would silently lie
+  expect(tickCase).toContain("CHECKED_STATE(op.checked)");          // last-line-of-defense re-check
+  expect(tickCase).toContain("el.checked = op.checked");            // state, not value, not markup
+  expect(tickCase).toContain('el.setAttribute("data-grade", "grain")');
+  expect(tickCase).toContain('new Event("input", { bubbles: true })');
+  expect(tickCase).toContain('new Event("change", { bubbles: true })');
+  expect(dispatch).toContain('const TICKABLE_TYPES = new Set(["checkbox", "radio"]);');
+});
+
+test("tick refuses to CLEAR a radio, out loud — no click can reach an all-clear group", async () => {
+  const dispatch = await read("./ai-dispatch.js");
+  const tickCase = dispatch.match(/case "tick":([\s\S]*?)\n        return;/)?.[1] ?? "";
+  expect(tickCase).toMatch(/el\.type === "radio" && op\.checked === false/);
+  expect(tickCase).toContain("console.error");                      // refused audibly, like an unsafe navigate
+  // and the refusal returns BEFORE the assignment, rather than logging and carrying on
+  expect(tickCase.indexOf("console.error")).toBeLessThan(tickCase.indexOf("el.checked = op.checked"));
+});
+
 test("a navigate op with an unsafe href is never assigned to location — asserted on the shared regex", async () => {
   const contract = await read("../ai/contract.ts");
   const src = contract.match(/const SAFE_NAV_HREF = (\/.*\/);/)?.[1];

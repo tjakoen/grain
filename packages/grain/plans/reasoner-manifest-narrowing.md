@@ -113,7 +113,7 @@ Five of the fifteen picked a real block verb AND a real block number, which had 
 Every one of those five was refused for the same single reason: the target was `b2` where the
 manifest addresses it `block:b2`.
 
-## What blocks the next red turning green
+## What blocks the next red turning green, and what does NOT
 
 The prefix is not the model's invention. The page's own line under the manifest says "The blocks here
 are: b1, b2, b3, b4", built by `blockMessage` in the portfolio's `src/ai/block-reasoner.ts` from the
@@ -122,7 +122,25 @@ disagree, and the function's own comment says why the model believes the wrong o
 literally because "a 0.5B copies far better than it computes". It copies. It was given the form that
 does not resolve.
 
-That is a contradiction this estate authored rather than a limit of the model, and it is one line to
-fix. It is also the portfolio's prompt, which is the direction the owner explicitly did not take on
-2026-08-14, so it is left here rather than done. It is the strongest lead in the data now, the way
-the manifest's length was the strongest lead before it.
+That looked like a contradiction this estate authored rather than a limit of the model, and like one
+line to fix. **It was authorized on 2026-08-15, built, measured, and reverted whole**, and the
+measurement is the reason this section is worth reading rather than the diagnosis.
+
+| what the page's line said | aimed at a block | named a real block verb |
+| --- | --- | --- |
+| `b1, b2, b3, b4` | 7 of 15 | 6 of 15 |
+| `block:b1, …` plus "copy it exactly, prefix included" | 0 of 15 | 0 of 15 |
+| `block:b1, …` alone | 0 of 10 | 2 of 10, neither aimed at a block |
+
+Prefixing made the model strictly worse, and worse in a specific way: it stopped naming blocks and
+collapsed to answering `move` on `builder`, a token off the screen name. Twenty-five answers across
+two variants say it was the prefix rather than the extra instruction.
+
+So the reading that survives is that a 0.5B can copy `b2` and cannot copy `block:b2`, and that being
+handed an address it cannot reproduce is worse than being handed a short one that needs a prefix
+added. The contradiction is still real. The fix is on the OTHER side of it: normalize a bare id up to
+`block:<id>` when reading the answer, rather than pushing the long form down into the prompt. That is
+a decision rather than a cleanup, so it is filed and not taken.
+
+**Do not retry the prompt-side prefix.** It is the obvious move, it reads as an obvious bug fix, and
+it has been measured twice.

@@ -180,14 +180,18 @@ test("b-check takes its type from data, with no literal to shadow the binding", 
   expect(html).toContain(`data-bind-checked="checked"`);
 });
 
-// The deliberate ABSENCE, asserted so the next reader cannot tidy it away as an oversight. Every
-// other atom in this family carries a surface, and this one must not: field.set is the only verb the
-// vocabulary has for a field, it writes el.value, and a checkbox's value is what the form SUBMITS
-// rather than whether it is ticked. A write would land, report success, change the form's meaning and
-// leave the control looking untouched — worse than the choice hazard, which at least blanks visibly.
-// When a verb exists that can tick a box, delete this test in the same commit that adds the binding.
-test("b-check carries NO surface: the vocabulary has no verb that can tick a box", () => {
-  expect(read("b-check")).not.toContain(`data-bind-data-surface`);
+// This atom shipped 2026-08-13 with NO surface, because the vocabulary had no verb that could tick a
+// box and an address would have advertised a write that lands, reports success and moves nothing.
+// The verb exists now (check.set, contract.ts), so the address does too — and the assertion that
+// replaces the old absence is the one that keeps the address honest: it has to be a `check` address,
+// because a `field` one would advertise field.set, which writes el.value, and a tick box's value is
+// what the form SUBMITS rather than whether it is ticked. The atom cannot pin its own prefix (the
+// value comes from the spec at render time), so what is pinned here is the binding's PLACE: on the
+// input, never on the wrapper, the same rule b-field and b-choice are held to.
+test("b-check addresses the input, matching b-field's control-not-label rule", () => {
+  const html = read("b-check");
+  expect(openTag(html, "field__box")).toContain(`data-bind-data-surface="surface"`);
+  expect(openTag(html, "field")).not.toContain(`data-bind-data-surface`);
 });
 
 // ---- the two message slots, and the required marker ------------------------------------------

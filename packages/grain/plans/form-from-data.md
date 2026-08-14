@@ -328,20 +328,21 @@ So the atom ships unaddressable, the absence is a conformance test with the reas
 it, and the real fix is **a new verb, which is a contract change and therefore an owner's call.**
 Something in the shape of a `field.toggle` that sets `checked` rather than `value`. Not taken here.
 
-**ANSWERED 2026-08-13: add the verb.** The owner chose to grow the vocabulary rather than leave the
-tick box out of the AI's reach. It is a separate unit of work and deliberately not smuggled into this
-one, because it reaches further than any atom: `ai/contract.ts` gains the verb and decides which
-surface kind accepts it, `scripts/ai-dispatch.js` gains a branch that sets `checked` and fires the
-events a form listens for, the manifest starts advertising it, and only then does `b-check` get its
-address and lose the test that asserts it has none. The order matters: the atom is the LAST step, not
-the first, because an address that lands before the verb exists is the same false promise in the
-other direction. Whoever takes it should also decide whether the verb accepts a `field` surface or
-earns a kind of its own, since `field.set` and it would then both accept the same kind and only one
-of them would work on any given control.
+**ANSWERED 2026-08-13: add the verb. BUILT 2026-08-14** as `check.set`, spec + account in
+[`check-set-op.md`](check-set-op.md). Both calls this paragraph left open were settled there and are
+worth carrying here in one line each, because they are the part a reader of this section will want:
+the verb **earns its own kind**, `check`, since a manifest target's accepts is derived from the
+registry and one kind carrying both verbs would advertise `field.set` on a control it lands silently
+wrong on; and it is a **set, not a toggle**, since a toggle flips whatever is there and so cannot
+honestly carry the `idempotent` flag a reasoner reads before retrying. The order held: contract,
+dispatcher, kit and door first, then the verb proved on a real control in a real browser, and only
+then `b-check`'s address. The "carries NO surface" test below is gone, replaced by the one that keeps
+the new address honest — the binding is on the input, never on the wrapper.
 
 **Tests.** Eight new assertions in `form-from-data.test.ts`, each proved by mutation before it was
 kept: the two literal types with no prop able to shadow them, `b-check` taking its type from data
-with no literal to shadow the binding, the deliberate missing surface, both slots present in every
+with no literal to shadow the binding, the deliberate missing surface (replaced 2026-08-14 by the
+address-on-the-input assertion, once the verb existed), both slots present in every
 framed template, the empty-fallback rule, the frame declaring the collapse and the marker, and
 form-grid shipping CSS only with its overflow floor intact. Gates: 600 unit green, `check` green.
 

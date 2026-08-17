@@ -35,7 +35,7 @@ export interface ProofServeOptions {
 // The request handler, separated from Bun.serve so it can be exercised in tests without a socket.
 // `stream` is injectable (piece 3, live.ts) so `serveProof` can share the SAME hub with the file
 // watcher it starts — a test that only wants the handler gets a private default instance instead.
-export function createProofHandler(opts: ProofServeOptions, stream: Stream = createStream()) {
+export function createProofHandler(opts: ProofServeOptions, stream: Stream = createStream()): (req: Request) => Promise<Response> {
   const grainRoot = opts.grainRoot ?? GRAIN_ROOT;
   const serveStyles = makeStatic(bunRuntime, join(grainRoot, "styles"));
   const componentCss = createStyleBundle(bunRuntime, join(grainRoot, "components"));

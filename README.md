@@ -41,10 +41,10 @@ published versions from the public npm registry:
 }
 ```
 
-That is the whole setup. **No `.npmrc`, no token** — the `@tjakoen` scope resolves from npmjs by
+That is the whole setup. **No `.npmrc`, no token**: the `@tjakoen` scope resolves from npmjs by
 default, so `bun install` works on a fresh machine with nothing configured. (These packages lived on
 GitHub Packages until 2026-07-30, which required every consumer to mint a `read:packages` PAT before
-installing anything; that is no longer the case. Never commit an `.npmrc` that maps the scope — a
+installing anything; that is no longer the case. Never commit an `.npmrc` that maps the scope: a
 mapping overrides the default and drags the token requirement back.)
 
 The full write-up, including why a single monorepo git dependency cannot expose the sub-packages by

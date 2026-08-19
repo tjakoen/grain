@@ -71,6 +71,44 @@ test("fenced code keeps text verbatim and captures the language", () => {
   }
 });
 
+test("a fence with no tail carries no meta at all", () => {
+  const [code] = parseMarkdown("```ts\nconst x = 1;\n```");
+  expect(code.type).toBe("code");
+  if (code.type === "code") expect(code.meta).toBeUndefined();
+});
+
+test("a fence tail is captured as meta, leaving the language alone", () => {
+  const [code] = parseMarkdown('```mermaid label="A flows to B"\ngraph TD; A-->B;\n```');
+  expect(code.type).toBe("code");
+  if (code.type === "code") {
+    expect(code.lang).toBe("mermaid");
+    expect(code.meta).toBe('label="A flows to B"');
+    expect(code.value).toBe("graph TD; A-->B;");
+  }
+});
+
+// The first word of an info string is the language, always, so a tail cannot be written
+// without one. That is inherent rather than a bug: there is nothing in the text to tell the
+// two cases apart, and a diagram fence names its language anyway.
+test("the first word of an info string is the language, even when it looks like a tail", () => {
+  const [code] = parseMarkdown('``` label="x"\nbody\n```');
+  expect(code.type).toBe("code");
+  if (code.type === "code") expect(code.lang).toBe('label="x"');
+});
+
+// Before the tail was captured, the $-anchored fence pattern meant ANY text after the language
+// stopped the line being a fence, and the body leaked out as prose. This is that regression.
+test("a fence with a tail still opens a fence, so its body never leaks into prose", () => {
+  const nodes = parseMarkdown('```mermaid label="A flows to B"\n# not a heading\n```');
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0].type).toBe("code");
+});
+
+test("a strikethrough line is not mistaken for a fence", () => {
+  const nodes = parseMarkdown("~~~word~~~");
+  expect(nodes[0].type).toBe("paragraph");
+});
+
 test("markdown inside a code fence is NOT parsed", () => {
   const [code] = parseMarkdown("```\n# not a heading\n- not a list\n```");
   expect(code.type).toBe("code");

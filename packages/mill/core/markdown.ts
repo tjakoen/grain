@@ -9,7 +9,10 @@ import type { MillNode, InlineNode } from "./types.ts";
 // ---- block-level line shapes ------------------------------------------------
 const HR         = /^ {0,3}([-*_])(?: *\1){2,} *$/;      // ---, ***, ___ (3+)
 const HEADING    = /^ {0,3}(#{1,6})\s+(.*?)\s*#*\s*$/;   // # … ###### (trailing # stripped)
-const FENCE      = /^ {0,3}(```+|~~~+)\s*([^\s`~]*)\s*$/;// ``` or ~~~ with optional lang
+const FENCE      = /^ {0,3}(```+|~~~+)[ \t]*([^\s`~]*)[ \t]*([^`~]*?)[ \t]*$/;
+// ``` or ~~~ with an optional lang and an optional tail. Neither part may contain a backtick
+// or a tilde, which is CommonMark's own rule for an info string and is also what keeps a
+// strikethrough line like ~~~word~~~ from being mistaken for a fence.
 const LIST_ITEM  = /^\s*([-*+]|\d+[.)])\s+(.*)$/;        // -, *, +, or 1. / 1)
 const BLOCKQUOTE = /^ {0,3}> ?(.*)$/;
 const HTML_LINE  = /^ {0,3}</;                           // a line that opens a tag → passthrough
@@ -44,7 +47,13 @@ export function parseMarkdown(md: string): MillNode[] {
       i++;
       while (i < lines.length && !close.test(lines[i])) { buf.push(lines[i]); i++; }
       i++;                                              // consume the closing fence (if present)
-      nodes.push({ type: "code", lang: fence[2] ?? "", value: buf.join("\n") });
+      // The tail is carried through as `meta` only when there is one, so a plain fence keeps
+      // producing exactly the node it always did. The diagram layer reads its label from here.
+      const meta = (fence[3] ?? "").trim();
+      nodes.push({
+        type: "code", lang: fence[2] ?? "", value: buf.join("\n"),
+        ...(meta ? { meta } : {}),
+      });
       continue;
     }
 

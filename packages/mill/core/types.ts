@@ -15,7 +15,7 @@ export type MillNode =
   | { type: "heading"; level: number; children: InlineNode[] }
   | { type: "paragraph"; children: InlineNode[] }
   | { type: "list"; ordered: boolean; items: InlineNode[][] }
-  | { type: "code"; lang: string; value: string }
+  | { type: "code"; lang: string; value: string; meta?: string }
   | { type: "blockquote"; children: InlineNode[] }
   | { type: "image"; src: string; alt: string }
   | { type: "thematicBreak" }

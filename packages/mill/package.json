@@ -24,11 +24,13 @@
     "./index.ts": "./index.ts",
     "./core/*": "./core/*",
     "./adapters/*": "./adapters/*",
+    "./diagrams/*": "./diagrams/*",
     "./PLAN.md": "./PLAN.md"
   },
   "files": [
     "adapters",
     "core",
+    "diagrams",
     "index.ts",
     "serve.ts",
     "README.md",

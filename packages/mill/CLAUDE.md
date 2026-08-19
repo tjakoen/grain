@@ -5,7 +5,9 @@ stack's content rendering engine (a content plugin for GRAIN). Read the plan fir
 source of truth. **Built so far (pieces 1–4, 2026-07-03/04):** the framework-agnostic core engine
 (`core/`), the reference BATCH+GRAIN adapter (`adapters/grain/`), the live content route
 (`serve.ts` — `createMillRoutes(deps)`, a transport-generic pathname handler), and the portfolio
-wiring (`../tjakoen.github.io/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested. Next:
+wiring (`../tjakoen.github.io/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested.
+**Also built (2026-08-16):** `diagrams/` — mermaid fences render to theme-tokened inline SVG behind
+the `DiagramRenderer` port, with a committable disk cache. Next:
 piece 4b (AI-facing outputs: meta/JSON-LD, `llms.txt`, `knowledge.json`, `data-surface`).
 
 > This file follows the `CLAUDE.starter.md` template from the published standards index
@@ -46,4 +48,11 @@ build it.
   layer docs behind `/grain/docs` + `/batch/docs` were folded into the portfolio in the 2026-07-09
   option-b docs home, so the portfolio's `content.ts` now points those two collections at its own
   `docs/<layer>/` via `dirSource` — MILL's resolution mechanism is unchanged, only the source dir.
+- **Heavy dependencies stay behind a port and a dynamic import.** `@tjakoen/mill` has no runtime
+  dependency beyond grain. The mermaid renderer needs `playwright` and `mermaid`, so it lives alone
+  in `diagrams/mermaid-playwright.ts`, imports both dynamically, and is never re-exported from
+  `index.ts`. A consumer that wants diagrams installs them and builds the renderer itself; a
+  consumer that does not pays nothing and never launches a browser.
+- **A diagram that will not render is never an error.** Every path — no browser, invalid source,
+  unwritable cache — degrades to the ordinary code block. A renderer must not throw.
 - **Build against the plan and keep it canonical.** `PLAN.md` tracks what's built vs. deferred.

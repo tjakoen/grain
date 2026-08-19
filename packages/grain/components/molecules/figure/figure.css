@@ -10,6 +10,14 @@
   line-height: var(--leading-normal);
 }
 
+/* diagram variant: an inline SVG rather than an <img>. MILL emits this for a rendered
+   mermaid fence. The SVG carries token references, so it re-colors with the theme; the only
+   job here is fitting it to the column and letting a wide flowchart scroll rather than
+   shrink to unreadable. No caption: a diagram fence has no caption source, and the prose
+   convention (an italic line under the figure) stays. */
+.figure[data-variant="diagram"] { max-width: 100%; overflow-x: auto; }
+.figure[data-variant="diagram"] svg { display: block; max-width: 100%; height: auto; }
+
 /* clipped-photo variant: a hard editorial clip instead of a straight rectangle */
 .figure[data-variant="clipped"] img { border: 0; clip-path: polygon(0 0, 100% 0, 100% 94%, 96% 100%, 0 100%); }
 

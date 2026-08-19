@@ -9,8 +9,36 @@ frontmatter + images; it renders them as real GRAIN pages by mapping Markdown no
 
 > **Status: in progress, the core is live.** Pieces 1–4 are built and tested: the
 > framework-agnostic core engine (`core/`), the BATCH+GRAIN adapter (`adapters/grain/`), the live
-> content route (`serve.ts`), and the portfolio wiring (`/notes`, `/grain/docs`, `/batch/docs`).
-> What remains (AI-facing outputs, mermaid→SVG, RSS) is tracked in [PLAN.md](PLAN.md).
+> content route (`serve.ts`), the portfolio wiring (`/notes`, `/grain/docs`, `/batch/docs`), and
+> diagrams (`diagrams/`, mermaid to theme-tokened SVG).
+> What remains (AI-facing outputs, RSS) is tracked in [PLAN.md](PLAN.md).
+
+## Diagrams (optional)
+
+A fenced mermaid block can render to inline SVG, with its colors written as GRAIN token references
+so one diagram follows both theme axes without being rendered again. The renderer is optional and
+sits behind a port, so MILL itself stays free of heavy dependencies: install them only if you want
+diagrams.
+
+```bash
+bun add -d playwright mermaid
+```
+
+```ts
+import { createMillRoutes } from "@tjakoen/mill/serve.ts";
+import { cachedRenderer } from "@tjakoen/mill/diagrams/cache.ts";
+import { createMermaidRenderer, MERMAID_VERSION_TAG } from "@tjakoen/mill/diagrams/mermaid-playwright.ts";
+
+const millRoutes = createMillRoutes({
+  collections: [/* … */],
+  diagrams: cachedRenderer("diagram-cache", createMermaidRenderer(), MERMAID_VERSION_TAG),
+});
+```
+
+Commit the cache directory. A rendered diagram is keyed by its own source, so CI, the deploy and
+the static export read the committed SVG and never need a browser; only a new diagram launches
+one. Nothing here can break a page: a missing browser or an invalid diagram falls back to the
+ordinary code block.
 
 ## Quickstart
 

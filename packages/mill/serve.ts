@@ -26,6 +26,7 @@ import { parseFrontmatter } from "./core/frontmatter.ts";
 import { escapeHtml } from "./core/engine.ts";
 import { assertHumanGrade } from "./core/grade.ts";
 import { renderGrainDocument, type GrainAdapterOptions } from "./adapters/grain/grain-adapter.ts";
+import { prepareDiagrams, withDiagrams, type DiagramRenderer } from "./diagrams/prepare.ts";
 import { madeWith } from "@tjakoen/grain/scripts/made-with.js";
 
 // ---- the content-source port -------------------------------------------------
@@ -121,6 +122,13 @@ export interface MillServeDeps {
   compose?: (html: string) => Promise<string>;
   /** default chrome for collections that don't bring their own */
   chrome?: PageChrome;
+  /**
+   * Optional diagram renderer, shared by every collection: when supplied, fenced diagram
+   * blocks (mermaid) are rendered to inline SVG before the page renders. Omitted — the
+   * default — diagram fences stay ordinary code blocks and MILL touches no browser.
+   * The usual wiring is `cachedRenderer(dir, createMermaidRenderer())`.
+   */
+  diagrams?: DiagramRenderer;
 }
 
 const defaultChrome: PageChrome = ({ title, description, body }) => `<!DOCTYPE html>
@@ -261,7 +269,9 @@ export function createMillRoutes(deps: MillServeDeps): MillRequestHandler {
         if (!SLUG.test(slug)) return new Response("Not found", { status: 404 });
         const raw = await c.source.read(slug);
         if (raw === null) return new Response("Not found", { status: 404 });
-        const doc = renderGrainDocument(raw, c.adapter);   // grade guardrail runs inside
+        // Diagrams resolve first (async) so the document render can stay synchronous.
+        const svgs = deps.diagrams ? await prepareDiagrams(raw, deps.diagrams) : undefined;
+        const doc = renderGrainDocument(raw, withDiagrams(c.adapter, svgs));  // grade guardrail runs inside
         const description = fmStr(doc.frontmatter, "summary")
           || fmStr(doc.frontmatter, "subtitle")
           || fmStr(doc.frontmatter, "description")

@@ -7,6 +7,9 @@ export {
 } from "./adapters/grain/grain-adapter.ts";
 export type { GrainAdapterOptions } from "./adapters/grain/grain-adapter.ts";
 export { createMillRoutes, dirSource, packageDocsSource } from "./serve.ts";
+export { prepareDiagrams, withDiagrams, diagramKey, DIAGRAM_LANGS } from "./diagrams/prepare.ts";
+export type { DiagramRenderer } from "./diagrams/prepare.ts";
+export { cachedRenderer, CACHE_VERSION } from "./diagrams/cache.ts";
 export type {
   ContentSource, MillCollection, MillServeDeps, MillRequestHandler, PageChrome, PageInput,
 } from "./serve.ts";

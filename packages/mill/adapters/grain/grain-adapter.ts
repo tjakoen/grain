@@ -47,6 +47,14 @@ const heading = (surfaces: boolean): BlockHandlers["heading"] => (n, ctx) => {
   return `<h${n.level} id="${ctx.escape(slug)}"${surface}>${ctx.renderInline(n.children)}</h${n.level}>`;
 };
 
+// The default fenced-code rendering. Exported because the diagrams module composes over it:
+// a mermaid fence with a prepared SVG becomes a figure, everything else must fall back to
+// exactly this, and re-implementing it there would be two escaping rules that can drift.
+export const grainCodeBlock: BlockHandlers["code"] = (n, ctx) => {
+  const lang = n.lang ? ` data-lang="${ctx.escape(n.lang)}"` : "";
+  return `<pre class="code-block"${lang}><code>${ctx.escape(n.value)}</code></pre>`;
+};
+
 // ---- block map (node → GRAIN tag) ------------------------------------------
 const block: BlockHandlers = {
   heading: heading(false),
@@ -57,10 +65,7 @@ const block: BlockHandlers = {
     const items = n.items.map(it => `<li class="list__item">${ctx.renderInline(it)}</li>`).join("");
     return `<${tag} class="list"${variant}>${items}</${tag}>`;
   },
-  code: (n, ctx) => {
-    const lang = n.lang ? ` data-lang="${ctx.escape(n.lang)}"` : "";
-    return `<pre class="code-block"${lang}><code>${ctx.escape(n.value)}</code></pre>`;
-  },
+  code: grainCodeBlock,
   blockquote: (n, ctx) => `<blockquote class="callout">${ctx.renderInline(n.children)}</blockquote>`,
   image: (n, ctx) => {
     const cap = n.alt ? `<figcaption class="figure__caption">${ctx.escape(n.alt)}</figcaption>` : "";

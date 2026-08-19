@@ -7,10 +7,11 @@
 [![No build step](https://img.shields.io/badge/build_step-none-2ea44f)](#)
 [![Bun workspace](https://img.shields.io/badge/monorepo-bun_workspace-2ea44f)](#)
 
-This is the monorepo for the GRAIN family: one Bun workspace holding four layers that build on each
-other, from the design system up to the tools built on it. Each layer is its own package, so an app
-can adopt just the design system or the whole stack. Nothing here has a build step, everything runs
-on Bun straight from TypeScript.
+This is the monorepo for the GRAIN family: one Bun workspace holding five packages. Four of them are
+published layers that build on each other, from the design system up to the tools built on it. The
+fifth is a workspace-only MCP server that reads what those layers export. Each layer is its own
+package, so an app can adopt just the design system or the whole stack. Nothing here has a build
+step, everything runs on Bun straight from TypeScript.
 
 ## The packages
 
@@ -20,6 +21,7 @@ on Bun straight from TypeScript.
 | [`@tjakoen/mill`](packages/mill) | Markdown In, Living Layouts. A Markdown to GRAIN-pages CMS: feed it markdown and images, it renders GRAIN pages. | [mill/docs](https://tjakoen.github.io/mill/docs) |
 | [`@tjakoen/proof`](packages/proof) | The AI plan board. Plans are markdown files and the board is a live projection of them. The files are the source of truth, the board never writes back. | [proof/docs](https://tjakoen.github.io/proof/docs) |
 | [`@tjakoen/crumb`](packages/crumb) | The guided-tour, demo-mode, and AI-review layer. Tours are markdown, rendered as a guided projection. Published and live: it's the guided-tour frame running on tjakoen.github.io, see its [PLAN](packages/crumb/PLAN.md). | [crumb/docs](https://tjakoen.github.io/crumb/docs) · [live](https://tjakoen.github.io/crumb/) |
+| [`@tjakoen/grain-mcp`](packages/grain-mcp) | A hand-rolled MCP stdio server over a grain app's static export. It reads the built HTML and answers what is on a page and whether a move would be legal, without a browser. **Workspace-only, not published**: run it from a checkout. | [README](packages/grain-mcp/README.md) |
 
 The dependency direction runs one way. A substrate (BATCH is the reference one) sits below grain,
 mill builds on grain, proof builds on mill, and crumb builds on grain and mill. grain itself imports
@@ -27,19 +29,22 @@ nothing from the substrate except one port.
 
 ## Using a layer in your own app
 
-Inside this repo the packages resolve as workspaces (`workspace:*`). A separate app installs the
-published versions from the public npm registry:
+Inside this repo the packages resolve as workspaces (`workspace:*`). A separate app installs the four
+published layers from the public npm registry (grain-mcp is workspace-only and is not on npm):
 
 ```json
 {
   "dependencies": {
-    "@tjakoen/grain": "^0.1.12",
-    "@tjakoen/mill": "^0.2.0",
-    "@tjakoen/proof": "^0.1.2",
-    "@tjakoen/crumb": "^0.1.4"
+    "@tjakoen/grain": "^0.1.23",
+    "@tjakoen/mill": "^0.3.0",
+    "@tjakoen/proof": "^0.1.4",
+    "@tjakoen/crumb": "^0.1.10"
   }
 }
 ```
+
+Those are the versions npm serves today, 2026-08-19. Take them as a floor, not a snapshot to keep
+copying: `bun update` moves them forward.
 
 That is the whole setup. **No `.npmrc`, no token**: the `@tjakoen` scope resolves from npmjs by
 default, so `bun install` works on a fresh machine with nothing configured. (These packages lived on
@@ -64,14 +69,16 @@ Each package also carries its own `check` and `test` scripts.
 
 ```
 packages/
-  grain/   the AI-interaction design system + default theme
-  mill/    the Markdown to GRAIN-pages CMS
-  proof/   the AI plan board
-  crumb/   the guided-tour / AI-review layer
+  grain/      the AI-interaction design system + default theme
+  mill/       the Markdown to GRAIN-pages CMS
+  proof/      the AI plan board
+  crumb/      the guided-tour / AI-review layer
+  grain-mcp/  the MCP stdio server over a static export (workspace-only)
 ```
 
-Each package has its own `CLAUDE.md` and `PLAN.md` with its rules and design. Start there when you
-work in a layer.
+grain, mill and proof each carry their own `CLAUDE.md` and `PLAN.md` with that layer's rules and
+design, and crumb carries a `PLAN.md`. Start there when you work in a layer. grain-mcp is small
+enough that its README is the whole story.
 
 ---
 🤖 **Built with Claude, on the same door you'd use.** I called the shots, Claude typed them, and the

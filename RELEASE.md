@@ -1,6 +1,7 @@
 # Releasing the GRAIN monorepo
 
-This repo is a bun workspace holding `packages/{grain,mill,proof,crumb}`. Internal deps resolve
+This repo is a bun workspace holding `packages/{grain,mill,proof,crumb,grain-mcp}`. The first four
+are published; grain-mcp is workspace-only and is never released. Internal deps resolve
 via `workspace:*`; **external consumers install the published packages from the public npm
 registry** (a single monorepo git-dep cannot expose the sub-packages by their own names — verified
 2026-07-19).

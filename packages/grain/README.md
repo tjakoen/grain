@@ -1,6 +1,7 @@
 # 🌾 GRAIN: usage
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
+[![npm](https://img.shields.io/npm/v/@tjakoen/grain?logo=npm&logoColor=white)](https://www.npmjs.com/package/@tjakoen/grain)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 
 GRAIN is the **AI-interaction design system**: a UI where every surface is addressable
@@ -188,7 +189,7 @@ data-attributes, no composition-root wiring and no AI layer required:
   `presentation:slide`.
 - **`scripts/drawer.js`** + the `drawer` organism: the modal side panel. `[data-drawer-open="id"]`
   opens, `[data-drawer-close]` (the scrim carries it) closes, and the script owns the modal
-  obligations — focus into the panel, Tab trapped, the rest of the page `inert`, focus returned to
+  obligations: focus into the panel, Tab trapped, the rest of the page `inert`, focus returned to
   the opener. Open/closed is the plain `hidden` attribute, so a server can ship it either way.
 
 ---

@@ -2,7 +2,7 @@
 
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97757?logo=anthropic&logoColor=white)](https://tjakoen.github.io/notes/ten-times-zero)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](../../LICENSE)
-[![Status](https://img.shields.io/badge/status-0.1.10_published-brightgreen)](PLAN.md)
+[![npm](https://img.shields.io/npm/v/@tjakoen/crumb?logo=npm&logoColor=white)](https://www.npmjs.com/package/@tjakoen/crumb)
 
 **Tours as markdown, in. A guided walk, out.** CRUMB is PROOF's twin: where PROOF renders
 *plans-as-markdown* as a board that never writes, CRUMB renders **tours-as-markdown** as a guided
@@ -12,8 +12,8 @@ projection that writes only through the app's own door, and never submits. Publi
 ## What's built
 
 Core, routes, loader, `crumb check`, and `from-timeline` (turning grain's audit trail into a
-review tour) are all built and shipping in `0.1.4`. `crumb-live.js` drives the lamp + popover
-client-side. What's still open is tracked in [PLAN.md](PLAN.md).
+review tour) are all built and shipping. `crumb-live.js` drives the lamp + popover client-side.
+The badge above says which version npm serves. What's still open is tracked in [PLAN.md](PLAN.md).
 
 A tour can also end by asking the reviewer what the walk could not check, and hand back a prompt to
 paste into a session:

@@ -42,8 +42,12 @@
   --paper-2:   #E8E6DF;            /* subtle hover surface */
   --panel:     #E8E6DF;            /* grouped "sheet" — a hair brighter than the page */
   --ink:       #1C1B17;            /* primary text, filled dots, rules */
-  --ink-muted: #6E6C64;            /* secondary text, section labels */
-  --ink-faint: #ABA89F;            /* fading insights, empty/future dots */
+  /* The two quiet tiers, and the line between them is a contract, not a shade. MUTED carries text
+     a reader is meant to read, so it clears WCAG AA (4.5:1) on --paper; it was #6E6C64 and measured
+     3.98:1, which is why it moved. FAINT is decoration: fading insights, empty and future dots. It
+     does NOT clear AA and is not meant to, so nothing a reader needs may be painted with it. */
+  --ink-muted: #65635B;            /* secondary text, section labels. 4.55:1 on --paper */
+  --ink-faint: #ABA89F;            /* fading insights, empty/future dots. DECORATIVE ONLY */
   --hairline:  #1C1B17;            /* solid rules (under headlines) */
   --line-soft: rgba(28, 27, 23, .14);  /* translucent border for quiet grouping */
 

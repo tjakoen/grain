@@ -7,9 +7,10 @@
 
 ## What this is
 
-The Bun-workspace monorepo for the **GRAIN family**: four layers that build on each other, each its
-own package, no build step, everything runs on Bun straight from TypeScript. An app can adopt just
-the design system or the whole stack.
+The Bun-workspace monorepo for the **GRAIN family**: four published layers that build on each other,
+plus a workspace-only MCP server over their built output, each its own package, no build step,
+everything runs on Bun straight from TypeScript. An app can adopt just the design system or the
+whole stack.
 
 | Package | What it is |
 |---|---|
@@ -74,6 +75,7 @@ badge and footer and the flagship note, not commit metadata.
 
 ## Docs / structure
 
-`packages/{grain,mill,proof,crumb}`, each with its own `CLAUDE.md` + `PLAN.md`. Consuming a layer in
+`packages/{grain,mill,proof,crumb,grain-mcp}`. grain, mill and proof each carry a `CLAUDE.md` and a
+`PLAN.md`, crumb carries a `PLAN.md`, and grain-mcp carries only its README. Consuming a layer in
 another app: see the README (published on npmjs — a version range, no `.npmrc`, no token) and
 [how to consume a layer](https://github.com/tjakoen/tjakoen.github.io/blob/main/docs/batch/CONSUME-AS-GIT-DEPS.md).

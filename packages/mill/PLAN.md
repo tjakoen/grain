@@ -262,10 +262,13 @@ retrieval port and models live with the consumer).
 
 # Diagrams: mermaid to SVG, styled with theme tokens
 
-> Status: **built in MILL (2026-08-16).** The renderer, the pre-pass, the disk cache and the
-> route wiring are done and tested. What is deliberately NOT done: the portfolio wiring, the
-> warm tool, the committed cache directory, and the migration of the hand-authored figures.
-> Read the section on why before picking any of those up.
+> Status: **built in MILL (2026-08-16), and made publishable (2026-08-19, 0.4.0).** The
+> renderer, the pre-pass, the disk cache and the route wiring are done and tested. A rendered
+> diagram now carries the accessible name FIGURES requires, read from the fence; see
+> *The accessible name* below, which is the one part of this that changes what an author types.
+> What is deliberately NOT done: the portfolio wiring, the warm tool, the committed cache
+> directory, and the migration of the hand-authored figures. Read the section on why before
+> picking any of those up.
 
 ## What changed about the reason for building this
 
@@ -348,8 +351,11 @@ and content files are small.
   in hand-authored SVG so it survives GitHub's sanitizer; MILL-generated SVG is injected into
   our own HTML and never sanitized. The two rules do not conflict.
 - **GRAIN grew `figure[data-variant="diagram"]`** — fits the column, lets a wide flowchart
-  scroll rather than shrink. No figcaption: a fence carries no caption source, and the italic
-  prose line under a figure stays the convention.
+  scroll rather than shrink. Still no figcaption, though half the reason given here in August
+  has since expired: a fence *does* now carry a label. The half that stands is the one that
+  mattered, which is that the italic prose line under a figure is the visible caption
+  convention on this site, and `label` is an accessible name rather than visible text. See
+  *The accessible name* below for why the two are not the same thing.
 
 ### Verified
 
@@ -360,6 +366,109 @@ renderer in three states: rendered, failed, and not wired. Two tests drive a rea
 skip where playwright is absent, since a machine without one is a supported case that reads the
 committed cache. Visual check: one diagram rendered once, then displayed under light Sourdough,
 dark Sourdough and dark Baguette from the same bytes, with arrowheads legible in each.
+
+## The accessible name (2026-08-19, 0.4.0)
+
+The renderer shipped in August could not legally put a diagram on the published site, and the
+reason had nothing to do with the picture. FIGURES is blunt about what a figure owes:
+`role="img"` plus an `aria-label` that narrates the whole flow in words, node by node,
+including the loop and the exit, because **the label is the accessible figure**. Mermaid emits
+`role="graphics-document"` and an `aria-roledescription` of `"flowchart-v2"`, which names the
+drawing's genre and says nothing about what the drawing says, and it emits no `aria-label` at
+all. So every generated diagram would have been strictly less accessible, and less AI-legible,
+than every hand-authored figure on the same site. FIGURES treats those two as one coin.
+
+The owner's call on 2026-08-19 was that this is fixed here, upstream, and that FIGURES is not
+amended to accommodate it.
+
+### The mechanism
+
+The label is authored in the fence's info string, next to the diagram it describes:
+
+~~~
+```mermaid label="BATCH serves the request, GRAIN dresses it, MILL renders the Markdown"
+flowchart LR
+...
+```
+~~~
+
+This needed a parser change, and it uncovered a latent bug on the way in. `FENCE` was anchored
+with `$` immediately after the language, so **any** tail made the line stop being a fence
+entirely and the diagram body leaked out as prose. That was true for every language, not just
+mermaid. The pattern now captures the tail as `MillNode.meta` (optional, so a plain fence
+produces exactly the node it always did), and the language group is unchanged. Backticks and
+tildes are excluded from both parts, which is CommonMark's own rule for an info string and is
+what keeps `~~~word~~~` from reading as a fence.
+
+### Decisions this piece resolved
+
+- **The label is called `label`, not `caption`.** A caption is visible text; this is an
+  accessible name, and nothing about it appears on the page. Naming it `caption` would have
+  promised a `figcaption` that is deliberately not emitted. Because `caption` is the obvious
+  thing to type anyway, an unknown fence key is reported by name in the warning rather than
+  ignored, so the near miss is as loud as the omission.
+- **The label stays OUT of the `DiagramRenderer` port**, which remains
+  `(lang, source) => Promise<string | null>`. Three reasons, worst first. It is not an input to
+  drawing: it describes the picture and does not change a pixel of it. Renderers are written by
+  consumers, so putting it in the signature would break every existing one and then oblige each
+  author to re-implement the same aria wrapping, which is the kind of duplicated rule that
+  drifts apart; MILL owns the `<figure>` wrapper, so MILL owns the name. And the cache keys on
+  what crosses the port, so a label in the signature would send an unchanged picture back
+  through chromium every time someone fixed a typo.
+- **`CACHE_VERSION` did NOT move, and that is a design property rather than an oversight.**
+  The name is applied when the figure is wrapped, downstream of the cache, so the bytes on disk
+  are the same bytes as before. A cached SVG cannot be stale against a label it never contained.
+  Every committed entry stays valid, which is the whole point of committing them, and bumping
+  would have re-rendered every diagram in the estate to produce byte-identical output. The
+  wrapper reads the label from the node on every render, so editing the sentence takes effect
+  immediately with no browser and no cache invalidation.
+- **The lookup map still keys on `(lang, source)` and still holds the unlabelled SVG.** Two
+  fences holding the same diagram therefore share one render while keeping their own separate
+  sentences, which is the correct behaviour and came free.
+
+### The unlabelled fence is refused, and why that over the alternatives
+
+An unlabelled diagram is the exact defect this work exists to prevent, so it must not be the
+easy default. It is **refused: it renders as an ordinary code block**, down the same path a
+failed render already takes, plus a console warning that names the attribute to add and quotes
+the diagram's first line so the author can find it. The pre-pass checks before it renders, so
+an unnamed diagram never costs a browser launch either.
+
+The two rejected options, and the reason each lost:
+
+- **Render it anyway with a warning.** This is the silent default the work exists to remove. A
+  warning scrolls past in a dev server, the page looks finished, and it ships. Rejected.
+- **Throw, and fail the build.** MILL is a live server, not a batch compiler. An author halfway
+  through writing a fence has to be able to load the page they are editing, and a 500 there is
+  hostile. It would also break this subsystem's one standing promise, that a diagram which will
+  not render must never take the page down with it. Rejected.
+
+Refusing wins because the failure is **visible on the page itself**, not only in a log. Raw
+mermaid source sitting where a picture should be is the pre-MILL symptom FIGURES complains
+about, and nobody ships that by accident.
+
+### The honest limit
+
+MILL enforces that a label exists and is not blank. It cannot enforce that the label is any
+good. A one-word label passes the check and fails the standard, and no lint can tell the
+difference; that judgment stays with the reader, the same way `bun run lint:voice` deliberately
+covers only the mechanical half of VOICE. The warning text at least states the bar (in words,
+node by node, including any loop and any exit) so the author is aimed at the right shape.
+
+### Verified
+
+`bun run check` clean and `bun test` green at 135 passing, up from 107. New coverage: the info
+string in the parser (including the leaked-body regression and the strikethrough case), the
+label parser, the root-element rewrite (role replaced, `aria-roledescription` and
+`aria-labelledby` dropped because either would out-rank or muddy the name, `aria-describedby`
+kept because a description sits alongside a name, attribute escaping, first-`<svg>`-only,
+non-SVG passthrough), and the refusal in four directions: not sent to the renderer, served as a
+visible code block, warns naming the attribute, and never reaches a page even when the map
+holds an SVG for it. Proved end to end against real mermaid in real chromium: the served root
+element came back `role="img"` with the author's sentence, `graphics-document` and
+`aria-roledescription` gone, `id`/`viewBox`/`class`/`style` untouched, and the name read back
+out of the live DOM rather than out of the string that produced it. Rendered light and dark
+from one cached SVG, so the sentinel substitution is undisturbed.
 
 ## Not built, and why
 
@@ -375,3 +484,6 @@ dark Sourdough and dark Baguette from the same bytes, with arrowheads legible in
 - **A consumer needs its own dependencies.** `@tjakoen/mill` stays dependency-free; `mermaid`
   and `playwright` are root devDependencies here, for tests. A consumer building the renderer
   installs both itself.
+- **The visible caption is still prose, not a `figcaption`.** `label` is the accessible name
+  and renders nowhere. The italic line under a figure stays the way a reader is told what they
+  are looking at. Emitting both from one field would make the same sentence do two jobs badly.

@@ -7,7 +7,9 @@ source of truth. **Built so far (pieces 1–4, 2026-07-03/04):** the framework-a
 (`serve.ts` — `createMillRoutes(deps)`, a transport-generic pathname handler), and the portfolio
 wiring (`../tjakoen.github.io/content.ts`: `/notes`, `/grain/docs`, `/batch/docs`) — all tested.
 **Also built (2026-08-16):** `diagrams/` — mermaid fences render to theme-tokened inline SVG behind
-the `DiagramRenderer` port, with a committable disk cache. Next:
+the `DiagramRenderer` port, with a committable disk cache. **Extended 2026-08-19 (0.4.0):** a fence
+carries `label="…"`, which becomes `role="img"` plus that sentence as the `aria-label`, and an
+unlabelled fence is refused down to a code block. Next:
 piece 4b (AI-facing outputs: meta/JSON-LD, `llms.txt`, `knowledge.json`, `data-surface`).
 
 > This file follows the `CLAUDE.starter.md` template from the published standards index
@@ -54,5 +56,9 @@ build it.
   `index.ts`. A consumer that wants diagrams installs them and builds the renderer itself; a
   consumer that does not pays nothing and never launches a browser.
 - **A diagram that will not render is never an error.** Every path — no browser, invalid source,
-  unwritable cache — degrades to the ordinary code block. A renderer must not throw.
+  unwritable cache, no label — degrades to the ordinary code block. A renderer must not throw.
+- **A generated figure carries an accessible name or it does not render.** FIGURES requires
+  `role="img"` plus an `aria-label` narrating the flow, so the fence supplies one via `label="…"`.
+  The name is applied when the figure is wrapped, downstream of both the port and the cache: it is
+  not a renderer argument and not part of `CACHE_VERSION`. See `diagrams/label.ts`.
 - **Build against the plan and keep it canonical.** `PLAN.md` tracks what's built vs. deferred.

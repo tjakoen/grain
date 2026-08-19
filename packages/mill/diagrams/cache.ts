@@ -18,6 +18,13 @@ import type { DiagramRenderer } from "./prepare.ts";
  * substitution in particular. Committed SVGs are only valid for the transformation that
  * produced them, so a change here is what invalidates them. The renderer's own version
  * (mermaid's) is folded in by the caller via `versionTag`.
+ *
+ * The accessible name added in 0.4.0 did NOT move this, and the reason is the reason it was
+ * built the way it was: the label is applied when the figure is wrapped, downstream of here,
+ * so the bytes on disk are the same bytes as before. A cached SVG cannot go stale against a
+ * label it never contained, and every entry stays valid, which is what keeps chromium out of
+ * the deploy. Moving it would have re-rendered every committed diagram to produce identical
+ * output. See label.ts.
  */
 export const CACHE_VERSION = "mill-diagrams-1";
 

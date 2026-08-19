@@ -21,6 +21,23 @@ so one diagram follows both theme axes without being rendered again. The rendere
 sits behind a port, so MILL itself stays free of heavy dependencies: install them only if you want
 diagrams.
 
+**Every diagram needs a label, and this is enforced.** A picture with no accessible name is
+decorative: a screen reader skips it, and so does anything else reading the page as text. So the
+fence carries one, and it should narrate the flow in words rather than name it.
+
+~~~
+```mermaid label="BATCH serves the request, GRAIN dresses it, MILL renders the Markdown"
+flowchart LR
+  A[BATCH] --> B[GRAIN]
+  B --> C[MILL]
+```
+~~~
+
+That becomes `role="img"` with the sentence as the `aria-label` on the rendered SVG. A fence
+without a label is **refused**: it renders as an ordinary code block, with a warning naming the
+attribute to add. The raw source then sits visibly on the page, which is the point. An unnamed
+figure that looks finished is the failure this prevents.
+
 ```bash
 bun add -d playwright mermaid
 ```
@@ -38,8 +55,9 @@ const millRoutes = createMillRoutes({
 
 Commit the cache directory. A rendered diagram is keyed by its own source, so CI, the deploy and
 the static export read the committed SVG and never need a browser; only a new diagram launches
-one. Nothing here can break a page: a missing browser or an invalid diagram falls back to the
-ordinary code block.
+one. The label is applied downstream of the cache and is not part of its key, so rewording one
+takes effect at once without re-rendering anything. Nothing here can break a page: a missing
+browser or an invalid diagram falls back to the ordinary code block.
 
 ## Quickstart
 

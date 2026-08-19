@@ -125,17 +125,35 @@ test("packageDocsSource resolves a package-exported dir via import.meta.resolve 
 
 test("diagrams: a fence becomes an inline figure when a renderer is wired", async () => {
   await writeFile(join(dir, "charted.md"),
-    `---\ntitle: Charted\ndate: 2026-08-16\n---\n# Charted\n\n\`\`\`mermaid\ngraph TD; A-->B;\n\`\`\`\n`);
+    `---\ntitle: Charted\ndate: 2026-08-16\n---\n# Charted\n\n` +
+    `\`\`\`mermaid label="A flows to B"\ngraph TD; A-->B;\n\`\`\`\n`);
+
+  const res = await createMillRoutes({
+    collections: [notes()],
+    diagrams: async () => `<svg role="graphics-document" data-fake></svg>`,
+  })("/notes/charted");
+
+  const body = await res!.text();
+  expect(body).toContain(`<figure class="figure" data-variant="diagram">`);
+  expect(body).toContain(`role="img"`);
+  expect(body).toContain(`aria-label="A flows to B"`);        // the served page carries the name
+  expect(body).not.toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(body).toContain(`data-grade="smooth"`);              // the guardrail still holds
+});
+
+test("diagrams: an unlabelled fence serves the source, visibly, rather than an unnamed figure", async () => {
+  await writeFile(join(dir, "unnamed.md"),
+    `---\ntitle: Unnamed\ndate: 2026-08-16\n---\n# Unnamed\n\n\`\`\`mermaid\ngraph TD; A-->B;\n\`\`\`\n`);
 
   const res = await createMillRoutes({
     collections: [notes()],
     diagrams: async () => `<svg data-fake></svg>`,
-  })("/notes/charted");
+  })("/notes/unnamed");
 
+  expect(res?.status).toBe(200);                              // refusing never takes the page down
   const body = await res!.text();
-  expect(body).toContain(`<figure class="figure" data-variant="diagram"><svg data-fake></svg></figure>`);
-  expect(body).not.toContain(`<pre class="code-block" data-lang="mermaid">`);
-  expect(body).toContain(`data-grade="smooth"`);              // the guardrail still holds
+  expect(body).toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(body).not.toContain("data-variant=\"diagram\"");
 });
 
 test("diagrams: a renderer that cannot render leaves the code block, and the page still serves", async () => {

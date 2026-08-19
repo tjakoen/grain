@@ -16,11 +16,16 @@ import type { BlockHandlers } from "../core/types.ts";
 import { parseFrontmatter } from "../core/frontmatter.ts";
 import { parseMarkdown } from "../core/markdown.ts";
 import { grainCodeBlock, type GrainAdapterOptions } from "../adapters/grain/grain-adapter.ts";
+import { applyAccessibleName, parseDiagramMeta } from "./label.ts";
 
 /**
  * Render diagram source to SVG markup, or null when it cannot (unsupported language,
  * invalid source, no browser available). A renderer NEVER throws: a diagram that will not
  * render must degrade to the ordinary code block, not take the page down with it.
+ *
+ * The accessible name is deliberately NOT here. It describes the picture rather than drawing
+ * it, MILL owns the wrapper it lands on, and keeping it out of the port keeps it out of the
+ * disk-cache key. See label.ts for the argument in full.
  */
 export type DiagramRenderer = (lang: string, source: string) => Promise<string | null>;
 
@@ -33,6 +38,26 @@ export const DIAGRAM_LANGS: readonly string[] = ["mermaid"];
  * body matched a mermaid block would otherwise render as that diagram.
  */
 export const diagramKey = (lang: string, source: string): string => `${lang.toLowerCase()}\0${source}`;
+
+// A diagram with no accessible name is the exact defect this module exists to prevent, so it
+// is refused rather than rendered, and it degrades down the path a failed render already
+// takes: an ordinary code block. That refusal is deliberately visible on the PAGE. Raw mermaid
+// source sitting where a picture should be is a thing nobody ships by accident, where a
+// console warning alone scrolls past in a dev server and the page still looks finished.
+//
+// Refusing rather than throwing is the other half of the choice. MILL is a live server, not a
+// batch compiler, and an author halfway through writing a fence has to be able to load the
+// page they are editing. Taking the route down would also break the subsystem's one standing
+// promise, that a diagram which will not render must never take the page with it.
+const refuse = (lang: string, source: string, reason: string): void => {
+  const opening = source.split("\n").map(l => l.trim()).find(Boolean) ?? "(empty)";
+  console.warn(
+    `[mill] a ${lang} diagram ${reason} and will render as a code block instead. ` +
+    'Add label="…" to the fence, saying in words what the diagram shows, ' +
+    "node by node, including any loop and any exit. " +
+    `Diagram begins: ${opening.slice(0, 60)}`,
+  );
+};
 
 /**
  * Parse raw Markdown, collect the code blocks whose language the renderer handles, and
@@ -56,6 +81,17 @@ export async function prepareDiagrams(
     if (node.type !== "code") continue;
     const lang = node.lang.toLowerCase();
     if (!handled.has(lang)) continue;
+
+    // Checked BEFORE the key lookup and before the render, so an unnamed diagram never costs
+    // a browser launch for a picture that is going to be refused anyway.
+    const { label, unknownKeys } = parseDiagramMeta(node.meta);
+    if (unknownKeys.length) {
+      console.warn(
+        `[mill] ignoring unknown diagram fence key(s): ${unknownKeys.join(", ")}. ` +
+        "The accessible name is spelled label.",
+      );
+    }
+    if (!label) { refuse(lang, node.value, "has no accessible name"); continue; }
 
     const key = diagramKey(lang, node.value);
     if (svgs.has(key)) continue;                  // the same diagram twice renders once
@@ -92,7 +128,15 @@ export function withDiagrams(
   const code: BlockHandlers["code"] = (node, ctx) => {
     const svg = svgs.get(diagramKey(node.lang, node.value));
     if (!svg) return previous(node, ctx);
-    return `<figure class="figure" data-variant="diagram">${svg}</figure>`;
+
+    // Re-read the label here rather than trusting the map. The lookup is keyed by language and
+    // source, so two fences holding the same diagram share one entry while keeping their own
+    // sentences, and a consumer that built the map itself still cannot get an unnamed figure
+    // onto a page through this door.
+    const { label } = parseDiagramMeta(node.meta);
+    if (!label) return previous(node, ctx);
+
+    return `<figure class="figure" data-variant="diagram">${applyAccessibleName(svg, label)}</figure>`;
   };
 
   return { ...adapter, blockOverrides: { ...adapter?.blockOverrides, code } };

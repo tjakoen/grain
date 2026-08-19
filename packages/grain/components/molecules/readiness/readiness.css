@@ -1,0 +1,51 @@
+/* molecules/readiness — a verdict over its evidence: whether a set of boundary conditions
+   holds, the one line saying why, and what is still in the way. The generic shape behind
+   "ready to deploy", "ready to release", "ready to hand off". CSS-only (CONVENTIONS §4):
+   composed by hand, nothing data-binds it.
+
+   Parent context: none required. It fills its container and carries no width of its own —
+   drop it inside a `.card` for a bordered tile, or leave it bare in a panel.
+
+   Composition: the evidence rows are a `status-list`, NOT a shape this component invents.
+   A readiness block that grows its own row markup is the thing to avoid — the marks, the
+   in-flight lifecycle and the per-row `data-surface` hook all already live there.
+
+   This is a READOUT, not an ask. It reports state and stops. A closed-set question with
+   options and an escape belongs on CRUMB's decision ask, and having two surfaces put the
+   same question to someone is the failure DECISIONS names outright. */
+
+.readiness { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* The verdict sits at display scale on purpose: grade texture only reads at >= --text-2xl
+   (CLAUDE.md lesson 4), and a verdict is exactly the line an AI might compose — so put
+   `data-grade="grain"` here and the provenance is legible instead of theoretical. */
+.readiness__verdict {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  color: var(--color-fg);
+}
+
+.readiness__why {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-muted);
+}
+
+/* State reads as ink level and edge weight, never hue — the same rule stat-tile follows.
+   `blocked` earns a solid-ink edge because it is the one meant to stop you; `waiting`
+   recedes; `ready` and the default are identical, since a healthy verdict needs no
+   shouting. */
+.readiness[data-state="blocked"] {
+  border-left: 2px solid var(--color-fg);
+  padding-left: var(--space-3);
+}
+.readiness[data-state="waiting"] .readiness__verdict { color: var(--color-muted); }
+
+/* In transit — the detector has not finished deciding. The shared idiom keyed off
+   `data-commit="pending"` and an ancestor `[data-grade="grain"]`, expressed here as a
+   dashed leading edge, never a bespoke "loading" state. */
+.readiness[data-commit="pending"],
+[data-grade="grain"] .readiness[data-commit="pending"] {
+  border-left: 2px dashed var(--color-fg);
+  padding-left: var(--space-3);
+}

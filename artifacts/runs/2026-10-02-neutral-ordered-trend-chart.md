@@ -64,9 +64,9 @@ COMPONENT_TEST_EXIT=0
 (pass) chart ink and range use semantic tokens rather than a judgment color [0.09ms]
 (pass) the component is static and keeps the reduced-motion contract explicit [0.07ms]
 (pass) the shared GRAIN in-transit treatment applies to the component root [0.05ms]
- 5 pass
+ 6 pass
  0 fail
-Ran 5 tests across 1 file. [136.00ms]
+Ran 6 tests across 1 file. [150.00ms]
 ```
 
 `git diff --check` and `git diff --cached --check` both exited 0. The staged code change reported:

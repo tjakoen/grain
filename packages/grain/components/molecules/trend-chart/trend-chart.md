@@ -48,15 +48,15 @@ categories. The four horizontal rules are caller-chosen scale guides, not thresh
       <text class="trend-chart__axis-label" x="70" y="158" text-anchor="middle">A</text>
       <text class="trend-chart__axis-label" x="176" y="158" text-anchor="middle">B</text>
       <text class="trend-chart__axis-label" x="282" y="158" text-anchor="middle">C</text>
-      <text class="trend-chart__axis-label" x="390" y="158" text-anchor="end">D</text>
-      <polygon class="trend-chart__range" points="70,86 176,77 282,90 388,67 388,110 282,121 176,114 70,124"></polygon>
-      <polyline class="trend-chart__range-edge" points="70,86 176,77 282,90 388,67"></polyline>
-      <polyline class="trend-chart__range-edge" points="70,124 176,114 282,121 388,110"></polyline>
-      <polyline class="trend-chart__series" points="70,105 176,96 282,109 388,87"></polyline>
-      <circle class="trend-chart__point" cx="70" cy="105" r="4"></circle>
+      <text class="trend-chart__axis-label" x="388" y="158" text-anchor="middle">D</text>
+      <polygon class="trend-chart__range" points="70,86.5 176,77 282,96 388,67.5 388,115 282,124.5 176,115 70,124.5"></polygon>
+      <polyline class="trend-chart__range-edge" points="70,86.5 176,77 282,96 388,67.5"></polyline>
+      <polyline class="trend-chart__range-edge" points="70,124.5 176,115 282,124.5 388,115"></polyline>
+      <polyline class="trend-chart__series" points="70,105.5 176,96 282,115 388,86.5"></polyline>
+      <circle class="trend-chart__point" cx="70" cy="105.5" r="4"></circle>
       <circle class="trend-chart__point" cx="176" cy="96" r="4"></circle>
-      <circle class="trend-chart__point" cx="282" cy="109" r="4"></circle>
-      <circle class="trend-chart__point" cx="388" cy="87" r="4"></circle>
+      <circle class="trend-chart__point" cx="282" cy="115" r="4"></circle>
+      <circle class="trend-chart__point" cx="388" cy="86.5" r="4"></circle>
     </svg>
   </div>
   <div class="trend-chart__table-wrap">

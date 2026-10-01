@@ -1,0 +1,61 @@
+/* molecules/trend-chart — a neutral time-series display. Callers own the meaning and scale. */
+.trend-chart {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+}
+
+.trend-chart__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.trend-chart__title { margin: 0; font-size: var(--text-base); font-weight: var(--font-weight-semibold); }
+.trend-chart__unit,
+.trend-chart__legend,
+.trend-chart__caption {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.trend-chart__plot { min-inline-size: 0; }
+.trend-chart__svg { display: block; inline-size: 100%; block-size: auto; overflow: visible; }
+.trend-chart__grid { stroke: var(--color-line); stroke-width: 1; }
+.trend-chart__axis-label { fill: var(--color-muted); font: var(--text-xs) var(--font-mono); }
+.trend-chart__series { fill: none; stroke: var(--color-fg); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.trend-chart__point { fill: var(--color-bg); stroke: var(--color-fg); stroke-width: 2; }
+.trend-chart__range { fill: var(--color-muted); fill-opacity: .18; stroke: none; }
+.trend-chart__range-edge { fill: none; stroke: var(--color-muted); stroke-width: 1.25; stroke-dasharray: 4 4; }
+
+.trend-chart__table-wrap { max-inline-size: 100%; overflow-x: auto; }
+.trend-chart__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.trend-chart__table caption { padding-block-end: var(--space-2); text-align: start; }
+.trend-chart__table th,
+.trend-chart__table td { padding: var(--space-2); border-block-start: 1px solid var(--color-line); text-align: start; }
+.trend-chart__table thead th { color: var(--color-muted); font-size: var(--text-xs); font-weight: var(--font-weight-semibold); }
+.trend-chart__table tbody th { font-weight: var(--font-weight-regular); }
+.trend-chart__table td { white-space: nowrap; }
+
+/* A pending value uses GRAIN's shared in-transit edge, never a chart-specific state. */
+.trend-chart[data-commit="pending"],
+[data-grade="grain"] .trend-chart { border-style: dashed; border-color: var(--color-fg); }
+
+/* The chart is static by design. Keep the reduced-motion contract explicit if future styling adds motion. */
+@media (prefers-reduced-motion: reduce) {
+  .trend-chart, .trend-chart * { scroll-behavior: auto; }
+}

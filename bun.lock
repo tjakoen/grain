@@ -29,7 +29,7 @@
     },
     "packages/grain": {
       "name": "@tjakoen/grain",
-      "version": "0.1.23",
+      "version": "0.1.24",
       "devDependencies": {
         "bun-types": "^1.3.14",
         "typescript": "^5.8.0",

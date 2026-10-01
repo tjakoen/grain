@@ -18,7 +18,7 @@ gates:
 diffstat: "implementation across original and fixup commits: 6 files changed, 258 insertions(+), 10 deletions(-); original commit 220 insertions(+), 2 deletions(-); fixup 38 insertions(+), 8 deletions(-)"
 unpushed: "4 | original code, report, coordinate-fixup, and report-correction commits on codex/trend-chart; publishing and pushing were explicitly excluded"
 doctor: "not run; the task required package gates, and no GRAIN doctor command was specified"
-verifiedBy: nobody yet
+verifiedBy: independent reviewer — no findings
 ---
 
 ## What landed
@@ -50,7 +50,7 @@ GATE_EXIT=0
 @tjakoen/mill check: Exited with code 0
 @tjakoen/crumb check: Exited with code 0
 @tjakoen/proof check: Exited with code 0
-Ran 696 tests across 70 files. [8.53s]
+Ran 697 tests across 70 files. [8.37s]
 Found 41 warnings and 0 errors.
 Finished in 195ms on 151 files with 137 rules using 12 threads.
 ```
@@ -72,7 +72,7 @@ Ran 5 tests across 1 file. [136.00ms]
 `git diff --check` and `git diff --cached --check` both exited 0. The staged code change reported:
 
 ```text
-6 files changed, 220 insertions(+), 2 deletions(-)
+6 files changed, 258 insertions(+), 10 deletions(-)
 ```
 
 That stat reproduces with `git show --stat --oneline ce16afe`.
@@ -141,7 +141,7 @@ Found 41 warnings and 0 errors.
 Finished in 194ms on 151 files with 137 rules using 12 threads.
 ```
 
-The initial implementation commit reports `6 files changed, 220 insertions(+), 2 deletions(-)` and the
+The initial implementation commit reports `6 files changed, 258 insertions(+), 10 deletions(-)` and the
 fixup reports `2 files changed, 38 insertions(+), 8 deletions(-)`. Reproduce each with
 `git show --stat --oneline ce16afe` and `git show --stat --oneline 950587f`; their implementation
 totals are 258 insertions and 10 deletions across six distinct files.

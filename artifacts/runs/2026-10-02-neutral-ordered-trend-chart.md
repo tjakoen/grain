@@ -16,7 +16,7 @@ gates:
   - "git diff --check | exit 0"
   - "npm version availability | 0.1.24 returns E404; current published version is 0.1.23"
 diffstat: "implementation across original and fixup commits: 6 files changed, 258 insertions(+), 10 deletions(-); original commit 220 insertions(+), 2 deletions(-); fixup 38 insertions(+), 8 deletions(-)"
-unpushed: "4 | original code, report, coordinate-fixup, and report-correction commits on codex/trend-chart; publishing and pushing were explicitly excluded"
+unpushed: "7 | implementation, report, coordinate fix, and report corrections on codex/trend-chart; release push is pending"
 doctor: "not run; the task required package gates, and no GRAIN doctor command was specified"
 verifiedBy: independent reviewer — no findings
 ---

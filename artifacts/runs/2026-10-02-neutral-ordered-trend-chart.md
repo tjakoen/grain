@@ -11,12 +11,12 @@ touched: [trend-chart CSS, component documentation and conformance tests, packag
 dirty: []
 plans: ["trend-chart | packages/grain/PLAN.md"]
 gates:
-  - "Docker GRAIN workspace gate | exit 0"
-  - "Docker component conformance test | 5 pass, 0 fail"
+  - "Docker GRAIN workspace gate after coordinate fix | 697 pass, 0 fail; typechecks exit 0; lint 0 errors"
+  - "Docker component conformance test after coordinate fix | 6 pass, 0 fail"
   - "git diff --check | exit 0"
   - "npm version availability | 0.1.24 returns E404; current published version is 0.1.23"
-diffstat: "6 files changed, 220 insertions(+), 2 deletions(-)"
-unpushed: "2 | local code and report commits on codex/trend-chart; publishing and pushing were explicitly excluded"
+diffstat: "implementation across original and fixup commits: 6 files changed, 258 insertions(+), 10 deletions(-); original commit 220 insertions(+), 2 deletions(-); fixup 38 insertions(+), 8 deletions(-)"
+unpushed: "4 | original code, report, coordinate-fixup, and report-correction commits on codex/trend-chart; publishing and pushing were explicitly excluded"
 doctor: "not run; the task required package gates, and no GRAIN doctor command was specified"
 verifiedBy: nobody yet
 ---
@@ -98,6 +98,56 @@ npm error 404 No match found for version 0.1.24
 - The host-side `tsc` command was unavailable, and host-wide tests encountered existing Windows
   path assumptions. The Docker workspace gate above is the repository’s documented authoritative
   environment and passed on the final implementation.
+
+## Coordinate review correction
+
+An independent review found that the first example’s plotted values did not exactly match its table,
+and the final category label did not share the plotted point’s x coordinate. Commit `950587f` fixes
+all four rows against the documented linear scale, where `y = 20 + (16 - value) × 9.5`. The A–D
+labels and all three plotted series now use x coordinates 70, 176, 282, and 388. The points, upper
+and lower comparison edges, and the range polygon are derived from the table values with no rounding
+error. Group C’s lower bound is 5, and Group D’s lower bound is 6; each now maps to its corresponding
+y coordinate.
+
+A new conformance test parses the example’s table and SVG, computes expected coordinates from the
+scale, and checks the line, circles, range edges, polygon, and label alignment. It failed during
+development when Group C’s lower edge still disagreed with the table, then passed after correction.
+The final focused test output is:
+
+```text
+COMPONENT_TEST_EXIT=0
+(pass) the component gives a chart an equivalent tabular text alternative [0.19ms]
+(pass) the data contract requires a visible unit and an optional comparison range [0.12ms]
+(pass) the documented SVG points and range map exactly to the accessible table and labels [0.93ms]
+(pass) chart ink and range use semantic tokens rather than a judgment color [0.13ms]
+(pass) the component is static and keeps the reduced-motion contract explicit [0.12ms]
+(pass) the shared GRAIN in-transit treatment applies to the component root [0.07ms]
+ 6 pass
+ 0 fail
+Ran 6 tests across 1 file. [150.00ms]
+```
+
+The complete Docker workspace gate was rerun after the coordinate and test changes:
+
+```text
+GATE_EXIT=0
+@tjakoen/grain check: Exited with code 0
+@tjakoen/grain-mcp check: Exited with code 0
+@tjakoen/mill check: Exited with code 0
+@tjakoen/crumb check: Exited with code 0
+@tjakoen/proof check: Exited with code 0
+Ran 697 tests across 70 files. [8.37s]
+Found 41 warnings and 0 errors.
+Finished in 194ms on 151 files with 137 rules using 12 threads.
+```
+
+The initial implementation commit reports `6 files changed, 220 insertions(+), 2 deletions(-)` and the
+fixup reports `2 files changed, 38 insertions(+), 8 deletions(-)`. Reproduce each with
+`git show --stat --oneline ce16afe` and `git show --stat --oneline 950587f`; their implementation
+totals are 258 insertions and 10 deletions across six distinct files.
+
+The original example coordinates described earlier in this report have been superseded by this
+correction. The final worktree remains local and unpublished.
 
 ## Human review
 

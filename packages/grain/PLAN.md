@@ -56,3 +56,7 @@ Component work does not belong in the numbered list above, which tracks the AI-i
    are the one pair that does **not** invert in the dark block, on purpose: a scrim darkens
    somebody else's photograph so a label survives on top of it, and a photograph does not invert
    with the palette.
+3. **Trend chart.** `molecules/trend-chart`, a neutral time-series display with an optional comparison
+   range and an equivalent values table. The caller owns values, units, scale, period labels and any
+   interpretation; the component encodes no target or judgment. Static SVG and semantic tokens keep
+   it readable in narrow layouts, light and dark themes, and reduced-motion settings.

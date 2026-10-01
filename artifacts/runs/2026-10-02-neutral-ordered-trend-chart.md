@@ -141,7 +141,7 @@ Found 41 warnings and 0 errors.
 Finished in 194ms on 151 files with 137 rules using 12 threads.
 ```
 
-The initial implementation commit reports `6 files changed, 258 insertions(+), 10 deletions(-)` and the
+The initial implementation commit reports `6 files changed, 220 insertions(+), 2 deletions(-)` and the
 fixup reports `2 files changed, 38 insertions(+), 8 deletions(-)`. Reproduce each with
 `git show --stat --oneline ce16afe` and `git show --stat --oneline 950587f`; their implementation
 totals are 258 insertions and 10 deletions across six distinct files.

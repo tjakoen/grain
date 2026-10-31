@@ -146,3 +146,11 @@ test("pipeline: fake model → parse → validate yields a safe move", async () 
   const valid = validateMove(parsed.move, manifest);
   expect(valid).toEqual({ ok: true, move: { action: "note.append", target: "notepad", payload: { text: "remember the milk" }, reply: undefined } });
 });
+
+
+test("malformed model property types are rejected before validation executes them", () => {
+  for (const value of [{ reply: 42 }, { action: [] }, { target: false }, { payload: [] }, { payload: "bad" }]) {
+    expect(parseModelMove(JSON.stringify(value)).ok).toBe(false);
+    expect(validateMove(value as never, manifest).ok).toBe(false);
+  }
+});

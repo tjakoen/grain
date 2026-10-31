@@ -11,7 +11,7 @@
 // (ai/contract.ts) — that registry is grain's own push-only vocabulary, and grain must never
 // depend on proof (wrong layer direction, CONVENTIONS §1). PROOF depends on grain's `RenderOp`
 // wire shape + `OP_EVENT` name — the dependency runs one way only.
-import { watch, type FSWatcher } from "node:fs";
+import { watch } from "node:fs";
 import { OP_EVENT, type RenderOp } from "@tjakoen/grain/ai/contract.ts";
 import { loadPlans, type LastModified } from "./loader.ts";
 import { renderBoardBody } from "./board.ts";
@@ -30,48 +30,68 @@ export interface WatchPlansOptions {
   channel: BoardChannel;
   /** git-age lookup (injectable for tests); default reads git, degrades to fs mtime */
   lastModified?: LastModified;
+  /** Report an unavailable watch or failed refresh; defaults to a visible server error. */
+  onError?: (error: unknown) => void;
+  /** Watch adapter for deterministic lifecycle tests; native filesystem events are the default. */
+  watch?: (dir: string, onChange: () => void) => { close(): void; on?(event: "error", listener: (error: unknown) => void): unknown };
 }
 
 const DEBOUNCE_MS = 100;
 
-// Watch `plansDir` and broadcast a fresh `proof-board` replace on every settled change. Returns
-// `{ stop }` so a caller (serveProof's boot, a test) can close the watcher and clear any pending
-// debounce timer — never leaves a dangling fs watch or timer behind.
-export function watchPlans(opts: WatchPlansOptions): { stop(): void } {
+// Rebuilds run one at a time. Shutdown closes the watch immediately, suppresses late output,
+// and resolves only after the current refresh finishes, so callers can safely remove its files.
+export function watchPlans(opts: WatchPlansOptions): { stop(): Promise<void> } {
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let stopped = false;
+  let requested = false;
+  let active: Promise<void> | null = null;
+  const report = (error: unknown) => {
+    try { (opts.onError ?? ((err) => console.error("[proof/live]", err)))(error); }
+    catch (reportError) { console.error("[proof/live] error reporting failed", reportError, error); }
+  };
 
-  async function rebuildAndBroadcast() {
-    const { plans, duplicates } = await loadPlans(opts.plansDir, opts.lastModified);
-    const renderOp: RenderOp = {
-      target: "proof-board",
-      op: "replace",
-      html: renderBoardBody(plans, duplicates),
-      provenance: "system",
-      commit: "committed",
-    };
-    opts.channel.broadcast(OP_EVENT, renderOp);
+  async function drain(): Promise<void> {
+    while (requested) {
+      if (stopped) return;
+      requested = false;
+      try {
+        const { plans, duplicates } = await loadPlans(opts.plansDir, opts.lastModified);
+        if (stopped) return;
+        const renderOp: RenderOp = {
+          target: "proof-board", op: "replace", html: renderBoardBody(plans, duplicates),
+          provenance: "system", commit: "committed",
+        };
+        opts.channel.broadcast(OP_EVENT, renderOp);
+      } catch (error) { report(error); }
+    }
   }
 
-  let watcher: FSWatcher | null = null;
+  function changed() {
+    if (stopped) return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      if (stopped) return;
+      requested = true;
+      if (!active) active = drain().finally(() => { active = null; });
+    }, DEBOUNCE_MS);
+  }
+
+  let watcher: { close(): void; on?(event: "error", listener: (error: unknown) => void): unknown } | null = null;
   try {
-    // `recursive: true` — a plan is a flat file in plansDir today, but a future subfolder (or an
-    // editor's atomic-save-via-rename) still lands inside plansDir, so recursive is the safe default.
-    watcher = watch(opts.plansDir, { recursive: true }, () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        void rebuildAndBroadcast();
-      }, DEBOUNCE_MS);
-    });
-  } catch {
-    // no plans/ folder yet, or fs.watch unsupported on this platform/fs — degrade to "no live
-    // updates" rather than crash the boot. The board still renders; it just isn't live.
-  }
+    watcher = opts.watch
+      ? opts.watch(opts.plansDir, changed)
+      : watch(opts.plansDir, { recursive: true }, changed);
+    watcher.on?.("error", report);
+  } catch (error) { report(error); }
 
   return {
-    stop() {
-      if (timer) clearTimeout(timer);
+    async stop() {
+      stopped = true;
+      requested = false;
+      if (timer) { clearTimeout(timer); timer = null; }
       watcher?.close();
+      await active;
     },
   };
 }

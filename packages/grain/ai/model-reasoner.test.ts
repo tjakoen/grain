@@ -150,3 +150,59 @@ test("direct verb (control click, no message) → executed without consulting th
   expect(called).toBe(false);                                           // the human already decided — no model turn
   expect(archived).toEqual(["ITM-1"]);
 });
+
+
+test("unsupported registered actions reject instead of reporting success", async () => {
+  const field = { id: "name", kind: "field" as const, accepts: ["field.set" as const] };
+  const r = makeModelReasoner({ model: model(""), manifest: () => buildManifest("loop", [field], { surfaces: ["name"], readable: [] }) });
+  const { tools, ops } = recordingTools();
+  const d = await r.decide(intent({ action: "field.set", surface: "name", payload: { value: "Ada" } }), tools);
+  expect(d.ok).toBe(false);
+  expect(ops).toEqual([]);
+});
+
+test("cancellation while the model completes prevents the structural mutation", async () => {
+  let cancelled = false;
+  const r = makeModelReasoner({ model: { complete: async () => { cancelled = true; return '{"action":"item.archive","target":"item:ITM-1"}'; } }, manifest });
+  const { tools, archived } = recordingTools();
+  tools.cancelled = () => cancelled;
+  const d = await r.decide(intent({ payload: { text: "archive it" } }), tools);
+  expect(d.ok).toBe(false);
+  expect(archived).toEqual([]);
+});
+
+test("an already cancelled direct intent emits nothing and makes no mutation", async () => {
+  const r = makeModelReasoner({ model: model(""), manifest });
+  const { tools, ops, archived } = recordingTools();
+  tools.cancelled = () => true;
+  expect((await r.decide(intent({ action: "item.archive", surface: "item:ITM-1" }), tools)).ok).toBe(false);
+  expect(ops).toEqual([]);
+  expect(archived).toEqual([]);
+});
+
+
+test("cancellation during reply delay prevents later tokens and navigation", async () => {
+  const nav = { id: "screen", kind: "screen", accepts: ["navigate" as const] };
+  const r = makeModelReasoner({ model: model('{"action":"navigate","target":"screen","payload":{"href":"/notes"},"reply":"Going"}'),
+    thinkMs: 1, manifest: () => buildManifest("loop", [nav], { surfaces: ["screen"], readable: [] }) });
+  let cancelled = false;
+  const { tools, ops } = recordingTools();
+  tools.cancelled = () => cancelled;
+  tools.delay = async () => { cancelled = true; };
+  expect((await r.decide(intent({ payload: { text: "go" } }), tools)).ok).toBe(false);
+  expect(ops.some(op => op.op === "navigate" || (op.op === "type" && op.commit === "pending") )).toBe(false);
+});
+
+
+test("the generic prompt omits unsupported handlers and rejects a proposed unsupported move visibly", async () => {
+  const field = { id: "name", kind: "field", accepts: ["field.set" as const] };
+  let prompt = "";
+  const r = makeModelReasoner({ model: { complete: async text => { prompt = text; return '{"action":"field.set","target":"name","payload":{"value":"Ada"}}'; } },
+    manifest: () => buildManifest("loop", [...targets, field], { surfaces: ["name"], readable: [] }) });
+  const { tools } = recordingTools();
+  const result = await r.decide(intent({ payload: { text: "fill my name" } }), tools);
+  expect(prompt).not.toContain("field.set");
+  expect(result.ok).toBe(false);
+  expect(result.ops).toHaveLength(1);
+  expect(result.ops[0]).toMatchObject({ op: "replace" });
+});

@@ -46,7 +46,9 @@ expected, not a silent pass to worry about.
   theme-aware for free. Card detail renders the full plan body through MILL.
 - **The live board** (`live.ts`, `board-live.js`): a file watcher debounces a change and
   broadcasts a `replace` render op over SSE, so every open tab updates on its own. It's read-only
-  by design, v1 never posts an intent back.
+  by design, v1 never posts an intent back. Refreshes run in sequence, and errors are reported.
+  Await the watcher's or server handle's stop method before removing watched files: shutdown
+  suppresses late broadcasts and waits for the active refresh to finish.
 - **`proof check`**: a deterministic lint, schema validity, dangling `depends`, a `done` plan with
   unticked tasks, a `doing` plan gone stale with no activity. Exits nonzero, so it's CI-able.
 - **`proof verify`**: the same exit contract, pointed at reality. `check` asks whether the board is
@@ -55,7 +57,9 @@ expected, not a silent pass to worry about.
   changed under that plan, a plan closed over a diff that never entered its own blast radius.
   `--base` swaps the working tree for a whole branch. Only the unbacked tick fails; the rest warn,
   because a gate that cries wolf gets muted. A plan it *cannot* judge (no `touches`, or all of them
-  pointing out of the repo) is reported as unverifiable rather than passed.
+  pointing out of the repo) is reported as unverifiable rather than passed. A failed Git command
+  fails verification because the comparison evidence is unavailable; a successful empty diff
+  remains valid evidence.
 - **`proof init`**: scaffolds `plans/` plus a contract section for the host's own CLAUDE.md,
   non-invasive, it never edits a host's existing files.
 

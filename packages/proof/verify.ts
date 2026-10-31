@@ -5,6 +5,7 @@
 // This module is the git half only. Every judgement lives in core/verify.ts (pure), the same split
 // check.ts uses. Nothing here decides anything; it collects a `Diff` and hands it over.
 import { relative, resolve } from "node:path";
+import { realpath } from "node:fs/promises";
 import { loadPlans } from "./loader.ts";
 import { verifyAgainstDiff, type Diff, type VerifyProblem } from "./core/verify.ts";
 
@@ -43,25 +44,36 @@ async function run(args: string[], cwd: string): Promise<string | null> {
     return null;   // git absent
   }
 }
-const lines = (out: string | null) => (out ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+async function requiredRun(args: string[], cwd: string): Promise<string> {
+  const out = await run(args, cwd);
+  if (out === null) throw new Error(`git ${args.join(" ")} failed; comparison evidence is unavailable`);
+  return out;
+}
+const lines = (out: string) => out.split("\n").map((l) => l.trim()).filter(Boolean);
 
 export function gitReader(cwd: string): GitReader {
+  const root = async (): Promise<string | null> => {
+    const out = await run(["rev-parse", "--show-toplevel"], cwd);
+    return out ? out.trim() : null;
+  };
+  const evidence = async (args: string[]): Promise<string> => {
+    const repository = await root();
+    if (!repository) throw new Error("git repository root is unavailable; comparison evidence is unavailable");
+    return requiredRun(args, repository);
+  };
   return {
-    async root() {
-      const out = await run(["rev-parse", "--show-toplevel"], cwd);
-      return out ? out.trim() : null;
-    },
+    root,
     async changedFiles(base) {
-      return lines(await run(["diff", "--name-only", base], cwd));
+      return lines(await evidence(["diff", "--name-only", base]));
     },
     async untrackedFiles() {
-      return lines(await run(["ls-files", "--others", "--exclude-standard"], cwd));
+      return lines(await evidence(["ls-files", "--others", "--exclude-standard"]));
     },
     async addedLines(base, file) {
-      const out = await run(["diff", "-U0", base, "--", file], cwd);
+      const out = await evidence(["diff", "-U0", base, "--", file]);
       // a file git has no history for produces no diff; the caller handles that case by reading
       // the whole file instead, so an empty result here is not the same as "nothing was added"
-      return (out ?? "").split("\n").filter((l) => l.startsWith("+") && !l.startsWith("+++")).map((l) => l.slice(1));
+      return out.split("\n").filter((l) => l.startsWith("+") && !l.startsWith("+++")).map((l) => l.slice(1));
     },
   };
 }
@@ -81,41 +93,48 @@ export async function runVerify(dir: string, opts: VerifyOptions = {}): Promise<
   const plansDir = resolve(dir);
   const git = opts.git ?? gitReader(plansDir);
 
-  const root = await git.root();
-  if (root === null) {
-    return { ok: false, planCount: 0, fileCount: 0, base, problems: [{ planId: null, severity: "error", field: "git", message: `not a git repository (or git is unavailable), so there is no diff to verify against` }] };
-  }
-
-  const { plans: loaded } = await loadPlans(plansDir);
-  const plans = loaded.map((lp) => lp.plan);
-
-  const untracked = await git.untrackedFiles();
-  const untrackedSet = new Set(untracked);
-  const files = [...new Set([...(await git.changedFiles(base)), ...untracked])].sort();
-
-  // plan id → its path as git reports it, so a changed file can be traced back to the plan it is
-  const rel = relative(root, plansDir).split("\\").join("/");
-  const pathOf = (id: string) => (rel ? `${rel}/${id}.md` : `${id}.md`);
-
-  const newlyTicked: Record<string, string[]> = {};
-  const newlyDone: string[] = [];
-  for (const lp of loaded) {
-    const path = pathOf(lp.plan.id);
-    if (!files.includes(path)) continue;
-    const added = untrackedSet.has(path)
-      ? lp.plan.body.split("\n")                       // no before-image: the whole plan is new
-      : await git.addedLines(base, path);
-    const ticks = added.map((l) => l.match(TICKED)?.[1]).filter((t): t is string => !!t);
-    if (ticks.length > 0) newlyTicked[lp.plan.id] = ticks;
-    if (lp.plan.status === "done" && (untrackedSet.has(path) || added.some((l) => DONE_STATUS.test(l)))) {
-      newlyDone.push(lp.plan.id);
+  try {
+    const root = await git.root();
+    if (root === null) {
+      return { ok: false, planCount: 0, fileCount: 0, base, problems: [{ planId: null, severity: "error", field: "git", message: `not a git repository (or git is unavailable), so there is no diff to verify against` }] };
     }
+
+    const { plans: loaded } = await loadPlans(plansDir);
+    const plans = loaded.map((lp) => lp.plan);
+
+    const untracked = await git.untrackedFiles();
+    const untrackedSet = new Set(untracked);
+    const files = [...new Set([...(await git.changedFiles(base)), ...untracked])].sort();
+
+    // plan id → its path as git reports it, so a changed file can be traced back to the plan it is
+    const rel = relative(await realpath(root), await realpath(plansDir)).split("\\").join("/");
+    const pathOf = (id: string) => (rel ? `${rel}/${id}.md` : `${id}.md`);
+
+    const newlyTicked: Record<string, string[]> = {};
+    const newlyDone: string[] = [];
+    for (const lp of loaded) {
+      const path = pathOf(lp.plan.id);
+      if (!files.includes(path)) continue;
+      const added = untrackedSet.has(path)
+        ? lp.plan.body.split("\n")                       // no before-image: the whole plan is new
+        : await git.addedLines(base, path);
+      const ticks = added.map((l) => l.match(TICKED)?.[1]).filter((t): t is string => !!t);
+      if (ticks.length > 0) newlyTicked[lp.plan.id] = ticks;
+      if (lp.plan.status === "done" && (untrackedSet.has(path) || added.some((l) => DONE_STATUS.test(l)))) {
+        newlyDone.push(lp.plan.id);
+      }
+    }
+
+    const diff: Diff = { files, newlyTicked, newlyDone };
+    const problems = verifyAgainstDiff(plans, diff, { ignore: rel ? [rel] : [] });
+
+    return { ok: !problems.some((p) => p.severity === "error"), problems, planCount: plans.length, fileCount: files.length, base };
+  } catch (error) {
+    return { ok: false, planCount: 0, fileCount: 0, base, problems: [{
+      planId: null, severity: "error", field: "git",
+      message: `verification could not collect evidence: ${String(error)}`,
+    }] };
   }
-
-  const diff: Diff = { files, newlyTicked, newlyDone };
-  const problems = verifyAgainstDiff(plans, diff, { ignore: rel ? [rel] : [] });
-
-  return { ok: !problems.some((p) => p.severity === "error"), problems, planCount: plans.length, fileCount: files.length, base };
 }
 
 // Plain text for a terminal or a CI log — no ANSI, no backticks, matching formatReport in check.ts.

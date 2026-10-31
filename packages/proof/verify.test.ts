@@ -1,11 +1,11 @@
 // proof/verify.test.ts — the git half of `proof verify`: turning a repository's state into the
 // `Diff` the pure core judges. The GitReader is injected, so the suite describes a repository
-// instead of building one (no temp git repos, no shelling out, deterministic).
+// instead of building one. A real nested-directory fixture also checks Git path semantics.
 import { test, expect } from "bun:test";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runVerify, formatVerifyReport, type GitReader } from "./verify.ts";
+import { runVerify, formatVerifyReport, gitReader, type GitReader } from "./verify.ts";
 
 // a plans dir under <root>/plans, so the relative-path plumbing is actually exercised
 async function withPlans(files: Record<string, string>, fn: (root: string, plansDir: string) => Promise<void>) {
@@ -121,5 +121,58 @@ test("outside a git repo it fails loudly instead of passing on no evidence", asy
     const report = await runVerify(plansDir, { git: fakeGit("", { root: async () => null }) });
     expect(report.ok).toBe(false);
     expect(report.problems[0].field).toBe("git");
+  });
+});
+
+for (const method of ["changedFiles", "untrackedFiles", "addedLines"] as const) {
+  test(`a failed ${method} command fails verification rather than supplying an empty diff`, async () => {
+    await withPlans({ "a.md": PLAN_A }, async (root, plansDir) => {
+      const git = fakeGit(root, {
+        changedFiles: async () => ["plans/a.md"],
+        [method]: async () => { throw new Error(`git ${method} failed`); },
+      });
+      const report = await runVerify(plansDir, { git });
+      expect(report.ok).toBe(false);
+      expect(report.problems[0]).toMatchObject({ field: "git", severity: "error" });
+      expect(report.problems[0].message).toContain(method);
+    });
+  });
+}
+
+test("the real reader rejects an invalid comparison reference", async () => {
+  const reader = gitReader(import.meta.dir);
+  await expect(reader.changedFiles("PROOF_AUDIT_MISSING_REF_20261031")).rejects.toThrow();
+});
+
+test("a successful empty comparison is still verifiable", async () => {
+  await withPlans({}, async (root, plansDir) => {
+    const report = await runVerify(plansDir, { git: fakeGit(root) });
+    expect(report.ok).toBe(true);
+    expect(report.fileCount).toBe(0);
+  });
+});
+
+test("a real reader inside plans collects root-relative untracked files and plan additions", async () => {
+  await withPlans({ "a.md": PLAN_A.replace("[x]", "[ ]") }, async (root, plansDir) => {
+    const git = async (...args: string[]) => {
+      const process = Bun.spawn(["git", ...args], { cwd: root, stdout: "pipe", stderr: "pipe" });
+      const error = await new Response(process.stderr).text();
+      if (await process.exited) throw new Error(error);
+    };
+    await git("init");
+    await git("add", ".");
+    await git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "Initial fixture");
+    await writeFile(join(plansDir, "a.md"), PLAN_A);
+    await writeFile(join(root, "outside.txt"), "unclaimed root file");
+    await writeFile(join(plansDir, "new.md"), PLAN_A.replace("id: a", "id: new"));
+    const reader = gitReader(plansDir);
+    expect(await reader.untrackedFiles()).toEqual(["outside.txt", "plans/new.md"]);
+    expect(await reader.changedFiles("HEAD")).toEqual(["plans/a.md"]);
+    expect(await reader.addedLines("HEAD", "plans/a.md")).toContain("- [x] the done one");
+    const report = await runVerify(plansDir);
+    expect(report.fileCount).toBe(3);
+    expect(report.ok).toBe(false);
+    expect(report.problems.some(problem => problem.planId === "a" && problem.field === "tasks")).toBe(true);
+    expect(report.problems.some(problem => problem.planId === "new" && problem.field === "tasks")).toBe(true);
   });
 });

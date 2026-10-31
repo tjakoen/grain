@@ -72,7 +72,7 @@ export function createProofHandler(opts: ProofServeOptions, stream: Stream = cre
  *  directly, or the watcher outlives the server. */
 export interface ProofServerHandle {
   server: ReturnType<typeof Bun.serve>;
-  stop(): void;
+  stop(): Promise<void>;
 }
 
 // Boot the board on a port. One Stream instance is shared between the request handler (the
@@ -85,9 +85,9 @@ export function serveProof(opts: ProofServeOptions & { port?: number }): ProofSe
   const watcher = watchPlans({ plansDir: opts.plansDir, channel: stream });
   return {
     server,
-    stop() {
-      watcher.stop();
+    async stop() {
       server.stop();
+      await watcher.stop();
     },
   };
 }

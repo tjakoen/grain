@@ -99,6 +99,8 @@ export function parseModelMove(raw: string): { ok: true; move: ModelMove } | { o
   catch { return { ok: false, reason: "model returned malformed JSON" }; }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
     return { ok: false, reason: "model output is not a JSON object" };
+  const shape = modelMoveShape(parsed);
+  if (shape) return { ok: false, reason: shape };
   return { ok: true, move: parsed as ModelMove };
 }
 
@@ -124,6 +126,18 @@ function extractJsonObject(raw: string): string | null {
   return null;
 }
 
+function modelMoveShape(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "model move must be an object";
+  const move = value as Record<string, unknown>;
+  for (const key of ["action", "target", "reply"] as const) {
+    if (move[key] !== undefined && !(key === "action" && move[key] === null) && typeof move[key] !== "string")
+      return `model ${key} must be a string${key === "action" ? " or null" : ""}`;
+  }
+  if (move.payload !== undefined && (!move.payload || typeof move.payload !== "object" || Array.isArray(move.payload)))
+    return "model payload must be an object";
+  return null;
+}
+
 // ── validating the move against the contract + the live manifest ─────────────────────────────────
 /** Turn an UNTRUSTED ModelMove into a ValidatedMove or an informative rejection. This is the safety
  *  boundary: the model can PROPOSE anything, but only moves that are legal in the vocabulary AND
@@ -140,6 +154,8 @@ export function validateMove(
   move: ModelMove,
   manifest: Manifest,
 ): { ok: true; move: ValidatedMove } | { ok: false; reason: string } {
+  const shape = modelMoveShape(move);
+  if (shape) return { ok: false, reason: shape };
   const action = move.action ?? null;
 
   // reply-only: the model chose to talk, not act.

@@ -52,6 +52,7 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
     for (const ch of text) {
       if (tools.cancelled()) break;
       if (thinkMs > 0) await tools.delay(TYPE_MS);
+      if (tools.cancelled()) break;
       tools.emit(typeToken(surface, ch));
     }
     tools.emit(settleOp(surface));
@@ -61,6 +62,11 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
    *  human-facing reply into `replyTarget` (a chat bubble body, or the reflection line). `navigate` is
    *  emitted LAST — it's terminal for the page, so the reply is seen first. */
   async function execute(move: ValidatedMove, tools: ReasonTools, replyTarget: string | null): Promise<Decision> {
+    if (tools.cancelled()) return { ok: false, reason: "cancelled", ops: [] };
+    const unsupported = (): Decision => ({ ok: false,
+      reason: `unsupported action ${move.action} in the generic model reasoner`,
+      ops: replyTarget ? [replaceBodyOp(replyTarget, "I cannot perform that action here.", "committed")] : [],
+    });
     const structural: RenderOp[] = [];
     let terminal: RenderOp | null = null;
 
@@ -75,14 +81,20 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
         break;
       }
       // action null (reply-only) or a reply-shaped verb: the effect IS the reply, streamed below.
-      default: break;
+      case null: break;
+      case "demo.run": case "say.stream": case "say.set":
+        if (replyTarget && move.reply) break;
+        return unsupported();
+      default: return unsupported();
     }
 
+    if (tools.cancelled()) return { ok: false, reason: "cancelled", ops: [] };
     for (const op of structural) tools.emit(op);
     if (replyTarget) {
       if (move.reply) await stream(replyTarget, move.reply, tools);
       else tools.emit(settleOp(replyTarget));   // never leave an opened bubble blank
     }
+    if (tools.cancelled()) return { ok: false, reason: "cancelled", ops: [] };
     if (terminal) tools.emit(terminal);
 
     return { ok: true, ops: [], reply: move.reply };   // ops all emitted inline (streaming pattern)
@@ -90,7 +102,10 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
 
   /** The agentic entry: a human message → the model picks + we execute one move. */
   async function decideFromMessage(intent: Intent, tools: ReasonTools, message: string): Promise<Decision> {
-    const m = manifest();
+    const live = manifest();
+    const supported = new Set(["note.append", "note.replace", "navigate", "item.archive", "say.set", "say.stream", "demo.run"]);
+    const m = { ...live, actions: live.actions.filter(action => supported.has(action.name)),
+      targets: live.targets.map(target => ({ id: target.id, kind: target.kind, accepts: target.accepts.filter(action => supported.has(action)) })) };
 
     // chat.send shows the human's message, then opens an AI bubble to stream the reply into. say.set
     // writes straight back into the reflection surface it targeted (no chat bubble).
@@ -117,6 +132,7 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
     try { raw = await model.complete(buildReasonerPrompt(manifestToText(m), message)); }
     catch (e) { return fail("The model didn't respond — try again.", `model.complete threw: ${String(e)}`); }
 
+    if (tools.cancelled()) return { ok: false, reason: "cancelled", ops: [] };
     const parsed = parseModelMove(raw);
     if (!parsed.ok) return fail("I couldn't read that decision.", parsed.reason);
     const valid = validateMove(parsed.move, m);
@@ -127,6 +143,7 @@ export function makeModelReasoner(opts: ModelReasonerOptions): Reasoner {
 
   return {
     async decide(intent: Intent, tools: ReasonTools): Promise<Decision> {
+      if (tools.cancelled()) return { ok: false, reason: "cancelled", ops: [] };
       const message = String(intent.payload?.text ?? "").trim();
 
       if ((intent.action === "chat.send" || intent.action === "say.set") && message)

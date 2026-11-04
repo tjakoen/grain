@@ -207,3 +207,13 @@ body[data-viewport="mobile"] { --shell-viewport-w: 24.4rem; }
 ::view-transition-old(shell-rail), ::view-transition-old(shell-topbar),
 ::view-transition-old(shell-aside), ::view-transition-old(shell-console),
 ::view-transition-old(shell-window), ::view-transition-old(shell-status) { display: none; }
+/* <main> gets its own transition rather than riding the root cross-fade: the old page leaves fast,
+   and the new one fades in with a 4px rise, so a tab switch reads as a page settling into place
+   rather than two pages blinking through each other. Short on purpose; the chrome around it holds
+   still, so this is the only motion on screen. Reduced motion turns it off with the rest. */
+.app-shell__main { view-transition-name: shell-main; }
+::view-transition-group(shell-main) { animation: none; }
+::view-transition-old(shell-main) { animation: 90ms ease-out both shell-main-out; }
+::view-transition-new(shell-main) { animation: 200ms cubic-bezier(0.2, 0, 0, 1) 40ms both shell-main-in; }
+@keyframes shell-main-out { to { opacity: 0; } }
+@keyframes shell-main-in { from { opacity: 0; transform: translateY(4px); } }

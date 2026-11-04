@@ -123,5 +123,9 @@
     // refresh: re-resolve labels (e.g. after an island fills the data-tab-source tree lazily)
     window.grain.tabs = { open: () => [...list], close: closeTab, closeAll, refresh: render };
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+  // Loaded as a classic script right after the strip, it renders before the first paint, which a
+  // view transition captures; that keeps the stored tabs from popping in a frame late. Loaded any
+  // later (defer, module, end of body), the strip is parsed and this simply runs.
+  if (document.readyState !== "loading" || document.querySelector("[data-open-tabs]")) init();
+  else document.addEventListener("DOMContentLoaded", init);
 })();

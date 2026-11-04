@@ -6,7 +6,7 @@
    would break the spell (DESIGN-SYSTEM §6). */
 @view-transition { navigation: auto; }
 @media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.3s; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.15s; }
 
 * { box-sizing: border-box; }
 

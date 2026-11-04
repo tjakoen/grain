@@ -139,10 +139,14 @@ body:has(.app-shell) { container-type: inline-size; container-name: shell-frame;
 @container shell-frame (max-width: 768px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "window" "topbar" "main" "console" "status";
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    /* the last row only reserves room for the bottom sheet's peeking head (sidebar-panel.css),
+       so the sheet never covers the end of <main>. The console strip and status bar are
+       dropped here: on a phone they stacked 75px of chrome under the sheet for no new reading. */
+    grid-template-areas: "window" "topbar" "main" "sheet";
+    grid-template-rows: auto auto minmax(0, 1fr) 2.75rem;
   }
   .app-shell__aside { display: none; }
+  .app-shell > .app-shell__console, .app-shell > .app-shell__status { display: none; }   /* two classes: status-bar.css sorts later */
   .app-shell[data-rail-collapsed="true"] { --shell-rail: 15rem; }   /* collapse-width is desktop-only */
   /* two classes ON PURPOSE: a composed rail (e.g. side-rail) may carry its own `position:
      relative` (the icon gutter), and the CSS bundle sorts side-rail AFTER app-shell — at equal
@@ -191,3 +195,15 @@ body[data-viewport="mobile"] { --shell-viewport-w: 24.4rem; }
 .app-shell__console { view-transition-name: shell-console; }
 .app-shell__window  { view-transition-name: shell-window; }
 .app-shell__status  { view-transition-name: shell-status; }
+/* the chrome SNAPS to its new state rather than morphing. The browser's default for a named
+   element is to tween its box and cross-fade its two snapshots, so a tab strip that lost a tab,
+   or a window that gained the aside, slid visibly on every navigation. Only <main> fades. */
+::view-transition-group(shell-rail), ::view-transition-group(shell-topbar),
+::view-transition-group(shell-aside), ::view-transition-group(shell-console),
+::view-transition-group(shell-window), ::view-transition-group(shell-status),
+::view-transition-new(shell-rail), ::view-transition-new(shell-topbar),
+::view-transition-new(shell-aside), ::view-transition-new(shell-console),
+::view-transition-new(shell-window), ::view-transition-new(shell-status) { animation: none; }
+::view-transition-old(shell-rail), ::view-transition-old(shell-topbar),
+::view-transition-old(shell-aside), ::view-transition-old(shell-console),
+::view-transition-old(shell-window), ::view-transition-old(shell-status) { display: none; }

@@ -49,6 +49,8 @@ export interface LoadResult {
   plans: LoadedPlan[];
   /** ids that appear on more than one file (case-folded collision) — a loader-only check */
   duplicates: string[];
+  /** set when the plans directory could not be read: the board shows it empty, a check fails on it */
+  dirError?: string;
 }
 
 // Read every `.md` in `dir` as a plan. A malformed plan is still loaded (best-effort, with its
@@ -57,8 +59,10 @@ export async function loadPlans(dir: string, lastModified: LastModified = gitOrM
   let files: string[];
   try {
     files = (await readdir(dir)).filter(isPlanFile).sort();
-  } catch {
-    return { plans: [], duplicates: [] };   // no plans/ folder yet → an empty board, not a crash
+  } catch (e) {
+    // No plans/ folder yet is an empty board for the UI, not a crash. The reason travels with the
+    // result so check and verify can refuse to call an unread directory clean.
+    return { plans: [], duplicates: [], dirError: `cannot read plans directory ${dir}: ${(e as Error).message}` };
   }
 
   const seen = new Map<string, number>();

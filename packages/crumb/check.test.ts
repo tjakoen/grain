@@ -165,3 +165,12 @@ test("an ask with one option is flagged: a choice of one is a statement wearing 
   expect(ok).toBe(false);
   expect(lines.join("\n")).toContain("one option");
 });
+
+// A mistyped or unreadable tour directory used to load as zero tours and pass. A gate that
+// passes on input it never read is the failure the audit of 2026-11-05 ranked as a blocker.
+test("checkDir fails when the tour directory cannot be read", async () => {
+  const { checkDir } = await import("./check.ts");
+  const res = await checkDir("/nonexistent/crumb-tours-typo");
+  expect(res.ok).toBe(false);
+  expect(res.lines[0]).toContain("cannot read tour directory");
+});

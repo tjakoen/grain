@@ -23,6 +23,9 @@ const isTourFile = (name: string) => name.endsWith(".md") && !RESERVED.has(name.
 export interface LoadResult {
   tours: LoadedTour[];
   duplicates: string[];   // ids that appear on more than one file (case-folded)
+  // Set when the directory itself could not be read. A caller serving pages may treat that as an
+  // empty list; a caller checking may not, because a mistyped path must never read as "all clean".
+  dirError?: string;
 }
 
 // Read every `.md` in `dir` as a tour. A malformed tour is still loaded (best-effort, errors
@@ -31,8 +34,8 @@ export async function loadTours(dir: string): Promise<LoadResult> {
   let files: string[];
   try {
     files = (await readdir(dir)).filter(isTourFile).sort();
-  } catch {
-    return { tours: [], duplicates: [] };
+  } catch (e) {
+    return { tours: [], duplicates: [], dirError: `cannot read tour directory ${dir}: ${(e as Error).message}` };
   }
   const seen = new Set<string>();
   const duplicates = new Set<string>();

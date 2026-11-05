@@ -38,7 +38,8 @@ export async function runCheck(dir: string, opts: CheckOptions = {}): Promise<Ch
   const staleDays = opts.staleDays ?? DEFAULT_STALE_DAYS;
   const problems: CheckProblem[] = [];
 
-  const { plans: loaded, duplicates } = await loadPlans(dir, opts.lastModified);
+  const { plans: loaded, duplicates, dirError } = await loadPlans(dir, opts.lastModified);
+  if (dirError) problems.push({ planId: null, severity: "error", field: "dir", message: dirError });
 
   // a. duplicate plan ids — two files claiming the same address
   for (const id of duplicates) {

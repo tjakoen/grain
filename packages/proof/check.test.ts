@@ -117,3 +117,10 @@ test("formatReport renders one line per problem plus a footer and OK/FAIL", asyn
   expect(text).toContain("1 plans, ");
   expect(text.trim().endsWith("FAIL")).toBe(true);
 });
+
+// The same blocker as crumb's: a plans directory that cannot be read must not report "0 problems".
+test("runCheck fails when the plans directory cannot be read", async () => {
+  const report = await runCheck("/nonexistent/proof-plans-typo");
+  expect(report.ok).toBe(false);
+  expect(report.problems.some((p) => p.field === "dir")).toBe(true);
+});

@@ -87,6 +87,7 @@ export function checkLoaded(tours: LoadedTour[], duplicates: string[]): CheckRes
 }
 
 export async function checkDir(dir: string): Promise<CheckResult> {
-  const { tours, duplicates } = await loadTours(dir);
+  const { tours, duplicates, dirError } = await loadTours(dir);
+  if (dirError) return { ok: false, lines: [`✗ ${dirError}`] };
   return checkLoaded(tours, duplicates);
 }

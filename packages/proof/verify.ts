@@ -99,7 +99,10 @@ export async function runVerify(dir: string, opts: VerifyOptions = {}): Promise<
       return { ok: false, planCount: 0, fileCount: 0, base, problems: [{ planId: null, severity: "error", field: "git", message: `not a git repository (or git is unavailable), so there is no diff to verify against` }] };
     }
 
-    const { plans: loaded } = await loadPlans(plansDir);
+    const { plans: loaded, dirError } = await loadPlans(plansDir);
+    if (dirError) {
+      return { ok: false, planCount: 0, fileCount: 0, base, problems: [{ planId: null, severity: "error", field: "dir", message: dirError }] };
+    }
     const plans = loaded.map((lp) => lp.plan);
 
     const untracked = await git.untrackedFiles();

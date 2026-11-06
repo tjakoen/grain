@@ -18,7 +18,7 @@ test("emits GRAIN-classed semantic HTML, not data-bound component tags", () => {
 
 test("code fence → .code-block with a language tag; text is escaped", () => {
   const { html } = renderGrainDocument("```ts\nconst x = 1 < 2 && a > b;\n```");
-  expect(html).toContain(`<pre class="code-block" data-lang="ts">`);
+  expect(html).toContain(`<pre class="code-block" tabindex="0" data-lang="ts">`);
   expect(html).toContain("1 &lt; 2 &amp;&amp; a &gt; b");
 });
 

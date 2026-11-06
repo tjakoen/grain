@@ -10,9 +10,11 @@ the meter an `aria-label`; for a single-value progress meter add `aria-valuenow`
 
 ## Health bar (three tones)
 `ok` is solid ink, `bad` is a dense hatch, an untoned/`pending` segment is faint. Order and
-widths are author-set.
+widths are author-set. Several segments are not one value, so the health bar is `role="img"` with a label that
+states the split in words; `role="meter"` is kept for the single-value progress form, where
+`aria-valuenow` is required (WCAG 4.1.2).
 ```html
-<div class="meter" role="meter" aria-label="Run health">
+<div class="meter" role="img" aria-label="Run health: 70% ok, 20% failing, 10% pending">
   <span class="meter__seg" data-tone="ok" style="--seg: 70%"></span>
   <span class="meter__seg" data-tone="bad" style="--seg: 20%"></span>
   <span class="meter__seg" data-tone="pending" style="--seg: 10%"></span>
@@ -30,14 +32,14 @@ widths are author-set.
 `data-state="busy"` sweeps a faint stripe across the track (static faint fill under
 `prefers-reduced-motion`).
 ```html
-<div class="meter" data-state="busy" role="meter" aria-label="Running…">
+<div class="meter" data-state="busy" role="progressbar" aria-label="Running…">
   <span class="meter__seg"></span>
 </div>
 ```
 
 ## In transit (AI updating the meter)
 ```html
-<div class="meter" data-commit="pending" role="meter" aria-label="Run health">
+<div class="meter" data-commit="pending" role="img" aria-label="Run health, updating">
   <span class="meter__seg" data-tone="ok" style="--seg: 55%"></span>
   <span class="meter__seg" data-tone="pending" style="--seg: 45%"></span>
 </div>

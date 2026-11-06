@@ -23,5 +23,11 @@ title as the message, tags as branch chips. Opt in per collection (MILL's `index
 default listing is unchanged for collections that don't ask for it.
 
 ```html
-<ul class="content-index" data-variant="log">…</ul>
+<ul class="content-index" data-variant="log">
+  <li class="content-index__item">
+    <p class="content-index__meta">2026-07-04</p>
+    <h2 class="content-index__title"><a href="/notes/the-browser-grew-up">The Browser Grew Up</a></h2>
+    <div class="note__tags"><span class="badge" data-status="active">native-first</span></div>
+  </li>
+</ul>
 ```

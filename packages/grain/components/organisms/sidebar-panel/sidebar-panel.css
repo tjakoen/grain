@@ -30,7 +30,7 @@
 .assistant__composer { border-top: 1px solid var(--color-line); padding: var(--space-3); display: flex; gap: var(--space-2); }
 .assistant__composer .field__input { flex: 1; font: inherit; font-size: var(--text-sm); color: var(--color-fg);
   background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
-.assistant__composer .field__input::placeholder { color: var(--ink-faint); }
+.assistant__composer .field__input::placeholder { color: var(--ink-muted); }
 
 /* TAKEOVER: the shell raises `data-acting` (grain/scripts/ai-dispatch.js). The terminal (console)
    narrates the AI's THINKING; the chat is for COMMUNICATION — the two are separate concerns and
@@ -66,4 +66,10 @@
 @media (prefers-reduced-motion: reduce) {
   .app-shell__aside { transition: none; }
   .assistant__log { scroll-behavior: auto; }
+}
+
+/* WCAG 2.4.11 (focus not obscured): the collapsed sheet peeks over the page bottom on a narrow
+   frame, so the page's scrollers keep a focused element clear of that strip. */
+@container shell-frame (max-width: 768px) {
+  .app-shell__main { scroll-padding-bottom: 3.75rem; }
 }

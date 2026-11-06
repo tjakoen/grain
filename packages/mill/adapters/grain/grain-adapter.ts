@@ -52,7 +52,7 @@ const heading = (surfaces: boolean): BlockHandlers["heading"] => (n, ctx) => {
 // exactly this, and re-implementing it there would be two escaping rules that can drift.
 export const grainCodeBlock: BlockHandlers["code"] = (n, ctx) => {
   const lang = n.lang ? ` data-lang="${ctx.escape(n.lang)}"` : "";
-  return `<pre class="code-block"${lang}><code>${ctx.escape(n.value)}</code></pre>`;
+  return `<pre class="code-block" tabindex="0"${lang}><code>${ctx.escape(n.value)}</code></pre>`;
 };
 
 // ---- block map (node → GRAIN tag) ------------------------------------------

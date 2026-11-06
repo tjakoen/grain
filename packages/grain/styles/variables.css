@@ -47,7 +47,7 @@
      3.98:1, which is why it moved. FAINT is decoration: fading insights, empty and future dots. It
      does NOT clear AA and is not meant to, so nothing a reader needs may be painted with it. */
   --ink-muted: #65635B;            /* secondary text, section labels. 4.55:1 on --paper */
-  --ink-faint: #ABA89F;            /* fading insights, empty/future dots. DECORATIVE ONLY */
+  --ink-faint: #ABA89F;            /* fading insights, empty/future dots. DECORATIVE ONLY: never text, never a control (WCAG 1.4.3, 1.4.11) */
   --hairline:  #1C1B17;            /* solid rules (under headlines) */
   --line-soft: rgba(28, 27, 23, .14);  /* translucent border for quiet grouping */
 

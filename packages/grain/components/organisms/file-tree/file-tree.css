@@ -24,7 +24,7 @@
 /* the chevron: one glyph, rotated by state — no per-state art */
 .file-tree__dir > summary::before {
   content: "▸"; flex: 0 0 auto; width: 0.9em;
-  color: var(--ink-faint); font-size: 0.9em;
+  color: var(--ink-muted); font-size: 0.9em;
   transition: transform 0.15s ease;
 }
 .file-tree__dir[open] > summary::before { transform: rotate(90deg); }
@@ -47,7 +47,7 @@
   background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
 /* an index/entry file (a folder's own page, e.g. index.html) is DIMMED — the directory name
    above it carries the meaning, so the filename recedes. Hover + current win by later position. */
-.file-tree__file[data-variant="index"] { color: var(--ink-faint); }
+.file-tree__file[data-variant="index"] { color: var(--ink-muted); }
 /* the OPEN file: ink + a quiet accent edge (mirrors the rail's current-item bar) */
 .file-tree__file[aria-current="page"] {
   color: var(--color-fg); position: relative;
@@ -69,11 +69,11 @@
 .file-tree__file:has(.file-tree__close) { display: flex; align-items: center; justify-content: space-between; }
 .file-tree__close {
   display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
-  width: 1.15rem; height: 1.15rem; border-radius: var(--radius-sm);
+  width: 1.5rem; height: 1.5rem;   /* 24px: the WCAG 2.2 target-size minimum (2.5.8) */ border-radius: var(--radius-sm);
   color: transparent; pointer-events: none;
 }
 .file-tree__file:hover .file-tree__close, .file-tree__file[aria-current="page"] .file-tree__close {
-  color: var(--ink-faint);
+  color: var(--ink-muted);
 }
 .file-tree__close:hover { color: var(--color-fg); background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
 
@@ -83,3 +83,5 @@
 /* ---- explorer variant of the rail: the icon gutter is the NAV rail's look; a tree brings its
    own indent guides, so the host drops the gutter line ---- */
 .side-rail[data-variant="explorer"]::before { display: none; }
+/* WCAG 2.4.7: a keyboard user tabbing onto a hidden × must see it, not just a ring round nothing. */
+.file-tree__close:focus-visible { color: var(--ink-muted); }

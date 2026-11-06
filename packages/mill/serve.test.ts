@@ -137,7 +137,7 @@ test("diagrams: a fence becomes an inline figure when a renderer is wired", asyn
   expect(body).toContain(`<figure class="figure" data-variant="diagram">`);
   expect(body).toContain(`role="img"`);
   expect(body).toContain(`aria-label="A flows to B"`);        // the served page carries the name
-  expect(body).not.toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(body).not.toContain(`<pre class="code-block" tabindex="0" data-lang="mermaid">`);
   expect(body).toContain(`data-grade="smooth"`);              // the guardrail still holds
 });
 
@@ -152,7 +152,7 @@ test("diagrams: an unlabelled fence serves the source, visibly, rather than an u
 
   expect(res?.status).toBe(200);                              // refusing never takes the page down
   const body = await res!.text();
-  expect(body).toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(body).toContain(`<pre class="code-block" tabindex="0" data-lang="mermaid">`);
   expect(body).not.toContain("data-variant=\"diagram\"");
 });
 
@@ -164,12 +164,12 @@ test("diagrams: a renderer that cannot render leaves the code block, and the pag
 
   expect(res?.status).toBe(200);
   const body = await res!.text();
-  expect(body).toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(body).toContain(`<pre class="code-block" tabindex="0" data-lang="mermaid">`);
   expect(body).not.toContain("data-variant=\"diagram\"");
 });
 
 test("diagrams: no renderer wired means no browser and no change in output", async () => {
   const res = await createMillRoutes({ collections: [notes()] })("/notes/charted");
   const body = await res!.text();
-  expect(body).toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(body).toContain(`<pre class="code-block" tabindex="0" data-lang="mermaid">`);
 });

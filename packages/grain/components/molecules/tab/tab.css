@@ -19,14 +19,16 @@
 .tab[aria-current="page"] .tab__icon, .tab[data-active="true"] .tab__icon { color: var(--color-accent, var(--ink)); }
 .tab__close {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 1.15rem; height: 1.15rem; border-radius: var(--radius-sm);
+  width: 1.5rem; height: 1.5rem;   /* 24px: the WCAG 2.2 target-size minimum (2.5.8) */ border-radius: var(--radius-sm);
   color: transparent; pointer-events: none;   /* hidden until the tab is hovered/active */
 }
-.tab:hover .tab__close, .tab[aria-current="page"] .tab__close, .tab[data-active="true"] .tab__close { color: var(--ink-faint); }
+.tab:hover .tab__close, .tab[aria-current="page"] .tab__close, .tab[data-active="true"] .tab__close { color: var(--ink-muted); }
 /* the PINNED marker: same box as .tab__close but ALWAYS visible and never interactive — it
    reads "this tab doesn't close" (a pinned tab ships a .tab__pin instead of a .tab__close). */
 .tab__pin {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 1.15rem; height: 1.15rem; border-radius: var(--radius-sm);
-  color: var(--ink-faint); pointer-events: none;
+  width: 1.5rem; height: 1.5rem;   /* 24px: the WCAG 2.2 target-size minimum (2.5.8) */ border-radius: var(--radius-sm);
+  color: var(--ink-muted); pointer-events: none;
 }
+/* WCAG 2.4.7: a keyboard user tabbing onto a hidden × must see it, not just a ring round nothing. */
+.tab__close:focus-visible { color: var(--ink-muted); }

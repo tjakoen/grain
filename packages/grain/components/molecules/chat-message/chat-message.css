@@ -27,7 +27,7 @@
 .chat-message[data-grade="grain"], .chat-message[data-commit="pending"] { --type-font: var(--font-grain-fine); }
 .chat-message__who {
   display: block; margin-bottom: 2px;
-  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint);
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted);
 }
 /* the body reads the inherited grade font (a <span> isn't in grain.css's type selector), so the
    AI's line actually renders grain when the message carries data-grade="grain". */

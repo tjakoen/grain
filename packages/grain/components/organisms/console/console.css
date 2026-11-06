@@ -65,7 +65,7 @@
   color: var(--color-fg); font-family: var(--font-smooth); font-size: var(--text-sm); }
 .console__cmd::placeholder { color: var(--ink-muted); }
 .console__cmd:focus { outline: none; }
-/* WCAG 2.4.7 and 1.4.1: a prompt that only changes colour is not enough, so the row also takes a ring. */
+/* WCAG 2.4.7 and 1.4.1: a prompt that only changes color is not enough, so the row also takes a ring. */
 .console__input:focus-within { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 .console__input:focus-within .console__prompt { color: var(--color-accent); }
 

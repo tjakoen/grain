@@ -83,8 +83,8 @@ test("an unprepared fence falls back to the default code block", () => {
 
   const html = renderGrainDocument(raw, withDiagrams(undefined, svgs)).html;
 
-  expect(html).toContain(`<pre class="code-block" data-lang="mermaid">`);
-  expect(html).toContain(`<pre class="code-block" data-lang="ts">`);
+  expect(html).toContain(`<pre class="code-block" tabindex="0" data-lang="mermaid">`);
+  expect(html).toContain(`<pre class="code-block" tabindex="0" data-lang="ts">`);
   expect(html).not.toContain("<figure");
 });
 
@@ -169,7 +169,7 @@ test("an unlabelled fence renders as a visible code block, not a figure", () => 
 
   const html = renderGrainDocument(raw, withDiagrams(undefined, svgs)).html;
 
-  expect(html).toContain(`<pre class="code-block" data-lang="mermaid">`);
+  expect(html).toContain(`<pre class="code-block" tabindex="0" data-lang="mermaid">`);
   expect(html).toContain("graph TD; A--&gt;B;");   // the source is on the page, where it shows
   expect(html).not.toContain("<figure");
 });

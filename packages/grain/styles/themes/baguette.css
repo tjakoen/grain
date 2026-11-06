@@ -7,7 +7,7 @@
   --paper: #FAFAF8; --paper-2: #F2F2F0; --panel: #FFFFFF;
   --ink: #232326; --ink-muted: #6B6B70; --ink-faint: #A6A6AB;
   --hairline: #232326; --line-soft: rgba(35, 35, 38, 0.11);
-  --color-accent: #2F6FE0; --color-accent-hover: #2559C0;
+  --color-accent: #2C68D6; --color-accent-hover: #2559C0;
   --color-accent-contrast: #FFFFFF; --color-accent-soft: #E7EEFB;
 }
 @media (prefers-color-scheme: dark) {

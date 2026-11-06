@@ -6,7 +6,7 @@
   background: transparent;
 }
 .badge[data-status="active"]   { color: var(--ink); border-color: var(--ink); }
-.badge[data-status="archived"] { color: var(--ink-faint); }
+.badge[data-status="archived"] { color: var(--ink-muted); }
 
 /* ---- AI / in-transit: the non-text grain. A badge the AI is setting (live pending, or
    any grain ancestor) wears the dashed "terminal" edge; the label already swaps to the

@@ -85,3 +85,41 @@
   window.grain = window.grain || {};
   window.grain.theme = { setScheme, setTheme, toggleScheme, cycleTheme, scheme, theme, themes };
 })();
+
+// Keyboard reach for scrolling regions (WCAG 2.1.1). Any GRAIN surface that scrolls (a wide
+// table, a code block, the tab strip, a notepad body) must be scrollable without a mouse. Most
+// already hold a link or a button that takes focus and scrolls them; the ones that hold only text
+// get tabindex="0" here, so the guarantee lives in the system rather than in every component's
+// markup. It lives in theme.js because every GRAIN page loads it. An element that already has a
+// tabindex, or holds anything focusable, is left exactly as it is.
+(function () {
+  const FOCUSABLE = 'a[href], button, input, select, textarea, [tabindex], [contenteditable="true"]';
+  const scrolls = (el) => {
+    const s = getComputedStyle(el);
+    const x = /(auto|scroll)/.test(s.overflowX) && el.scrollWidth > el.clientWidth + 1;
+    const y = /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 1;
+    return x || y;
+  };
+  const check = (el) => {
+    if (el.hasAttribute("tabindex") || !scrolls(el) || el.querySelector(FOCUSABLE)) return;
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("data-grain-scroll-focus", "");
+  };
+  const sweep = (root) => { check(root); for (const el of root.querySelectorAll("*")) check(el); };
+  // Later passes look only at what was added, and only when the page is idle: a full rescan on
+  // every change measured as a hang on pages whose live effects never stop mutating.
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 200));
+  let pending = new Set(), queued = false;
+  const flush = () => { queued = false; const roots = pending; pending = new Set();
+    for (const r of roots) if (r.isConnected) sweep(r); };
+  const start = () => {
+    sweep(document.body);
+    new MutationObserver((records) => {
+      for (const m of records) for (const n of m.addedNodes) if (n.nodeType === 1) pending.add(n);
+      if (pending.size && !queued) { queued = true; idle(flush); }
+    }).observe(document.body, { childList: true, subtree: true });
+    addEventListener("resize", () => { pending.add(document.body); if (!queued) { queued = true; idle(flush); } });
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();

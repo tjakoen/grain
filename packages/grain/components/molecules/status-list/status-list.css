@@ -24,7 +24,7 @@
 /* ---- waiting: a row the runner hasn't reached yet recedes to faint (generic queue/pending
    state — not a domain status) ---- */
 .status-list__item[data-state="waiting"] .status-list__mark,
-.status-list__item[data-state="waiting"] .status-list__title { color: var(--ink-faint); }
+.status-list__item[data-state="waiting"] .status-list__title { color: var(--ink-muted); }
 
 /* ---- AI / in-transit + "this row is being acted on": the grain control lifecycle (lesson 2),
    same vocabulary as the button/field. An in-flight row (a runner is acting on it, or the AI is)

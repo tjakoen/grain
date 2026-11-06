@@ -8,7 +8,7 @@
   color: var(--ink); background: transparent;
   border: var(--border); border-radius: var(--radius-sm);   /* hard edge — you tap it */
 }
-.field__input::placeholder { color: var(--ink-faint); }
+.field__input::placeholder { color: var(--ink-muted); }
 /* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
    the button) — never `autofocus`, which would steal focus + scroll the catalog on load. */
 .field__input:focus-visible, .field__input[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 1px; }
@@ -21,7 +21,7 @@
    per-control copy of these rules is how one frame becomes four. Both hide when empty, which is what
    makes them safe to put in every template: a slot with nothing in it must not open a gap in the
    column, and an optional slot nobody fills is the common case, not the exception. */
-.field__hint { font-size: var(--text-xs); color: var(--ink-faint); line-height: var(--leading-normal); }
+.field__hint { font-size: var(--text-xs); color: var(--ink-muted); line-height: var(--leading-normal); }
 /* An error is NOT a red one. Status is weight, not hue (DESIGN-SYSTEM §2): the message reads at full
    ink against a hint's faint, and --color-danger is hueless by default so a flavor that DOES own a
    hue can reach it without this file ever naming a color. */

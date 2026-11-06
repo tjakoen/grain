@@ -6,12 +6,28 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![No build step](https://img.shields.io/badge/build_step-none-2ea44f)](#)
 [![Bun workspace](https://img.shields.io/badge/monorepo-bun_workspace-2ea44f)](#)
+[![WCAG 2.2 AA, automated](https://img.shields.io/badge/WCAG_2.2_AA-automated_scan_passing-2ea44f)](#accessibility)
 
 This is the monorepo for the GRAIN family: one Bun workspace holding five packages. Four of them are
 published layers that build on each other, from the design system up to the tools built on it. The
 fifth is a workspace-only MCP server that reads what those layers export. Each layer is its own
 package, so an app can adopt just the design system or the whole stack. Nothing here has a build
 step, everything runs on Bun straight from TypeScript.
+
+## Accessibility
+
+GRAIN's components and its three themes (and the template a new one starts from) meet WCAG 2.2 AA, and that is checked rather than hoped
+for. Every text color clears 4.5:1 in light and dark, every control is at least 24px, every
+focusable thing draws a ring, and anything that scrolls can be scrolled from a keyboard, which
+GRAIN does for you on any page that loads it. The proof is an axe scan of the 421 pages of
+[tjakoen.github.io](https://tjakoen.github.io), which is built on GRAIN, run in both color schemes
+on every change. The full audit, with what was fixed and what was not, is
+[published with the site](https://github.com/tjakoen/tjakoen.github.io/blob/main/audit/wcag-2.2.md).
+
+Two honest limits. An automated scan covers part of WCAG, and nobody has walked these pages with a
+screen reader yet, so this is *tested against* AA, not certified. And GRAIN can only promise what it
+owns: an app built on it inherits accessible components, but its own alt text, headings and link
+wording are still its own job. Copy the site's *e2e/wcag.e2e.ts* to scan yours.
 
 ## The packages
 

@@ -5,16 +5,18 @@ A monospace block for fenced code — plus a `.code-inline` run for inline code.
 edge (non-text grain), not a font swap. CSS-only: composed by hand (by MILL), nothing data-binds
 it, so there is no template. Long lines scroll rather than break the column.
 
+A code block that can scroll sideways carries `tabindex="0"` so a keyboard can scroll it (WCAG 2.1.1); MILL adds it to every fence.
+
 ## Block
 
 ### Plain
 ```html
-<pre class="code-block"><code>bun run dev</code></pre>
+<pre class="code-block" tabindex="0"><code>bun run dev</code></pre>
 ```
 
 ### With a language tag
 ```html
-<pre class="code-block" data-lang="ts"><code>export const answer = 42;</code></pre>
+<pre class="code-block" tabindex="0" data-lang="ts"><code>export const answer = 42;</code></pre>
 ```
 
 ## Inline

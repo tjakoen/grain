@@ -204,6 +204,10 @@ is the worked example: `project/` and `tjakoen.github.io/` are two consumers doi
 
 ### A · A theme (re-skin): override token slots, never components
 
+*Keep a theme at WCAG 2.2 AA:* muted ink and the accent each need 4.5:1 against both the page and the
+panel background, in both color schemes, because both are used as text. The faint ink token is
+decorative only and never carries text or a control.
+
 1. Write a stylesheet that redefines the §4 token slots (`--paper`, `--ink`, `--font-*`,
    `--space-*`, `--radius-*`, `--ai-veil`, …). **Touch no component CSS.**
 2. Link it **after** GRAIN's `variables.css` in your pages. Every `b-*` atom re-skins.

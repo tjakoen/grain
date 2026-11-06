@@ -23,7 +23,7 @@
   --paper: #FFFFFF; --paper-2: #F2F2F0; --panel: #FFFFFF;
   --ink: #1A1A1A; --ink-muted: #6B6B70; --ink-faint: #A6A6AB;
   --hairline: #1A1A1A; --line-soft: rgba(26, 26, 26, 0.11);
-  --color-accent: #2F6FE0; --color-accent-hover: #2559C0;      /* the ONE signature hue */
+  --color-accent: #2C68D6; --color-accent-hover: #2559C0;      /* the ONE signature hue */
   --color-accent-contrast: #FFFFFF; --color-accent-soft: #E7EEFB;
 }
 /* ---- dark: the @media block follows the OS unless the user forced light ---- */

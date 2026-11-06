@@ -14,7 +14,7 @@
 .notepad__head { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto;
   padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line); }
 .notepad__title { font-family: var(--font-grain); font-size: var(--text-xs); text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--ink-faint); margin-right: auto; }
+  letter-spacing: 0.06em; color: var(--ink-muted); margin-right: auto; }
 .notepad__toggle, .notepad__commit { cursor: pointer; font: inherit; font-size: var(--text-xs);
   color: var(--color-fg); background: transparent; border: 1px solid var(--color-line);
   border-radius: var(--radius-sm); padding: 2px var(--space-2); }
@@ -37,7 +37,7 @@
 .notepad__body { display: flex; flex-direction: column; gap: var(--space-3); }
 .notepad__body:empty::after,
 .notepad__body:not(:has(.notepad__entry))::after {
-  content: "Nothing noted yet."; color: var(--ink-faint); font-style: italic; }
+  content: "Nothing noted yet."; color: var(--ink-muted); font-style: italic; }
 /* min-width:0 lets the entry shrink below its content's intrinsic width (a flex child won't by
    default), and overflow-wrap breaks a long unbroken token instead of forcing the whole pane wide —
    together they stop a long AI line or pasted URL from giving the panel a horizontal scrollbar. */
@@ -59,6 +59,8 @@
 .notepad__source { display: block; width: 100%; resize: none; box-sizing: border-box;
   background: var(--color-bg); border: 0; outline: none;
   color: var(--color-fg); font-family: var(--font-grain); font-size: var(--text-sm); line-height: 1.6; }
-.notepad__source::placeholder { color: var(--ink-faint); }
+/* WCAG 2.4.7: the borderless source still owes a visible focus ring when reached by keyboard. */
+.notepad__source:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.notepad__source::placeholder { color: var(--ink-muted); }
 
 @media (prefers-reduced-motion: reduce) { .notepad__body, .notepad__source { scroll-behavior: auto; } }

@@ -15,7 +15,7 @@
   line-height: var(--leading-tight); color: var(--ink);
 }
 .stat__label { font-size: var(--text-sm); color: var(--color-muted); }
-.stat__sub { font-size: var(--text-xs); color: var(--ink-faint); }
+.stat__sub { font-size: var(--text-xs); color: var(--ink-muted); }
 
 /* ---- tone (attribute) — ink-level + border weight, NOT hue ----
    default : the calm baseline (a healthy/positive count needs no shouting).
@@ -23,8 +23,8 @@
    bad     : draws the eye monochromatically — a solid-ink border + full-ink value.
    muted   : a context/secondary count (skipped, pending, a total) recedes to faint. */
 .stat[data-tone="bad"] { border-color: var(--ink); }
-.stat[data-tone="muted"] .stat__value { color: var(--ink-faint); }
-.stat[data-tone="muted"] .stat__label { color: var(--ink-faint); }
+.stat[data-tone="muted"] .stat__value { color: var(--ink-muted); }
+.stat[data-tone="muted"] .stat__label { color: var(--ink-muted); }
 
 /* ---- AI / in-transit: the non-text grain, same vocabulary as the button/field/badge
    (AI-INTERFACE §5). A tile whose number is mid-update wears the dashed "terminal" edge; a

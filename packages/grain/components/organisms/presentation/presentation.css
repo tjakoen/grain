@@ -134,15 +134,22 @@
 
 .presentation__dots {
   position: absolute; left: calc(var(--u) * 11.7); bottom: calc(var(--u) * 3.4);
-  display: flex; gap: calc(var(--u) * 0.85); align-items: center;
+  display: flex; gap: 0; align-items: center;
+  margin-left: calc((24px - var(--u) * 0.62) / -2);   /* the first dot still lines up with the text */
 }
+/* WCAG 2.5.8: the button is a 24px target and the dot is drawn inside it, so the row looks the
+   same and every dot is still easy to hit. The dot is a control, so it uses muted ink (1.4.11). */
 .presentation__dot {
-  width: calc(var(--u) * 0.62); height: calc(var(--u) * 0.62); border-radius: 50%;
-  background: var(--ink-faint); border: 0; padding: 0; cursor: pointer;
+  display: grid; place-items: center; width: max(24px, calc(var(--u) * 1.47)); height: 24px;
+  background: transparent; border: 0; padding: 0; cursor: pointer; border-radius: 50%;
+}
+.presentation__dot::before {
+  content: ""; width: calc(var(--u) * 0.62); height: calc(var(--u) * 0.62); border-radius: 50%;
+  background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-muted);   /* unseen: a ring */
   transition: transform 0.24s ease, background 0.24s ease;
 }
-.presentation__dot[data-seen] { background: var(--color-muted); }
-.presentation__dot[data-now] { background: var(--color-accent); transform: scale(1.9); }
+.presentation__dot[data-seen]::before { background: var(--color-muted); }
+.presentation__dot[data-now]::before { background: var(--color-accent); transform: scale(1.9); }
 .presentation__dot:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
 
 
@@ -157,7 +164,7 @@
   z-index: 1;
 }
 .presentation__meta, .presentation__hint, .presentation__legend {
-  margin: 0; font-size: calc(var(--u) * 1.4); color: var(--ink-faint);
+  margin: 0; font-size: calc(var(--u) * 1.4); color: var(--ink-muted);
   display: flex; gap: calc(var(--u) * 2.2); align-items: baseline; min-width: 0;
 }
 .presentation__hint { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -242,7 +249,7 @@
 .presenter__next h3 { font-size: 0.95rem; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--color-muted); margin: 0 0 var(--space-2); }
 .presenter__next p { color: var(--color-muted); }
-.presenter__hint { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: var(--ink-faint);
+.presenter__hint { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: var(--ink-muted);
   letter-spacing: 0.08em; text-transform: uppercase; }
 
 

@@ -33,10 +33,12 @@ caps the DOM at 80 rows. CSS-only (no `.html`).
 Each `log` op appends one row (built by `timelineEntryHtml`):
 
 ```html
+<ol class="timeline__feed">
 <li class="timeline__entry" data-provenance="ai" data-kind="response" data-seq="4">
   <span class="timeline__who">ai</span>
   <span class="timeline__mark">✓</span>
   <span class="timeline__verb">chat.send</span>
   <span class="timeline__detail">2 ops</span>
 </li>
+</ol>
 ```

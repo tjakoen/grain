@@ -36,10 +36,10 @@ untouched.
 ```html
 <div class="assistant" data-mode="chat">
   <div class="assistant__head"><span>Assistant</span>
-    <nav class="assistant__modes" aria-label="Panel mode">
-      <button type="button" data-shell-mode="chat" aria-selected="true">Chat</button>
-      <button type="button" data-shell-mode="catalog" aria-selected="false">Catalog</button>
-    </nav>
+    <div class="assistant__modes" role="tablist" aria-label="Panel mode">
+      <button type="button" role="tab" data-shell-mode="chat" aria-selected="true">Chat</button>
+      <button type="button" role="tab" data-shell-mode="catalog" aria-selected="false">Catalog</button>
+    </div>
   </div>
   <div class="assistant__pane" data-pane="chat">…log + composer…</div>
   <div class="assistant__pane" data-pane="catalog" hidden>…anything…</div>

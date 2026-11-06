@@ -18,7 +18,7 @@
      scale moves it too. */
   min-height: calc(var(--text-base) * var(--leading-relaxed) * 4 + var(--space-2) * 2);
 }
-.field__textarea::placeholder { color: var(--ink-faint); }
+.field__textarea::placeholder { color: var(--ink-muted); }
 /* focus ring; data-force parallel lets the catalog show the state statically (same pattern as
    b-input) — never `autofocus`, which would steal focus + scroll the catalog on load. */
 .field__textarea:focus-visible, .field__textarea[data-force~="focus"] { outline: 2px solid var(--color-accent); outline-offset: 1px; }

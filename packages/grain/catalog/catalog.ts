@@ -173,7 +173,7 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
       ${p.flat ? `<p class="panel__flat">Source only — this one owns the whole window, so a panel cannot host it. Open a real one.</p>` : `<div class="panel__live">${liveSafe(p.code)}</div>`}
       <div class="panel__src">
         <button class="panel__copy" type="button">Copy</button>
-        <pre><code>${esc(p.code)}</code></pre>
+        <pre tabindex="0"><code>${esc(p.code)}</code></pre>
       </div>
     </figure>`;
   }

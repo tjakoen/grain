@@ -63,8 +63,10 @@
 .console__prompt { color: var(--color-muted); flex: 0 0 auto; }
 .console__cmd { flex: 1; min-width: 0; background: transparent; border: 0; padding: 0; margin: 0;
   color: var(--color-fg); font-family: var(--font-smooth); font-size: var(--text-sm); }
-.console__cmd::placeholder { color: var(--ink-faint); }
+.console__cmd::placeholder { color: var(--ink-muted); }
 .console__cmd:focus { outline: none; }
+/* WCAG 2.4.7 and 1.4.1: a prompt that only changes colour is not enough, so the row also takes a ring. */
+.console__input:focus-within { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 .console__input:focus-within .console__prompt { color: var(--color-accent); }
 
 /* the chat's mid-run "thinking" box: a compact indicator + a small LIVE PREVIEW of the terminal
@@ -73,7 +75,7 @@
   border: 1px dashed var(--ink-faint); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
   background: color-mix(in srgb, var(--ink) 4%, transparent); }
 .chat-thinking__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); }
-.chat-thinking__who { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+.chat-thinking__who { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
 /* compact icon button (saves space in the run-time thinking box) */
 .chat-thinking__toggle { cursor: pointer; font: inherit; color: var(--color-fg);
   display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; padding: 0;

@@ -10,8 +10,10 @@
 // open/close hooks, the lazy iframe load (base, unconditional), and the hover/tap bridge (enhanced,
 // gated on the demo root existing).
 //
-// It maps each rendered CSS class to its catalog section slug (the .md title slug — stable for
-// grain's components). The catalog exposes a "single" mode (data-peek-single + .is-peek-active,
+// It maps each rendered CSS class to its catalog section slug. The lookup is read from the loaded
+// catalog itself: a class matches an entry whose slug equals it, or whose title does once a
+// trailing "(source)" is dropped, which is how a consumer's own components ("cv-entry (portfolio)")
+// get found. The hand MAP below only holds the aliases where the class and the slug differ. The catalog exposes a "single" mode (data-peek-single + .is-peek-active,
 // driven here via window.__catSetActive). The bridge adapts to the pointer: with a HOVERING
 // pointer it's a hover-reveal in single mode (one entry at a time, cross-fading). On a COARSE
 // pointer (touch, no hover) a finger can't hover, so the same usage→specimen link becomes a TAP:
@@ -34,16 +36,40 @@
   // on touch it would be undrivable, so there we leave the full scrollable catalog.
   const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-  // rendered CSS class → catalog slug. A hand-maintained BRIDGE (the rendered class often differs
-  // from the slug: "icon-btn" → "icon-button", "field" → "input"), so keep it in sync when a
-  // component's class or title changes. A drift test (catalog-peek.test.ts) fails if a slug here
-  // stops matching a real component. Innermost match wins (hover the glyph → Icon; the row → Nav item).
+  // ALIASES: rendered CSS class → catalog slug, only where the two differ ("icon-btn" →
+  // "icon-button", "field" → "input"). Every other class resolves through the index built from the
+  // loaded catalog (indexCatalog below), so a new component reveals on hover with no edit here.
+  // Identity rows are kept so the bridge still works in the moment before the catalog loads. A
+  // drift test (catalog-peek.test.ts) fails if a slug here stops matching a real component.
+  // Innermost match wins (hover the glyph → Icon; the row → Nav item).
   const MAP = {
     "action-badge": "action-badge", "icon-btn": "icon-button", "nav-item": "nav-item",
     "tab-bar": "tab-bar", "side-rail": "side-rail", "app-shell": "app-shell",
     "chat-message": "chat-message", "field": "input", "badge": "badge",
     "kbd": "keyboard-hint", "list": "list", "tab": "tab", "btn": "button",
     "icon": "icon", "t": "typography",
+  };
+
+  // class → slug, filled from the embedded catalog's own entries once it loads.
+  const INDEX = new Map();
+  const titleKey = (t) => t.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function indexCatalog(doc) {
+    for (const d of doc.querySelectorAll(".cat-doc[id]")) {
+      if (!INDEX.has(d.id)) INDEX.set(d.id, d.id);
+      const h = d.querySelector("h1, h2");
+      const key = h && titleKey(h.textContent || "");
+      if (key && !INDEX.has(key)) INDEX.set(key, d.id);
+    }
+  }
+  // the slug for one element, or null: an alias first, then the catalog's own index
+  const slugFor = (el) => {
+    if (!el.classList) return null;
+    for (const cls of el.classList) {
+      if (Object.prototype.hasOwnProperty.call(MAP, cls)) return MAP[cls];
+      const hit = INDEX.get(cls);
+      if (hit) return hit;
+    }
+    return null;
   };
 
   const isOpen = () => !pane.hidden;
@@ -74,6 +100,7 @@
   // on touch we skip single mode and leave the full scrollable catalog.
   frame.addEventListener("load", () => {
     // touch: no single mode — honour a tap that fired before the frame finished loading.
+    try { if (frame.contentDocument) indexCatalog(frame.contentDocument); } catch { /* cross-origin — aliases only */ }
     if (!canHover) { if (pendingTouch) { scrollToInFrame(pendingTouch); pendingTouch = null; } return; }
     try {
       const doc = frame.contentDocument;
@@ -119,7 +146,8 @@
     if (!canHover || !isOpen()) return;
     let el = e.target;
     while (el && el !== demo) {
-      if (el.classList) for (const cls in MAP) if (el.classList.contains(cls)) { peek(MAP[cls]); return; }
+      const slug = slugFor(el);
+      if (slug) { peek(slug); return; }
       el = el.parentElement;
     }
     // No component under the pointer → HOLD the current reveal (don't switch on prose/gaps). This
@@ -144,7 +172,7 @@
     if (e.target.closest("a,button,input,textarea,select,label,[data-action],[data-peek]")) return;
     let el = e.target, slug = null;
     while (el && el !== demo && !slug) {
-      if (el.classList) for (const cls in MAP) if (el.classList.contains(cls)) { slug = MAP[cls]; break; }
+      slug = slugFor(el);
       el = el.parentElement;
     }
     if (!slug) return;

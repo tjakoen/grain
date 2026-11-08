@@ -17,8 +17,17 @@ import { createSpotlight } from "/scripts/ai-spotlight.js";
 (() => {
   "use strict";
 
-  // A stable session id for this tab; the server pushes results back on it.
+  // A stable session id for this tab; the server pushes results back on it. A server that issues
+  // and validates ids can hand one in (a data attribute or a global, set before this script runs);
+  // the per-tab UUID stays the fallback for a fully static site, so a page with no server still
+  // works. The id is validated here too, because it ends up in a query string: 128 safe characters
+  // or it is ignored and the UUID is used.
+  const provided =
+    (document.documentElement.dataset.deskSession || "") ||
+    (document.body.dataset.deskSession || "") ||
+    (typeof window.__DESK_SESSION__ === "string" ? window.__DESK_SESSION__ : "");
   const session =
+    (provided.length > 0 && provided.length <= 128 && /^[A-Za-z0-9_-]+$/.test(provided) && provided) ||
     (crypto && crypto.randomUUID && crypto.randomUUID()) ||
     "s-" + Math.random().toString(36).slice(2) + performance.now();
 

@@ -20,6 +20,19 @@ function cssFiles(dir: string, out: string[] = []): string[] {
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const FUNC = /\b(rgb|rgba|hsl|hsla)\(/;
 
+test("the dense type steps sit below the caption step, in order", () => {
+  const css = readFileSync(join(import.meta.dir, "../styles/variables.css"), "utf8");
+  const rem = (name: string) => {
+    const m = css.match(new RegExp(`--${name}:\\s*([\\d.]+)rem`));
+    return m ? Number(m[1]) : Number.NaN;
+  };
+  expect(rem("text-3xs")).toBe(0.625);
+  expect(rem("text-2xs")).toBe(0.6875);
+  expect(rem("text-xs")).toBe(0.8125);
+  expect(rem("text-3xs")).toBeLessThan(rem("text-2xs"));
+  expect(rem("text-2xs")).toBeLessThan(rem("text-xs"));
+});
+
 test("no component stylesheet hardcodes a color (tokens only, ever)", () => {
   const offenders: string[] = [];
   for (const f of cssFiles(import.meta.dir)) {

@@ -82,6 +82,11 @@
   --font-weight-bold: 700;         /* reserved for rare extra punch */
 
   /* type scale (mobile-first, rem @ 16px) — fluid display via clamp */
+  /* Dense instrument steps, below the caption. Only for packed panels and meters, never body copy,
+     and only where the foreground clears 4.5:1 at that size; a hint that cannot be read is not a
+     hint. The Nest panel is the surface these were added for (2026-11-08). */
+  --text-3xs: 0.625rem;   /* 10px dense instrument: meter hints, micro-labels */
+  --text-2xs: 0.6875rem;  /* 11px dense instrument: panel labels, captions */
   --text-xs:  0.8125rem;  /* 13px caption */
   --text-sm:  0.875rem;   /* 14px label / eyebrow */
   --text-base: 0.9375rem; /* 15px body */

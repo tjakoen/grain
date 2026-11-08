@@ -20,6 +20,14 @@ test("ai-dispatch.js registers a case for every RenderOpKind contract.ts declare
   for (const kind of kinds) expect(dispatch).toContain(`case "${kind}":`);
 });
 
+test("the client takes a server-issued session id before falling back to the per-tab UUID", async () => {
+  const dispatch = await read("./ai-dispatch.js");
+  expect(dispatch).toContain("dataset.deskSession");
+  expect(dispatch).toContain("__DESK_SESSION__");
+  expect(dispatch.indexOf("dataset.deskSession")).toBeLessThan(dispatch.indexOf("crypto.randomUUID"));
+  expect(dispatch).toContain("provided.length <= 128");
+});
+
 test("SAFE_NAV_HREF in ai-dispatch.js matches contract.ts's isSafeNavigateHref regex verbatim", async () => {
   const [dispatch, contract] = await Promise.all([read("./ai-dispatch.js"), read("../ai/contract.ts")]);
   const dispatchRe = dispatch.match(/const SAFE_NAV_HREF = (\/.*\/);/)?.[1];

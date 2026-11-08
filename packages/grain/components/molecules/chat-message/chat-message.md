@@ -50,3 +50,26 @@ buttons render clean, because clicking them is the **human's** move, not AI-auth
 
 Every verb here must exist in `ai/contract.ts` and walk the usual alignment row — an action button
 in the chat is a door client like any other, so a new verb needs its reasoner branch + tests.
+
+## Consent notice (the desk asks before it stores anything)
+
+A consent question is not an AI offer, so it carries no `data-action`: the app owns the policy and
+the endpoint. It is still an AI message (`data-role="ai"`, grain), because the desk asks it, and its
+buttons stay clean because choosing is the human's move. Use the actions row with
+`data-consent="allow|deny"`, name what is stored and for how long, and make the decline real.
+
+```html
+<div class="chat-message" data-role="ai" data-grade="grain" data-consent-notice>
+  <span class="chat-message__who">GRAIN</span>
+  <span class="chat-message__body">May the desk remember this conversation on this device with a cookie? It stores a session id for 30 days. Not now loses only the remembering.</span>
+  <div class="chat-message__actions">
+    <button class="btn" data-variant="soft" data-consent="allow" type="button">Remember this chat</button>
+    <button class="btn" data-variant="outline" data-consent="deny" type="button">Not now</button>
+  </div>
+</div>
+```
+
+The app sets the server-issued id on `data-desk-session` (see `scripts/ai-dispatch.js`) or as
+`window.__DESK_SESSION__` before the dispatcher runs, handles the two buttons, sets the cookie only
+on allow, and dismisses the notice after either choice. A static site with no consent endpoint
+simply never renders the notice.

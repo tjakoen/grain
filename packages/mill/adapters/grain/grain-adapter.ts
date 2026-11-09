@@ -15,6 +15,7 @@
 // Grade guardrail (mill/PLAN.md): output is clean/human — never grain, never data-commit.
 // The layout stamps `data-grade="smooth"` as a positive assertion; renderGrainDocument
 // verifies it.
+import { dateRailBody, wantsDateRail } from "./date-rail.ts";
 import type {
   RenderAdapter, BlockHandlers, InlineHandlers, LayoutFn, Frontmatter, RenderResult,
 } from "../../core/types.ts";
@@ -109,8 +110,12 @@ const defaultLayout: LayoutFn = ({ title, frontmatter, body }) => {
     : "";
   const head = (eyebrow || heading || lede || badges)
     ? `<header class="note__head">${eyebrow}${heading}${lede}${badges}<hr class="rule"></header>` : "";
+  // `layout: timeline` opts the note into GRAIN's date rail (see date-rail.ts).
+  const rail = wantsDateRail(frontmatter);
+  const content = rail ? dateRailBody(body) : body;
+  const layoutAttr = rail ? ` data-layout="timeline"` : "";
   // data-grade="smooth" = a positive human-grade assertion (the guardrail; only the AI grains).
-  return `<article class="note" data-grade="smooth">${head}${body}</article>`;
+  return `<article class="note"${layoutAttr} data-grade="smooth">${head}${content}</article>`;
 };
 
 export interface GrainAdapterOptions {

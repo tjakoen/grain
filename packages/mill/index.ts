@@ -6,6 +6,7 @@ export {
   createGrainAdapter, renderGrainDocument, externalLinkAttrs,
 } from "./adapters/grain/grain-adapter.ts";
 export type { GrainAdapterOptions } from "./adapters/grain/grain-adapter.ts";
+export { dateRailBody, wantsDateRail } from "./adapters/grain/date-rail.ts";
 export { createMillRoutes, dirSource, packageDocsSource } from "./serve.ts";
 export { prepareDiagrams, withDiagrams, diagramKey, DIAGRAM_LANGS } from "./diagrams/prepare.ts";
 export type { DiagramRenderer } from "./diagrams/prepare.ts";

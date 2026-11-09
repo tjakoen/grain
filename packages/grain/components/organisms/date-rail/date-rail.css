@@ -1,0 +1,67 @@
+/* organisms/date-rail: a left-hand rail of dates for a note that tells a dated story.
+   Each .date-rail__section pairs a date with a stretch of prose. The date is position: sticky
+   inside its own section, so it holds at the top while the reader is in that section and is
+   carried off by the section's end, which is exactly when the next date arrives. No scroll JS:
+   the handover is the browser's containing-block rule, nothing more.
+   No transitions or animation, so there is nothing for prefers-reduced-motion to switch off.
+   Tokens only, no shadows: the rail is one hairline in --color-line. */
+.date-rail {
+  --date-rail-width: 7.5rem;
+  --date-rail-top: var(--space-6);
+  position: relative;
+}
+/* The hairline runs the full height of the rail, behind every section, so the bar reads as one
+   continuous line rather than a stack of segments. */
+.date-rail::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--date-rail-width) - 1px);
+  border-inline-start: 1px solid var(--color-line);
+}
+.date-rail__section {
+  display: grid;
+  grid-template-columns: var(--date-rail-width) minmax(0, 1fr);
+  column-gap: var(--space-6);
+}
+.date-rail__date {
+  position: sticky;
+  top: var(--date-rail-top);
+  align-self: start;
+  margin: 0;
+  padding-block: var(--space-2);
+  padding-inline-end: var(--space-4);
+  text-align: end;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+  background: var(--color-bg);
+}
+.date-rail__body { min-width: 0; }
+.date-rail__body > h2:first-child { margin-top: var(--space-2); }
+.date-rail__body > p, .date-rail__body > ul, .date-rail__body > ol, .date-rail__body > blockquote {
+  line-height: var(--leading-relaxed);
+}
+.date-rail__section + .date-rail__section { padding-top: var(--space-6); }
+/* A note on the rail needs the rail's width on top of its reading measure. */
+.note[data-layout="timeline"] { max-width: calc(72ch + var(--date-rail-width, 7.5rem)); }
+
+/* Phone width: the rail folds away and each date becomes a small label above its heading. */
+@media (max-width: 768px) {
+  .date-rail::before { content: none; }
+  .date-rail__section { display: block; }
+  .date-rail__date {
+    position: static;
+    padding: 0;
+    text-align: start;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    background: none;
+  }
+  .date-rail__date:empty { display: none; }
+  .date-rail__body > h2:first-child { margin-top: var(--space-1); }
+  .note[data-layout="timeline"] { max-width: 72ch; }
+}

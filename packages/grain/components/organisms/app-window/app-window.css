@@ -102,10 +102,10 @@
    a demo-only feature. `.app-shell.app-window` and `.window-bar`, though, are DESCENDANTS of body,
    not body itself, so they're free to follow the container — converted, so the toggle's preview at
    least drops the frame border/shadow/title-bar even though the backdrop margin lingers. ---- */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .app-window-backdrop { padding: 0; }
 }
-@container shell-frame (max-width: 768px) {
+@container shell-frame (max-width: 640px) {
   .app-shell.app-window { border: 0; border-radius: 0; box-shadow: none; }
   .window-bar { display: none; }
 }

@@ -115,6 +115,14 @@
   --border: 1px solid var(--hairline);     /* buttons, hard edges you tap */
 
   --content-max: 768px;
+
+  /* The shell's layout breakpoints, the one named set. Below --bp-phone the shell is the phone
+     layout (one column, rail and assistant as drawers); up to --bp-narrow it keeps three columns
+     with a tighter assistant; above that it is the full desk. Container and media queries cannot
+     read a custom property, so each query writes the literal value, and app-shell.test.ts holds
+     every shell-frame query in GRAIN to exactly these two. Scripts read the tokens directly. */
+  --bp-phone: 640px;
+  --bp-narrow: 1100px;
   --page-pad: clamp(1.25rem, 5vw, 2.5rem);
 
   /* ---- Layer 2: semantic aliases (the only tokens components touch) -------

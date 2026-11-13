@@ -7,16 +7,16 @@
   const shell = document.querySelector(".app-shell");
   if (!shell) return;
 
-  const mobile = window.matchMedia("(max-width: 768px)");
+  const mobile = window.matchMedia("(max-width: 640px)");
   // "Effective mobile" is a CONTAINER question, not a viewport one. The mobile drawer/sheet LAYOUT is
-  // driven by `@container shell-frame (max-width: 768px)` on <body> (app-shell.css), which the
+  // driven by `@container shell-frame (max-width: 640px)` on <body> (app-shell.css), which the
   // viewport-toggle fires by clamping body's width — WITHOUT changing the real window, so
   // `mobile.matches` (a viewport media query) stays false and every behaviour gated on it silently
   // no-ops: the grab bar can't raise the sheet, the mode tabs can't reach the catalog, the rail
   // hamburger collapses instead of opening the drawer (owner report: "chat + catalog broken when the
   // viewport is toggled"). Gate on the SAME thing the CSS does — the shell-frame container's
   // inline-size (= body's width) — so JS and layout agree in both a real narrow window and the toggle.
-  const isMobile = () => mobile.matches || document.body.getBoundingClientRect().width <= 768;
+  const isMobile = () => mobile.matches || document.body.getBoundingClientRect().width <= 640;
   const KEY = "grain.shell.rail-collapsed";
 
   const setCollapsed = (v) => {

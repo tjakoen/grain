@@ -112,7 +112,7 @@
     const MARGIN = 8;
     // Narrow viewport: a full-width sheet dropping from just under the field. A
     // compact trigger button must not squeeze the palette to its own width.
-    if (vw <= 768) {
+    if (vw <= 640) {
       root.style.setProperty("--cmdk-top", `${r.bottom + 4}px`);
       root.style.setProperty("--cmdk-left", `${MARGIN}px`);
       root.style.setProperty("--cmdk-width", `${vw - MARGIN * 2}px`);

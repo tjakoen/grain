@@ -27,7 +27,7 @@
    (app-shell.css establishes the container on `<body>`) so this fires off BOTH a real narrow
    window and the shell's viewport-toggle clamp, not just the real one — `.status-bar` is a
    descendant of body, never body itself, so it's legal to query here (see app-shell.css). */
-@container shell-frame (max-width: 768px) {
+@container shell-frame (max-width: 640px) {
   .status-bar { gap: var(--space-4); }
   .status-bar [data-status-optional] { display: none; }
 }

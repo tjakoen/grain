@@ -180,9 +180,10 @@
   position: absolute; right: calc(var(--u) * 11.7); bottom: calc(var(--u) * 2.4);
   display: flex; align-items: center; gap: calc(var(--u) * 0.8);
 }
+/* WCAG 2.5.8: like the dots, a control never shrinks under a 24px target when the deck scales down. */
 .presentation__ctl {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4); padding: 0 calc(var(--u) * 1.1);
+  min-width: max(24px, calc(var(--u) * 3.4)); height: max(24px, calc(var(--u) * 3.4)); padding: 0 calc(var(--u) * 1.1);
   background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm);
   color: var(--color-muted); font: inherit; font-size: calc(var(--u) * 1.5); line-height: 1; cursor: pointer;
   transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;

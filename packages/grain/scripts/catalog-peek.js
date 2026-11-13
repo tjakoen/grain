@@ -79,7 +79,7 @@
   const modeTab = (m) => shell.querySelector(`.assistant__modes [data-shell-mode="${m}"]`);
   const setOpen = (v) => {
     modeTab(v ? "catalog" : "chat")?.click();
-    if (v && matchMedia("(max-width: 768px)").matches) shell.setAttribute("data-aside-open", "");
+    if (v && matchMedia("(max-width: 640px)").matches) shell.setAttribute("data-aside-open", "");
   };
   // [data-peek] hooks: "open" forces open, "close" forces closed, "toggle" (default) flips.
   // preventDefault so a hook can be a real <a> (the Catalog tab is href="/grain" for no-JS nav /

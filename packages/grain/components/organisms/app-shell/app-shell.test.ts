@@ -35,13 +35,13 @@ test("app-shell.css establishes the shell-frame container on <body>, not on .app
 test("app-shell.css's own layout breakpoints are @container, not @media (the self-query trap)", () => {
   expect(appShellCss).not.toMatch(MEDIA_LAYOUT_BP);
   expect(appShellCss).toMatch(/@container shell-frame \(max-width: 1100px\)/);
-  expect(appShellCss).toMatch(/@container shell-frame \(max-width: 768px\)/);
+  expect(appShellCss).toMatch(/@container shell-frame \(max-width: 640px\)/);
 });
 
 test("sidebar-panel + status-bar mobile rules follow the shell's container, not a stale @media", () => {
   for (const [name, css] of [["sidebar-panel.css", sidebarPanelCss], ["status-bar.css", statusBarCss]] as const) {
     expect(css, `${name} still has a real-viewport-only layout @media`).not.toMatch(MEDIA_LAYOUT_BP);
-    expect(css, `${name} lost its @container shell-frame mobile rule`).toMatch(/@container shell-frame \(max-width: 768px\)/);
+    expect(css, `${name} lost its @container shell-frame mobile rule`).toMatch(/@container shell-frame \(max-width: 640px\)/);
   }
 });
 
@@ -58,7 +58,7 @@ test("app-window.css keeps exactly the documented self-query exception, converts
   const mediaBody = afterMedia.slice(0, afterMedia.indexOf("}") + 1);
   expect(mediaBody).toMatch(/\.app-window-backdrop\s*\{\s*padding:\s*0/);
   expect(mediaBody).not.toMatch(/\.app-shell\.app-window|\.window-bar/);
-  expect(appWindowCss).toMatch(/@container shell-frame \(max-width: 768px\)\s*\{[^}]*\.app-shell\.app-window/);
+  expect(appWindowCss).toMatch(/@container shell-frame \(max-width: 640px\)\s*\{[^}]*\.app-shell\.app-window/);
   expect(appWindowCss).toMatch(/\.window-bar\s*\{\s*display:\s*none/);
 });
 
@@ -71,4 +71,23 @@ test("the viewport-toggle clamps body[data-viewport], not .app-shell[data-viewpo
 
 test("reduced-motion queries stay real @media (they read a user preference, not a size)", () => {
   expect(appShellCss).toMatch(/@media \(prefers-reduced-motion: reduce\)/);
+});
+
+// One named breakpoint set (variables.css: --bp-phone, --bp-narrow). Every shell-frame container
+// query and every width media query in GRAIN's components and scripts must use one of those two
+// values, so a component can never disagree with the shell about which layout it is in.
+test("every shell breakpoint in GRAIN is one of the named set", () => {
+  const vars = read("styles/variables.css");
+  const named = new Set([...vars.matchAll(/--bp-(?:phone|narrow):\s*(\d+px);/g)].map((m) => m[1]));
+  expect([...named].sort()).toEqual(["1100px", "640px"]);
+  const { readdirSync } = require("node:fs") as typeof import("node:fs");
+  const walk = (dir: string): string[] => readdirSync(join(root, dir), { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? walk(join(dir, e.name)) : /\.(css|js)$/.test(e.name) ? [join(dir, e.name)] : []);
+  const offenders: string[] = [];
+  for (const file of [...walk("components"), ...walk("scripts")]) {
+    const src = read(file);
+    for (const m of src.matchAll(/(?:@container shell-frame\s*|@media\s*|matchMedia\(["'`])\((?:max|min)-width:\s*(\d+px)\)/g))
+      if (!named.has(m[1])) offenders.push(`${file}: ${m[0]}`);
+  }
+  expect(offenders).toEqual([]);
 });

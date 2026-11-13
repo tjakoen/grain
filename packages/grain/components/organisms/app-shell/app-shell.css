@@ -112,7 +112,7 @@
 /* ---- CONTAINER (2026-07-14 responsive-polish fix): the two layout breakpoints below used to be
    `@media`, which reads the actual BROWSER viewport — so the viewport-toggle's cosmetic max-width
    clamp on `.app-shell` (see the bottom of this file) never made them fire; a squeezed real window
-   between 768-1100px also just squeezed the fixed rail/aside tracks instead of collapsing (the
+   between 640-1100px also just squeezed the fixed rail/aside tracks instead of collapsing (the
    `minmax(0,1fr)` main column went to zero, not the layout).
 
    Fix: `.app-shell` cannot query an `@container` condition on ITSELF (the CSS containment spec:
@@ -136,7 +136,7 @@ body:has(.app-shell) { container-type: inline-size; container-name: shell-frame;
 
 /* ---- mobile: single column; the rail becomes an off-canvas drawer. The aside (assistant)
    becomes a bottom sheet (sidebar-panel.css, which loads after this file and wins the tie). ---- */
-@container shell-frame (max-width: 768px) {
+@container shell-frame (max-width: 640px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
     /* the last row only reserves room for the bottom sheet's peeking head (sidebar-panel.css),

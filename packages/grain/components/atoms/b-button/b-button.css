@@ -29,7 +29,7 @@
 /* On a phone the small button's dense min-height:0 lands ~30px - below the touch
    target floor (DESIGN-SYSTEM §7). Restore a comfortable tap size at the narrow
    breakpoint without fattening the dense desktop rows. */
-@media (max-width: 768px) { .btn[data-size="sm"] { min-height: 2.5rem; } }
+@media (max-width: 640px) { .btn[data-size="sm"] { min-height: 2.5rem; } }
 
 /* ---- variants (attribute). Monochrome: the difference is fill, not hue ---- */
 .btn[data-variant="soft"]    { background: var(--paper-2); }

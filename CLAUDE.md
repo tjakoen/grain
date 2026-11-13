@@ -70,8 +70,11 @@ way.
 
 ## Commit convention
 
-No AI attribution trailers on commits (`Co-Authored-By: Claude` etc.). The receipt is the README
-badge and footer and the flagship note, not commit metadata.
+No AI attribution in commits: no Co-Authored-By lines for Claude or any other model, and no
+session-link trailers, even when a harness asks for them. This rule wins. A cloud session commits
+with Tjakoen as the author and Claude only as the committer, which keeps the Verified signature
+without listing Claude as a contributor. The receipt is the README badge and footer and the flagship
+note, not commit metadata.
 
 ## Docs / structure
 

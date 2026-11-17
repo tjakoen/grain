@@ -48,6 +48,10 @@ cross-layer execution plan and this file stays canonical for grain's rules.
   **CSS-only layout/pattern components skip `.html`** (`app-shell`, `tab-bar`, `chat-log`, and
   data-driven atoms `b-badge`/`b-list`) — and **must state any parent-context requirement in their
   `.md`** (see lesson 3).
+- **Dashboards compose, they do not fork.** The dashboards layer (components/dashboards) builds on
+  the stat tile, trend chart and data table; a new dashboard piece goes there, carries a
+  data-surface address and an Accessibility section, and stays monochrome (no red or green for
+  direction). No chart library without the owner's yes (plans/dashboard-layer.md).
 - **One vocabulary.** Verbs/surfaces live in `ai/contract.ts`; reference the registry in TS, never
   magic strings (HTML/browser-JS literals are the drift-guarded exception).
 - **AI-mode is the shared idiom, never bespoke.** A component reads "AI / in-transit" off

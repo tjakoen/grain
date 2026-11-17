@@ -1,0 +1,9 @@
+/* dashboards/delta — the change beside a number: a direction glyph, the change, a one-word
+   baseline. Monochrome: direction is the glyph and the words, never red or green, because whether
+   "up" is good depends on the measure and GRAIN assigns no meaning to direction. A delta on a
+   base too small for a percentage to be honest says "was 1" in a quiet tone instead. */
+.delta { display: inline-flex; align-items: baseline; gap: var(--space-1); font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium); color: var(--ink); font-variant-numeric: tabular-nums; }
+.delta__glyph { font-size: 0.8em; }
+.delta__base { font-weight: var(--font-weight-regular); color: var(--color-muted); }
+.delta[data-dir="flat"], .delta[data-small-base] { color: var(--color-muted); }

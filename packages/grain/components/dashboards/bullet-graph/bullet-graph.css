@@ -1,0 +1,15 @@
+/* dashboards/bullet-graph — a bar, a target line and grey qualitative ranges, in place of a
+   radial gauge. Values arrive as fractions of the scale through custom properties (--value,
+   --target, --poor, --fair), so no chart library and no inline colour. The ranges are ink tints,
+   darkest for the worst band, so the bar reads against them in both themes. */
+.bullet { --value: 0; --target: 0; --poor: 0; --fair: 0; position: relative; block-size: var(--space-6); border-radius: var(--radius-sm);
+  background: linear-gradient(to right,
+    var(--ink-faint) 0 calc(var(--poor, 0) * 100%),
+    var(--line-soft) 0 calc(var(--fair, 0) * 100%),
+    var(--paper-2) 0 100%); }
+.bullet__bar { position: absolute; inset-block: 35%; inset-inline-start: 0;
+  inline-size: calc(var(--value, 0) * 100%); background: var(--ink); border-radius: var(--radius-sm); }
+.bullet__target { position: absolute; inset-block: 15%; inline-size: var(--space-1);
+  inset-inline-start: calc(var(--target, 0) * 100% - var(--space-1) / 2); background: var(--ink); }
+.bullet__legend { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-muted);
+  font-variant-numeric: tabular-nums; }

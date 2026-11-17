@@ -1,0 +1,10 @@
+/* dashboards/rank-list — a ranked breakdown. Each row carries a slim share bar along its bottom
+   edge (width = --share, a fraction 0..1) instead of a tinted block behind the whole row, so the
+   names stay on plain paper and the bars compare by length. */
+.rank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.rank-list__row { --share: 0; position: relative; display: flex; justify-content: space-between; gap: var(--space-3);
+  padding-block: var(--space-1) var(--space-2); font-size: var(--text-sm); color: var(--ink); }
+.rank-list__row::after { content: ""; position: absolute; inset-inline-start: 0; inset-block-end: 0;
+  block-size: 3px; inline-size: calc(var(--share, 0) * 100%); background: var(--ink-muted); border-radius: var(--radius-sm); }
+.rank-list__name { min-inline-size: 0; overflow-wrap: anywhere; }
+.rank-list__value { font-variant-numeric: tabular-nums; color: var(--ink); }

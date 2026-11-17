@@ -1,0 +1,14 @@
+/* dashboards/dash-panel — the surface a chart, table or list sits on. A heading, an optional
+   action, and the four states every data panel has: ready, loading (the shared
+   data-commit="pending" idiom), empty, stale. Tone is border weight and ink level, never hue. */
+.dash-panel { display: flex; flex-direction: column; gap: var(--space-3); min-inline-size: 0;
+  padding: var(--space-4); border: var(--border); border-radius: var(--radius-md); background: var(--color-surface); }
+.dash-panel__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.dash-panel__title { margin: 0; font-size: var(--text-base); font-weight: var(--font-weight-medium); color: var(--ink); }
+.dash-panel__action { font-size: var(--text-sm); color: var(--ink); }
+.dash-panel__note { margin: 0; font-size: var(--text-sm); color: var(--color-muted); }
+.dash-panel[data-state="empty"] .dash-panel__note,
+.dash-panel[data-state="error"] .dash-panel__note { color: var(--ink); }
+.dash-panel[data-state="stale"] { border-style: dotted; }
+.dash-panel[data-state="error"] { border-color: var(--ink); }
+.dash-panel[data-commit="pending"], [data-grade="grain"] .dash-panel { border-style: dashed; border-color: var(--ink); }

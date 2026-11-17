@@ -1,0 +1,19 @@
+/* dashboards/dashboard — the page a dashboard sits on: a head that states the period and what the
+   numbers compare against, a KPI strip that ADDS columns as the screen widens (no narrow column
+   floating on a wide monitor), and a panel grid where a panel spans one, two or every column.
+   One column on a phone. Layout only: no colour of its own, so it follows both theme axes. */
+.dash { display: grid; gap: var(--space-6); container-type: inline-size; min-inline-size: 0; }
+.dash__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: var(--space-2) var(--space-4); padding-bottom: var(--space-3); border-bottom: var(--border); }
+.dash__title { margin: 0; font-size: var(--text-xl); font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight); color: var(--ink); }
+.dash__period { margin: 0; font-size: var(--text-sm); color: var(--color-muted); }
+.dash__kpis { display: grid; gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); }
+.dash__grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(var(--dash-cols, 1), minmax(0, 1fr)); }
+.dash__grid > * { min-inline-size: 0; }
+@container (min-width: 40rem) { .dash__grid { --dash-cols: 2; } }
+@container (min-width: 72rem) { .dash__grid { --dash-cols: 3; } }
+@container (min-width: 120rem) { .dash__grid { --dash-cols: 4; } }
+.dash__grid > [data-span="2"] { grid-column: span min(2, var(--dash-cols, 1)); }
+.dash__grid > [data-span="full"] { grid-column: 1 / -1; }

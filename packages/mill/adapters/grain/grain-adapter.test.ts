@@ -40,7 +40,7 @@ test("inline code → .code-inline; links resolve note:slug", () => {
 test("frontmatter drives the note masthead: date, title, tags → badges", () => {
   const { html } = renderGrainDocument(`---\ntitle: On AI\ndate: 2026-07-03\ntags: [ai, design]\n---\nbody`);
   expect(html).toContain(`<h1 class="masthead">On AI</h1>`);
-  expect(html).toContain(`<p class="eyebrow">2026-07-03</p>`);
+  expect(html).toContain(`<p class="byline">2026-07-03</p>`);
   expect(html).toContain(`<span class="badge" data-status="active">ai</span>`);
 });
 

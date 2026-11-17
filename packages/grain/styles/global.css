@@ -45,10 +45,11 @@ body::before {
 h1, h2, h3 { font-weight: var(--font-weight-regular); letter-spacing: -0.01em; text-wrap: balance; }
 p { margin: 0 0 var(--space-4); text-wrap: pretty; }   /* no orphans/ragged breaks — no JS */
 
-/* ---- Masthead (DESIGN-SYSTEM §5): eyebrow → display headline → hairline rule -- */
-.eyebrow { font-size: var(--text-sm); color: var(--color-fg); margin: 0 0 var(--space-2); }
-.eyebrow .name { text-decoration: underline; }
+/* ---- Masthead (DESIGN-SYSTEM §5): display headline → byline → hairline rule ------
+   Context sits BELOW the headline, never above it: no eyebrow. The byline carries name + date. */
 .masthead { font-size: var(--display); line-height: var(--leading-tight); letter-spacing: -0.01em; margin: 0 0 var(--space-3); }
+.byline { font-size: var(--text-sm); color: var(--color-fg); margin: 0 0 var(--space-3); }
+.byline .name { text-decoration: underline; }
 .rule { border: 0; border-bottom: var(--rule); margin: 0 0 var(--space-6); }
 
 /* ---- Section header: label left, underlined action right -------------------- */

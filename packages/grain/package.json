@@ -37,7 +37,8 @@
   ],
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "lint:grain": "bun scripts/grain-lint.ts"
   },
   "devDependencies": {
     "bun-types": "^1.3.14",

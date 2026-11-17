@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>grain-lint fixture: raw-color</title>
+<style>
+  :root { --color-fg: #1d1a16; --color-muted: #5c554c; --color-bg: #f4efe6; --color-accent: #7a4a10;
+          --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-6: 1.5rem; --text-sm: 0.875rem; --display: 2.5rem; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-fg); font: 16px/1.5 Georgia, serif; }
+  main { max-width: 40rem; margin: 0 auto; padding: 0 var(--space-4); }
+  h1, h2, h3 { font-weight: 400; text-wrap: balance; }
+  .masthead { font-size: var(--display); margin: var(--space-6) 0 var(--space-2); }
+  .byline { font-size: var(--text-sm); margin: 0 0 var(--space-3); }
+  .rule { border: 0; border-bottom: 1px solid var(--color-fg); margin: 0 0 var(--space-6); }
+  a { color: var(--color-accent); }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .loud { color: #ff2d55; }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="masthead">A page that reads like a person made it</h1>
+  <p class="byline"><span class="name">Tjakoen Stolk</span> · 17 Nov 2026</p>
+  <hr class="rule">
+  <p class="loud">A colour typed in by hand.</p>
+</main>
+</body>
+</html>

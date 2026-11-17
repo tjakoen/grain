@@ -63,24 +63,36 @@ palette are judged against the same rule in the first lint run.
       portfolio still loads grain 0.1.33 from npm, so its byline styling lands with the next
       grain release; the baselines were taken against the local stylesheet. The slide-eyebrow
       kickers in the talk decks and the presentation organism were left for the first lint run.
-- [ ] Owner approves the starting rule list.
-- [ ] Write the rules as data in grain-lint-rules.ts: id, tier, a one-line description, and a check
+- [x] Owner approves the starting rule list.
+- [x] Write the rules as data in grain-lint-rules.ts: id, tier, a one-line description, and a check
       that runs against the rendered DOM and computed styles.
-- [ ] Build grain-lint.ts on Playwright, which the portfolio already carries: load a URL or file,
+- [x] Build grain-lint.ts on Playwright, which the portfolio already carries: load a URL or file,
       render at 360, 768 and 1280 pixels, run every rule, and print findings grouped by tier with a
       selector for each. Exit non-zero on any Floor finding, or on a Reflex finding without an allow.
-- [ ] Give every finding a fix line that points at GRAIN: the token, component or pattern to use
+- [x] Give every finding a fix line that points at GRAIN: the token, component or pattern to use
       instead, so the agent's correction lands inside the system rather than in fresh CSS.
-- [ ] Add a static mode that runs without a browser in under a second (hardcoded colours, raw
+- [x] Add a static mode that runs without a browser in under a second (hardcoded colours, raw
       spacing values, eyebrow and tracked-caps markup), so it can run on every edit.
 - [ ] Wire the static mode as a PostToolUse hook on edits to GRAIN surfaces in Claude Code and
       Codex, and add the rendered mode to the tour-standard close-out, so an agent runs it before
       calling a rendered change done.
-- [ ] Reuse the existing axe run for contrast and focus rather than writing those rules twice.
-- [ ] Add one fixture page per rule that fails it and one clean page that passes every rule, and
+- [x] Reuse the existing axe run for contrast and focus rather than writing those rules twice.
+- [x] Add one fixture page per rule that fails it and one clean page that passes every rule, and
       test each rule against its pair.
 - [ ] Run it over the catalog and the portfolio routes, fix or allow each finding, and record the
       counts in this plan.
+      First run, 2026-11-17, rendered at 360, 768 and 1280 against the local stylesheet:
+      - Portfolio, 23 routes without the catalog: 121 findings. Floor: contrast-aa 3 (the book
+        category glyphs on /reading, 4.33:1). Reflex: tracked-caps 68, card-run 34,
+        label-above-heading 13. Finish: image-ratio 2, heading-widow 1.
+      - Catalog: 403 findings on the published grain 0.1.33, 203 with this branch's catalog.
+        Reflex: tracked-caps 196 (grade-toggle buttons 100, cat-group headings 64, chat-message
+        speaker 27 and others), label-above-heading 3. Finish: heading-widow 2, image-ratio 2.
+      - Static mode over grain's components and styles: 46 findings, tracked-caps 20 and
+        off-scale-space 26, no raw colours. It ran in under a tenth of a second.
+      Not yet fixed or allowed: each tracked-caps and card-run cluster is a design call (the
+      grade toggle, the catalog group headings, the where-next card grid), so they wait for the
+      owner rather than being excused in bulk.
 - [ ] Wire it into the portfolio's lint gate as advisory first, the same way lint-gate.ts treats its
       baseline, and turn Floor into a hard failure once the baseline is clean.
 - [ ] Document the rules, the tiers and the allow attribute in the grain README and CLAUDE.md.

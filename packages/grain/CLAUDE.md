@@ -124,6 +124,14 @@ instead of the vocabulary GRAIN already ships, and contracts that fail *silently
    instead of the geometry — see lesson 8), *not* an architecture defect — the door, the ops, and
    the dispatcher orchestration were all correct throughout; nothing in `contract.ts` changed to fix it.
 
+## grain-lint before a rendered change is done
+
+Run scripts/grain-lint.ts on the page you changed, and fix what it names before a person looks.
+Floor findings block outright. Reflex findings block unless the element carries
+data-grain-lint-allow="rule-id: reason", and that reason should survive a reviewer reading it.
+The masthead is headline, byline, rule: nothing sits above an h1 except breadcrumb navigation,
+and no label sits above a section heading. The README's section 7 has the commands.
+
 ## Definition of done
 
 Code + the right test tier(s) (unit / conformance e2e) + `tsc` and `bun test` green + docs synced

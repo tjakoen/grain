@@ -102,7 +102,7 @@ MSYS_NO_PATHCONV=1 docker compose --profile gates run --rm gates-grain
 ```
 
 It installs from the frozen lockfile, then runs the typecheck, the tests and the linter. The
-baseline is 691 pass, 0 fail; anything less is a real regression rather than a local
+baseline is 749 pass, 0 fail; anything less is a real regression rather than a local
 quirk. This repo's gate builds its own image, because the mermaid diagram test drives a
 real browser that the bun image does not carry.
 

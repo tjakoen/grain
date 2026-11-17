@@ -249,6 +249,31 @@ manifest), a `data-action="verb"` trigger, and express AI-mode off `data-commit`
 Register the verb in the vocabulary (`ai/contract.ts`, see the §5 rough-edge note). That's the
 whole path: a themed, catalogued, AI-operable component without editing GRAIN.
 
+## 7. grain-lint: keep the tells of machine-made design out
+
+grain-lint renders a GRAIN page and checks it against a named list of tells, the defaults a
+model falls into when it designs: a label above every heading, tracked capitals as decoration,
+one coloured word in a headline, a run of identical cards, a sign-up closing the page. It is built
+for the agent first. It runs on one page in seconds, names the rule and the selector, and says
+which GRAIN token or component to use instead, so the agent fixes its own output before a person
+looks.
+
+```sh
+bun scripts/grain-lint.ts http://localhost:3000/notes      # rendered at 360, 768 and 1280
+bun scripts/grain-lint.ts --static components/ styles/     # source only, no browser, under a second
+bun scripts/grain-lint.ts --json --rule tracked-caps page.html
+```
+
+Every rule sits in one tier, and the tier decides what a finding does. Floor findings block with
+no override: contrast below AA, a missing focus ring, motion that ignores reduced motion, a
+hardcoded colour, sideways scroll at phone width, a form that goes nowhere. Reflex findings block
+unless the element records a reason, as data-grain-lint-allow="rule-id: reason" on the element or
+an ancestor, so the excuse sits next to the thing it excuses and shows up in a diff. Finish
+findings report and never block. The rules are data in scripts/grain-lint-rules.ts, each with a
+failing fixture and a shared clean page under scripts/fixtures/grain-lint. When the consumer has
+axe-core installed, the contrast rule uses axe's own run rather than a second implementation.
+
+
 ---
 
 🤖 **Built with Claude, on the same buttons you'd click.** I called the shots, Claude typed them,

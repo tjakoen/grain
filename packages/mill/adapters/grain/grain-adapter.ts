@@ -101,15 +101,15 @@ const inline: InlineHandlers = {
 const defaultLayout: LayoutFn = ({ title, frontmatter, body }) => {
   const str = (k: string): string => typeof frontmatter[k] === "string" ? (frontmatter[k] as string) : "";
   const meta = [str("date"), str("readingTime")].filter(Boolean).map(escapeHtml).join(" · ");
-  const eyebrow = meta ? `<p class="eyebrow">${meta}</p>` : "";
+  const byline = meta ? `<p class="byline">${meta}</p>` : "";
   const heading = title ? `<h1 class="masthead">${escapeHtml(title)}</h1>` : "";
   const lede = str("subtitle") ? `<p class="note__lede">${escapeHtml(str("subtitle"))}</p>` : "";
   const tags = asArray(frontmatter.tags);
   const badges = tags.length
     ? `<div class="note__tags">${tags.map(t => `<span class="badge" data-status="active">${escapeHtml(t)}</span>`).join(" ")}</div>`
     : "";
-  const head = (eyebrow || heading || lede || badges)
-    ? `<header class="note__head">${eyebrow}${heading}${lede}${badges}<hr class="rule"></header>` : "";
+  const head = (heading || byline || lede || badges)
+    ? `<header class="note__head">${heading}${byline}${lede}${badges}<hr class="rule"></header>` : "";
   // `layout: timeline` opts the note into GRAIN's date rail (see date-rail.ts).
   const rail = wantsDateRail(frontmatter);
   const content = rail ? dateRailBody(body) : body;

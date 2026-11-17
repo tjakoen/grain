@@ -197,8 +197,8 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
     return `<section class="cat-doc" id="${c.slug}" data-surface="catalog:${esc(c.slug)}" data-grade="smooth" data-layer="${c.layer}">
       <header class="cat-doc__head">
         <div class="cat-doc__title">
-          <p class="cat-doc__eyebrow">${esc(cap(c.layer))}</p>
           <h2>${esc(c.name)}</h2>
+          <p class="cat-doc__layer">${esc(cap(c.layer))}</p>
         </div>
         <div class="grade-toggle" role="group" aria-label="Interaction mode for ${esc(c.name)}">
           <button type="button" class="grade-toggle__btn is-on" data-grade-set="smooth">Human</button>
@@ -288,8 +288,7 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
     padding: var(--space-6); border: 1px solid var(--color-line); border-radius: var(--radius-md);
   }
   .cat-doc h2 { font-size: var(--text-2xl); margin: 0; }
-  .cat-doc__eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--color-muted); margin: 0 0 var(--space-1); }
+  .cat-doc__layer { font-size: var(--text-sm); color: var(--color-muted); margin: var(--space-1) 0 0; }
   .cat-doc__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4);
     flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-4);
     border-bottom: 1px solid var(--color-line); }   /* masthead rhythm: title block → hairline → body */

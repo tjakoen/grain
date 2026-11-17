@@ -6,7 +6,7 @@ import { expect, test, describe, beforeAll, afterAll } from "bun:test";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createCatalog } from "./catalog.ts";
+import { createCatalog, parseControl } from "./catalog.ts";
 
 describe("createCatalog inject seams", () => {
   let dir: string;
@@ -63,5 +63,60 @@ describe("flat panels render source only", () => {
   test("each component entry carries a data-surface address", async () => {
     const html = await (createCatalog(dir)).html();
     expect(html).toContain(`data-surface="catalog:deck"`);
+  });
+});
+
+// The explorer: a ```controls fence becomes a playground, an Accessibility section becomes its own
+// block, and the sidebar search carries the status line it announces into (plans/catalog-explorer.md).
+describe("catalog explorer", () => {
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), "batch-catalog-play-"));
+    await mkdir(join(dir, "dashboards", "tile"), { recursive: true });
+    await writeFile(join(dir, "dashboards", "tile", "tile.md"),
+      "# Tile\n\nA counted thing.\n\n## Default\n\n```html\n<div class=\"tile\"><b class=\"tile__v\">3</b></div>\n```\n\n" +
+      "```controls\nselect data-tone = - | bad\ntoggle data-commit = pending\ntext .tile__v = 3\nnot a control\n```\n\n" +
+      "## Accessibility\n\nRead in source order.\n");
+  });
+  afterAll(() => rm(dir, { recursive: true, force: true }));
+
+  test("parseControl reads the three kinds and rejects the rest", () => {
+    expect(parseControl("select data-dir @ .delta = up | down")).toEqual(
+      { kind: "select", name: "data-dir", selector: ".delta", options: ["up", "down"], value: "up" });
+    expect(parseControl("toggle data-commit = pending")?.value).toBe("pending");
+    expect(parseControl("text .stat__value = 128")).toMatchObject({ kind: "text", selector: ".stat__value", value: "128" });
+    expect(parseControl("select data-x =")).toBeNull();
+    expect(parseControl("prose line")).toBeNull();
+  });
+
+  test("a controls fence renders a playground with labelled inputs and a width switch", async () => {
+    const html = await createCatalog(dir).html();
+    expect(html).toContain(`aria-label="Playground for Tile"`);
+    expect(html).toContain(`<option value="-">none</option>`);
+    expect(html).toContain(`data-kind="toggle" data-name="data-commit"`);
+    expect(html).toContain(`<label for="ctl-tile-2">Text of .tile__v</label>`);
+    expect(html).toContain(`data-width="phone"`);
+    expect(html).not.toContain("not a control");
+  });
+
+  test("the Accessibility section is its own block, not a group heading", async () => {
+    const html = await createCatalog(dir).html();
+    expect(html).toContain(`class="cat-a11y"`);
+    expect(html).toContain("Read in source order.");
+    expect(html).not.toContain(`<h3 class="cat-group">Accessibility</h3>`);
+  });
+
+  test("search announces into a status region, opens with slash, and a skip link leads to main", async () => {
+    const html = await createCatalog(dir).html();
+    expect(html).toContain(`role="status" aria-live="polite"`);
+    expect(html).toContain(`aria-keyshortcuts="/"`);
+    expect(html).toContain(`href="#cat-main">Skip to components</a>`);
+    expect(html).toContain(`data-text="a counted thing."`);
+  });
+
+  test("the catalog chrome wears no tracked capitals", async () => {
+    const html = await createCatalog(dir).html();
+    expect(html).not.toMatch(/text-transform:\s*uppercase/);
   });
 });

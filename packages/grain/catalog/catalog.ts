@@ -17,7 +17,13 @@ interface Panel { label: string; code: string; flat?: boolean; }
 // absent. Both intro and group prose are PARAGRAPHS rather than one joined string: joining them was
 // what turned four paragraphs of a component doc into a single wall.
 interface Group { label: string; prose: string[]; panels: Panel[]; }
-interface Doc { name: string; slug: string; intro: string[]; groups: Group[]; }
+// A control is one input on a doc's playground, declared in a ```controls fence (one per line):
+//   select <attr> [@ <selector>] = a | b | c     a "-" option removes the attribute
+//   toggle <attr> [@ <selector>] [= <value>]      present or absent; value defaults to empty
+//   text <selector> = <default text>              edits that element's text
+// The shape copies Ladle's and Storybook's small fixed set of control kinds (plans/catalog-explorer.md).
+export interface Control { kind: "select" | "toggle" | "text"; name: string; selector: string; options: string[]; value: string; }
+interface Doc { name: string; slug: string; intro: string[]; groups: Group[]; controls: Control[]; a11y: string[]; }
 interface Component { layer: string; slug: string; name: string; human: Doc; ai: Doc | null; }
 
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -42,8 +48,20 @@ const inline = (s: string) => esc(s)
   .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
 
 // atomic-design layers render in this order; unknown dirs fall to the end.
-const LAYER_ORDER = ["atoms", "molecules", "organisms"];
+const LAYER_ORDER = ["atoms", "molecules", "organisms", "dashboards"];
 const rank = (layer: string) => { const i = LAYER_ORDER.indexOf(layer); return i < 0 ? 99 : i; };
+
+/** Parse one line of a ```controls fence, or return null when it is not one. */
+export function parseControl(line: string): Control | null {
+  const m = line.trim().match(/^(select|toggle|text)\s+(\S+)(?:\s+@\s+([^=]+?))?\s*(?:=\s*(.*))?$/);
+  if (!m) return null;
+  const kind = m[1] as Control["kind"];
+  const rest = (m[4] ?? "").trim();
+  if (kind === "text") return { kind, name: m[2], selector: m[2], options: [], value: rest };
+  const options = kind === "select" ? rest.split("|").map((o) => o.trim()).filter(Boolean) : [];
+  if (kind === "select" && !options.length) return null;
+  return { kind, name: m[2], selector: (m[3] ?? "").trim(), options, value: kind === "select" ? options[0] : rest };
+}
 
 // minimal markdown: # title, ## group, ### panel, ```html fences, plain prose.
 // A fence tagged ```html flat renders as SOURCE ONLY, with no live panel. That escape hatch
@@ -52,7 +70,7 @@ const rank = (layer: string) => { const i = LAYER_ORDER.indexOf(layer); return i
 // demonstrating itself inside its box. Default stays live — flat is the exception a doc asks for.
 function parseDoc(md: string): Doc {
   const lines = md.split("\n");
-  const doc: Doc = { name: "Untitled", slug: "untitled", intro: [], groups: [] };
+  const doc: Doc = { name: "Untitled", slug: "untitled", intro: [], groups: [], controls: [], a11y: [] };
   let group: Group | null = null;
   let pendingLabel = "";
   const intro: string[] = [];
@@ -84,6 +102,12 @@ function parseDoc(md: string): Doc {
       group.panels.push({ label: pendingLabel, code: body.join("\n").trim(), flat });
       continue;
     }
+    if (line.startsWith("```controls")) {
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) { const c = parseControl(lines[i]); if (c) doc.controls.push(c); i++; }
+      i++;
+      continue;
+    }
     // Any OTHER fence (```json, a bare ```) is skipped whole rather than read as prose. Falling
     // through used to sweep a spec block's braces into the surrounding paragraph, which is how raw
     // JSON ended up mid-sentence in two shipped intros.
@@ -98,6 +122,14 @@ function parseDoc(md: string): Doc {
   }
   doc.intro = intro.filter(Boolean);
   for (const g of doc.groups) g.prose = g.prose.filter(Boolean);
+  // An Accessibility section renders as its own labelled block beside the preview, not as one more
+  // group of panels, so it is lifted out here. Its panels, if a doc gave it any, stay as a group.
+  const a11y = doc.groups.findIndex((g) => /^accessibility$/i.test(g.label));
+  if (a11y >= 0) {
+    doc.a11y = doc.groups[a11y].prose;
+    if (doc.groups[a11y].panels.length) doc.groups[a11y].prose = [];
+    else doc.groups.splice(a11y, 1);
+  }
   return doc;
 }
 
@@ -185,8 +217,46 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
     ${paras("cat-note", g.prose)}
     ${g.panels.length ? `<div class="panel-grid">${g.panels.map(renderPanel).join("")}</div>` : ""}`).join("");
 
-  const renderView = (doc: Doc, view: "smooth" | "grain") => `<div class="cat-doc__view" data-view="${view}">
+  const renderControl = (slug: string, c: Control, n: number): string => {
+    const id = `ctl-${slug}-${n}`;
+    const data = `data-kind="${c.kind}" data-name="${esc(c.name)}" data-selector="${esc(c.selector)}"`;
+    const label = c.kind === "text" ? `Text of ${c.selector}` : c.selector ? `${c.name} on ${c.selector}` : c.name;
+    if (c.kind === "select") return `<div class="cat-ctl"><label for="${id}">${esc(label)}</label>
+      <select id="${id}" class="cat-ctl__input" ${data}>${c.options.map((o) => `<option value="${esc(o)}">${o === "-" ? "none" : esc(o)}</option>`).join("")}</select></div>`;
+    if (c.kind === "toggle") return `<div class="cat-ctl cat-ctl--toggle"><input id="${id}" type="checkbox" class="cat-ctl__input" ${data} data-value="${esc(c.value)}"><label for="${id}">${esc(label)}</label></div>`;
+    return `<div class="cat-ctl"><label for="${id}">${esc(label)}</label><input id="${id}" type="text" class="cat-ctl__input" ${data} value="${esc(c.value)}"></div>`;
+  };
+
+  // The playground: the doc's first live example, a form of its controls, a width switch and the
+  // source regenerated from the live markup by the page script, so what you copy is what you see.
+  function renderPlayground(slug: string, doc: Doc): string {
+    const first = doc.groups.flatMap((g) => g.panels).find((p) => !p.flat);
+    if (!doc.controls.length || !first) return "";
+    return `<section class="cat-play" aria-label="Playground for ${esc(doc.name)}" data-play>
+      <div class="cat-play__stage">
+        <div class="cat-play__widths" role="group" aria-label="Preview width">
+          ${["Full", "Tablet", "Phone"].map((w, n) => `<button type="button" class="cat-play__width" data-width="${w.toLowerCase()}" aria-pressed="${n === 0}">${w}</button>`).join("")}
+        </div>
+        <div class="cat-play__frame" data-width="full" tabindex="0" role="region" aria-label="Preview of ${esc(doc.name)}"><div class="cat-play__live panel__live">${liveSafe(first.code)}</div></div>
+      </div>
+      <form class="cat-play__controls" aria-label="Controls" onsubmit="return false">
+        <h3 class="cat-play__heading">Controls</h3>
+        ${doc.controls.map((c, n) => renderControl(slug, c, n)).join("")}
+      </form>
+      <div class="panel__src cat-play__src">
+        <button class="panel__copy" type="button">Copy</button>
+        <pre tabindex="0" aria-label="Source for the current controls"><code>${esc(first.code)}</code></pre>
+      </div>
+    </section>`;
+  }
+
+  const renderA11y = (doc: Doc) => doc.a11y.length ? `<aside class="cat-a11y" aria-label="Accessibility notes for ${esc(doc.name)}">
+      <h3 class="cat-a11y__heading">Accessibility</h3>${paras("cat-note", doc.a11y)}</aside>` : "";
+
+  const renderView = (doc: Doc, view: "smooth" | "grain", slug = doc.slug) => `<div class="cat-doc__view" data-view="${view}">
     ${paras("cat-intro", doc.intro)}
+    ${view === "smooth" ? renderPlayground(slug, doc) : ""}
+    ${renderA11y(doc)}
     ${renderGroups(doc.groups)}
   </div>`;
 
@@ -205,7 +275,7 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
           <button type="button" class="grade-toggle__btn" data-grade-set="grain">AI</button>
         </div>
       </header>
-      ${renderView(c.human, "smooth")}
+      ${renderView(c.human, "smooth", c.slug)}
       ${renderView(ai, "grain")}
     </section>`;
   }
@@ -223,8 +293,8 @@ export function createCatalog(componentsDir: string | string[], pages?: () => st
     for (const c of list) { if (!byLayer.has(c.layer)) byLayer.set(c.layer, []); byLayer.get(c.layer)!.push(c); }
     const navGroups = [...byLayer.entries()].map(([layer, list]) => `
       <details class="cat-nav__group" open>
-        <summary>${esc(cap(layer))}</summary>
-        ${list.map(c => `<a href="#${c.slug}" data-name="${esc(c.name.toLowerCase())}">${esc(c.name)}</a>`).join("")}
+        <summary>${esc(cap(layer))} <span class="cat-nav__count">${list.length}</span></summary>
+        ${list.map(c => `<a href="#${c.slug}" data-name="${esc(c.name.toLowerCase())}" data-text="${esc(c.human.intro.join(" ").toLowerCase().slice(0, 400))}">${esc(c.name)}</a>`).join("")}
       </details>`).join("");
 
     const pageNav = (pages?.() ?? []).map(p => `<a href="${p}">${esc(p)}</a>`).join("");
@@ -255,7 +325,7 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
      data-color-scheme/data-theme the render-blocking theme-boot inject applies from storage,
      so an embedded catalog matches its host. */
   body { margin: 0; background: var(--color-bg); color: var(--color-fg); }
-  .cat { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; background: var(--color-bg); }
+  .cat { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: var(--color-bg); }
   .cat-nav { position: sticky; top: 0; align-self: start; height: 100vh; overflow: auto;
     padding: var(--space-6) var(--space-4); border-right: 1px solid var(--color-line); }
   .cat-back { display: inline-flex; align-items: center; margin-bottom: var(--space-4);
@@ -267,16 +337,27 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
     padding: var(--space-1) var(--space-2); font-family: var(--font-smooth); font-size: var(--text-sm);
     color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: var(--radius-sm); }
   .cat-search::placeholder { color: var(--ink-faint); }
-  .cat-nav__heading { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--color-muted); margin: var(--space-4) 0 var(--space-1); }
+  .cat-nav__heading { font-size: var(--text-sm); font-weight: var(--font-weight-semibold);
+    color: var(--ink); margin: var(--space-4) 0 var(--space-1); }
   .cat-nav__group { margin-bottom: var(--space-2); }
   .cat-nav__group > summary { cursor: pointer; list-style: none; padding: var(--space-1) 0;
-    font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+    font-size: var(--text-sm); font-weight: var(--font-weight-semibold); color: var(--ink); }
+  .cat-nav__count { font-weight: var(--font-weight-regular); color: var(--color-muted); }
   .cat-nav__group > summary::-webkit-details-marker { display: none; }
   .cat-nav__group > summary::before { content: "▸ "; }
   .cat-nav__group[open] > summary::before { content: "▾ "; }
-  .cat-nav a { display: block; color: var(--color-muted); text-decoration: none; padding: var(--space-1) 0; }
+  .cat-nav a { display: block; color: var(--color-muted); text-decoration: none; padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm); border-inline-start: 2px solid transparent; }
   .cat-nav a:hover { color: var(--ink); text-decoration: underline; }
+  .cat-nav a[aria-current="true"] { color: var(--ink); border-inline-start-color: var(--ink); background: var(--paper-2); }
+  .cat :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .cat-skip { position: absolute; inset-inline-start: var(--space-2); inset-block-start: -10rem; z-index: 50;
+    padding: var(--space-2) var(--space-3); background: var(--paper); color: var(--ink); border: var(--border); border-radius: var(--radius-sm); }
+  .cat-skip:focus { inset-block-start: var(--space-2); }
+  .cat-search__wrap { position: relative; }
+  .cat-search__key { position: absolute; inset-inline-end: var(--space-2); inset-block-start: var(--space-1);
+    font-size: var(--text-xs); color: var(--color-muted); pointer-events: none; }
+  .cat-search__status { font-size: var(--text-xs); color: var(--color-muted); margin: calc(-1 * var(--space-3)) 0 var(--space-3); min-block-size: 1.2em; }
   .cat-main { padding: var(--space-8); max-width: 900px; }
   /* each component reads as a bounded CARD (hairline + generous padding), not bare text loose on
      the page — a doc with no live panels (a CSS-only pattern component, prose-only) used to read
@@ -293,8 +374,7 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
     flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-4);
     border-bottom: 1px solid var(--color-line); }   /* masthead rhythm: title block → hairline → body */
   .grade-toggle { display: inline-flex; border: 1px solid var(--ink); border-radius: var(--radius-sm); overflow: hidden; }
-  .grade-toggle__btn { font-family: var(--font-smooth); font-size: var(--text-xs); text-transform: uppercase;
-    letter-spacing: 0.08em; padding: var(--space-1) var(--space-3); cursor: pointer;
+  .grade-toggle__btn { font-family: var(--font-smooth); font-size: var(--text-sm); padding: var(--space-1) var(--space-3); cursor: pointer;
     background: transparent; color: var(--ink); border: 0; }
   .grade-toggle__btn.is-on { background: var(--ink); color: var(--paper); }
   /* Human/AI: show exactly one view, chosen by the section's data-grade */
@@ -317,13 +397,45 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
     background: var(--paper-2); padding: 0 0.3em; border-radius: 2px; color: var(--ink); }
   .cat-intro strong, .cat-note strong { color: var(--ink); font-weight: var(--font-weight-semibold); }
   .cat-intro a, .cat-note a { color: var(--ink); }
-  .cat-group { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--color-muted); margin: var(--space-6) 0 var(--space-3); }
+  .cat-group { font-size: var(--text-base); font-weight: var(--font-weight-semibold);
+    color: var(--ink); margin: var(--space-6) 0 var(--space-3); }
+  /* Playground: preview, controls and live source. Two columns when there is room, one when not. */
+  .cat-play { display: grid; gap: 0; grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem); margin: 0 0 var(--space-6);
+    border: var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface); }
+  .cat-play__stage { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-3); min-inline-size: 0; }
+  .cat-play__widths { display: inline-flex; gap: var(--space-1); justify-self: start; }
+  .cat-play__width { font: inherit; font-size: var(--text-xs); padding: var(--space-1) var(--space-2); cursor: pointer;
+    border: var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--ink); }
+  .cat-play__width[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .cat-play__frame { inline-size: 100%; margin-inline: auto; border: 1px dashed var(--color-line); border-radius: var(--radius-sm); overflow: auto; }
+  .cat-play__frame[data-width="tablet"] { max-inline-size: 48rem; }
+  .cat-play__frame[data-width="phone"] { max-inline-size: 23.5rem; }
+  .cat-play__live { display: block; }
+  .cat-play__controls { display: grid; align-content: start; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+    border-inline-start: var(--border); font-size: var(--text-sm); }
+  .cat-play__heading { margin: 0; font-size: var(--text-sm); font-weight: var(--font-weight-semibold); }
+  .cat-ctl { display: grid; gap: var(--space-1); }
+  .cat-ctl label { color: var(--color-muted); }
+  .cat-ctl--toggle { grid-template-columns: auto 1fr; align-items: center; gap: var(--space-2); }
+  .cat-ctl__input { font: inherit; color: var(--ink); background: var(--color-bg); border: 1px solid var(--ink);
+    border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); min-inline-size: 0; }
+  .cat-ctl--toggle .cat-ctl__input { inline-size: 1.1rem; block-size: 1.1rem; padding: 0; accent-color: var(--ink); }
+  .cat-play__src { grid-column: 1 / -1; }
+  .cat-a11y { margin: 0 0 var(--space-6); padding: var(--space-3) var(--space-4); border-inline-start: 3px solid var(--ink);
+    background: var(--paper-2); border-radius: var(--radius-sm); }
+  .cat-a11y__heading { margin: 0 0 var(--space-2); font-size: var(--text-base); font-weight: var(--font-weight-semibold); color: var(--ink); }
+  .cat-a11y .cat-note { color: var(--ink); }
+  .cat-a11y .cat-note:last-child { margin-bottom: 0; }
+  @media (max-width: 760px) { .cat-play { grid-template-columns: minmax(0, 1fr); }
+    .cat-play__controls { border-inline-start: 0; border-block-start: var(--border); } }
   .panel-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  /* Dashboards lay themselves out by their own width, so their panels take the whole row and the
+     live area stops centring: a centred flex box shrank a dashboard to the width of its widest word. */
+  .cat-doc[data-layer="dashboards"] .panel-grid { grid-template-columns: minmax(0, 1fr); }
+  .cat-doc[data-layer="dashboards"] .panel__live { display: block; }
   .panel { margin: 0; border: 1px solid var(--color-line); border-radius: var(--radius-md);
     overflow: hidden; background: var(--color-surface); }
-  .panel__label { font-size: var(--text-xs); font-weight: var(--font-weight-semibold);
-    text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted);
+  .panel__label { font-size: var(--text-sm); font-weight: var(--font-weight-medium); color: var(--color-muted);
     padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line); }
   .panel__live { padding: var(--space-6); display: flex; align-items: center; justify-content: center; background: var(--color-bg); }
   .panel__flat { margin: 0; padding: var(--space-4) var(--space-6); background: var(--color-bg);
@@ -343,19 +455,17 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
      persistent 240px menu, so the nav COLLAPSES by default and opens FULL-WIDTH over the
      main — the small-screen drawer pattern. The narrow catalog-peek sidebar inherits this. */
   @media (max-width: 640px) {
-    .cat { grid-template-columns: 1fr; }
+    .cat { grid-template-columns: minmax(0, 1fr); }
     .cat-navtoggle { display: inline-flex; align-items: center; position: sticky; top: 0; z-index: 30;
       width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4);
       border: 0; border-bottom: 1px solid var(--color-line); background: var(--paper); color: var(--ink);
-      font-family: var(--font-smooth); font-size: var(--text-sm); text-transform: uppercase;
-      letter-spacing: 0.06em; cursor: pointer; }
+      font-family: var(--font-smooth); font-size: var(--text-sm); font-weight: var(--font-weight-semibold); cursor: pointer; }
     .cat-nav { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100dvh;
       background: var(--paper);   /* opaque: a full-screen drawer OVER the main, not see-through */
       transform: translateX(-100%); transition: transform 0.25s ease; overscroll-behavior: contain; }
     .cat[data-nav="open"] .cat-nav { transform: none; }   /* full-screen takeover */
     .cat-nav__close { display: inline-flex; align-items: center; background: transparent; border: 0;
-      padding: 0 0 var(--space-3); font-family: var(--font-smooth); font-size: var(--text-sm);
-      text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); cursor: pointer; }
+      padding: 0 0 var(--space-3); font-family: var(--font-smooth); font-size: var(--text-sm); color: var(--color-muted); cursor: pointer; }
     .cat-main { padding: var(--space-6); overscroll-behavior: contain; }
   }
   @media (prefers-reduced-motion: reduce) { .cat-nav { transition: none; } }
@@ -377,6 +487,7 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
 </style>
 </head>
 <body>
+  <a class="cat-skip" href="#cat-main">Skip to components</a>
   <div class="cat" data-nav="closed">
     <button class="cat-navtoggle" type="button" aria-controls="cat-nav" aria-expanded="false">☰&nbsp;&nbsp;Catalog</button>
     <aside class="cat-nav" id="cat-nav">
@@ -386,13 +497,17 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
       <button class="cat-nav__close" type="button" aria-label="Close menu">✕&nbsp;&nbsp;Close</button>
       <h1>Catalog</h1>
       <p class="cat-nav__auto">Auto-generated by GRAIN from each component's <code>.md</code> doc — not hand-authored.</p>
-      <input class="cat-search" type="search" placeholder="Search components…" aria-label="Search components">
+      <div class="cat-search__wrap">
+        <input class="cat-search" type="search" placeholder="Search components" aria-label="Search components" aria-keyshortcuts="/" aria-describedby="cat-search-status">
+        <kbd class="cat-search__key" aria-hidden="true">/</kbd>
+      </div>
+      <p class="cat-search__status" id="cat-search-status" role="status" aria-live="polite"></p>
       <p class="cat-nav__heading">Pages</p>
       ${pageNav}
       <p class="cat-nav__heading">Components</p>
       ${navGroups}
     </aside>
-    <main class="cat-main">
+    <main class="cat-main" id="cat-main" tabindex="-1">
       ${main}
     </main>
   </div>
@@ -452,20 +567,82 @@ function page(pageNav: string, navGroups: string, main: string, inject: CatalogI
       }
     }));
 
-    // sidebar search: filter component links; hide empty groups; open groups while searching.
+    // sidebar search: name and opening prose; hide empty groups; announce the count; "/" opens it,
+    // Escape clears it. Arrow keys move through the visible sidebar links.
     const search = document.querySelector(".cat-search");
-    if (search) search.addEventListener("input", () => {
+    const status = document.getElementById("cat-search-status");
+    const filter = () => {
       const q = search.value.trim().toLowerCase();
+      let hits = 0;
       document.querySelectorAll(".cat-nav__group").forEach((group) => {
         let any = false;
         group.querySelectorAll("a").forEach((a) => {
-          const hit = !q || (a.dataset.name || "").includes(q);
+          const hit = !q || (a.dataset.name || "").includes(q) || (a.dataset.text || "").includes(q);
           a.style.display = hit ? "" : "none";
-          if (hit) any = true;
+          if (hit) { any = true; hits++; }
         });
         group.style.display = any ? "" : "none";
         if (q) group.open = true;
       });
+      if (status) status.textContent = !q ? "" : hits ? hits + (hits === 1 ? " component matches" : " components match") : "No component matches \u201c" + search.value.trim() + "\u201d";
+    };
+    if (search) {
+      search.addEventListener("input", filter);
+      search.addEventListener("keydown", (e) => { if (e.key === "Escape" && search.value) { search.value = ""; filter(); e.stopPropagation(); } });
+      document.addEventListener("keydown", (e) => {
+        const t = e.target;
+        const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
+        if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); setNav(true); search.focus(); }
+      });
+    }
+    const navEl = document.querySelector(".cat-nav");
+    navEl && navEl.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const links = [...navEl.querySelectorAll(".cat-nav__group a")].filter((a) => a.offsetParent !== null);
+      if (!links.length) return;
+      const i = links.indexOf(document.activeElement);
+      if (i < 0 && document.activeElement !== search) return;
+      e.preventDefault();
+      const next = e.key === "ArrowDown" ? Math.min(i + 1, links.length - 1) : Math.max(i - 1, 0);
+      links[next].focus();
+    });
+
+    // mark the component in view in the sidebar (aria-current), so the reader knows where they are
+    if ("IntersectionObserver" in window) {
+      const navLinks = new Map([...document.querySelectorAll(".cat-nav__group a")].map((a) => [a.getAttribute("href").slice(1), a]));
+      const io = new IntersectionObserver((entries) => {
+        for (const en of entries) if (en.isIntersecting) {
+          navLinks.forEach((a) => a.removeAttribute("aria-current"));
+          navLinks.get(en.target.id)?.setAttribute("aria-current", "true");
+        }
+      }, { rootMargin: "-20% 0px -70% 0px" });
+      document.querySelectorAll(".cat-doc").forEach((d) => io.observe(d));
+    }
+
+    // playground: each control rewrites the preview's root (or a selector inside it), then the
+    // source panel is regenerated from the live markup, so the copied code matches the preview.
+    document.querySelectorAll("[data-play]").forEach((play) => {
+      const live = play.querySelector(".cat-play__live");
+      const code = play.querySelector(".cat-play__src code");
+      const root = live.firstElementChild;
+      const sync = () => { code.textContent = root ? root.outerHTML : ""; };
+      play.querySelectorAll(".cat-ctl__input").forEach((input) => {
+        const apply = () => {
+          const sel = input.dataset.selector;
+          const kind = input.dataset.kind;
+          if (kind === "text") { const el = live.querySelector(sel); if (el) el.textContent = input.value; return sync(); }
+          const el = sel ? live.querySelector(sel) : root;
+          if (!el) return;
+          if (kind === "select") { input.value === "-" ? el.removeAttribute(input.dataset.name) : el.setAttribute(input.dataset.name, input.value); }
+          else input.checked ? el.setAttribute(input.dataset.name, input.dataset.value || "") : el.removeAttribute(input.dataset.name);
+          sync();
+        };
+        input.addEventListener(input.type === "text" ? "input" : "change", apply);
+      });
+      play.querySelectorAll(".cat-play__width").forEach((b) => b.addEventListener("click", () => {
+        play.querySelector(".cat-play__frame").dataset.width = b.dataset.width;
+        play.querySelectorAll(".cat-play__width").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      }));
     });
   </script>
   ${inject.bodyEnd ?? ""}

@@ -241,6 +241,30 @@ every theme, and verify it still reads in dark.
    passes its dir to `createRenderer` / the style bundle / `createCatalog`). It then appears
    in `/catalog` automatically.
 
+   Two optional parts of the doc make the catalog entry an explorer rather than a page. A
+   `controls` fence, one control per line, gives the entry a playground: its first example
+   becomes a live preview beside a form, with a phone, tablet and full width switch and the
+   source regenerated from the live markup.
+
+   ```controls
+   select data-state = - | empty | stale     a "-" option removes the attribute
+   toggle data-commit = pending              present or absent
+   text .dash-panel__title = Signups         edits that element's text
+   ```
+
+   A `## Accessibility` section renders as its own block above the examples. Every component in
+   the dashboards layer carries both.
+
+### Dashboards
+
+`components/dashboards/` holds the layer most GRAIN apps end up needing: `dashboard` (a head
+that states the period and baseline, a KPI strip that adds columns as it widens, a panel grid
+that queries its own width), `dash-panel` (ready, loading, empty, stale and failed), `delta` (a
+change with a one-word baseline and no red or green), `bullet-graph` (in place of a gauge) and
+`rank-list` (a slim share bar per row). They compose the stat tile, trend chart and data table
+molecules. Charts take caller-computed values through custom properties; there is no chart
+library. See plans/dashboard-layer.md.
+
 ### C · Make it AI-operable (optional: the payoff)
 
 Add the §2 conventions and the shared dispatcher drives it with **no bespoke JS**:

@@ -1,5 +1,27 @@
 # Releasing the GRAIN monorepo
 
+## Next release: what it holds and where it came from
+
+Every piece of this release that started from an outside post cites it here, one line per source
+saying what was taken. The plans carry the same lists in their own Sources sections.
+
+- grain-lint (plans/grain-lint.md): Hallmark by Nutlope, https://github.com/Nutlope/hallmark, for
+  the three-tier rule model and the rendered check against a named list of tells; Roy Derks's
+  LinkedIn post that pointed at it, https://www.linkedin.com/posts/gethackteam_this-coding-agent-skills-stops-every-ai-generated-share-7528002511081721856-McZY/.
+- The builder redesign (plans/builder-playground.md): the A2UI playground by CopilotKit,
+  https://a2ui.open.bot, for the layout, the sample chips and watching code arrive; Atai Barkai's
+  LinkedIn post announcing it, https://www.linkedin.com/posts/atai-barkai_we-built-an-a2ui-playground-ask-the-agent-ugcPost-7527800388524171264-FOIp/.
+- The dashboards layer (plans/dashboard-layer.md): dashboard-design-skill by Otabek Abdiraimov,
+  https://github.com/abdiraimov-otabek/dashboard-design-skill, for the share bar, the delta with a
+  one-word baseline, "was 1" over minus 100 percent, the bullet graph and every panel state; Ram
+  Maheshwari's LinkedIn post that pointed at it,
+  https://www.linkedin.com/posts/rammcodes_this-is-straight-up-magic-for-building-beautiful-share-7527972016134598656-01sA/.
+- The catalog explorer (plans/catalog-explorer.md): Storybook's Controls,
+  https://storybook.js.org/docs/essentials/controls, for editing a component's inputs live; Ladle's
+  Controls, https://ladle.dev/docs/controls/, for the small fixed set of control kinds.
+- The drift check (plans/grain-drift-check.md, a plan for the owner, not built): the same request
+  as the dashboards layer; nothing technical taken from the post.
+
 This repo is a bun workspace holding `packages/{grain,mill,proof,crumb,grain-mcp}`. The first four
 are published; grain-mcp is workspace-only and is never released. Internal deps resolve
 via `workspace:*`; **external consumers install the published packages from the public npm

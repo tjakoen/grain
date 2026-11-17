@@ -1,6 +1,6 @@
 ---
 id: grain-lint
-status: doing
+status: todo
 track: grain
 depends: []
 touches:

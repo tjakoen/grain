@@ -32,11 +32,14 @@ state.
 ```
 
 ## Tones
-`data-tone` shifts ink-level, not hue. `bad` draws the eye with a solid-ink border; `muted` is a
+`data-tone` shifts ink-level, not hue. `warn` marks a count worth a look that is not yet wrong
+(items waiting, checks due) by setting the value in semibold while the border stays calm; `bad`
+draws the eye with a solid-ink border; `muted` is a
 secondary/context count that recedes to faint; `ok` and the default read identically on purpose
 (a healthy count needs no shouting).
 ```html
 <div class="stat" data-tone="ok"><span class="stat__value">14</span><span class="stat__label">passed</span></div>
+<div class="stat" data-tone="warn"><span class="stat__value">4</span><span class="stat__label">due</span></div>
 <div class="stat" data-tone="bad"><span class="stat__value">2</span><span class="stat__label">failed</span></div>
 <div class="stat" data-tone="muted"><span class="stat__value">3</span><span class="stat__label">skipped</span></div>
 ```

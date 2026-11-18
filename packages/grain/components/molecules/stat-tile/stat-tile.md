@@ -41,6 +41,26 @@ secondary/context count that recedes to faint; `ok` and the default read identic
 <div class="stat" data-tone="muted"><span class="stat__value">3</span><span class="stat__label">skipped</span></div>
 ```
 
+## A long text value
+When the value is a word rather than a number (a plan id, a name), `data-fit="truncate"` keeps it
+on one line and ends it in an ellipsis, so the tile stays the height of its neighbours. Put the
+full text in a `title` so it can still be read.
+```html
+<div class="stat">
+  <span class="stat__value" data-fit="truncate" title="pantry-session-control">pantry-session-control</span>
+  <span class="stat__label">busiest plan</span>
+</div>
+```
+
+## As a link
+A tile can be the link itself when it filters a view or opens the detail behind the number. Use a
+real `<a>`, and mark the selected filter with `aria-current="page"`, which adds an ink bar under
+the tile. The label should say where the link goes, as it does here.
+```html
+<a class="stat" href="?view=doing" aria-current="page"><span class="stat__value">4</span><span class="stat__label">doing</span></a>
+<a class="stat" href="?view=blocked"><span class="stat__value">1</span><span class="stat__label">blocked</span></a>
+```
+
 ## In transit (AI writing the number)
 ```html
 <div class="stat" data-commit="pending">

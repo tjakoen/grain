@@ -32,3 +32,14 @@
    via the inherited --type-font. */
 .stat[data-commit="pending"],
 [data-grade="grain"] .stat { border-style: dashed; border-color: var(--ink); }
+
+/* ---- a long text value (a plan id, a name) stays on one line and ends in an ellipsis rather
+   than wrapping the tile taller than its neighbours. Opt-in, because a number never needs it. */
+.stat__value[data-fit="truncate"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- a tile that is a link: a filter or a drill-down. It reads as the same tile; hover and focus
+   firm the border to full ink, and the selected tile (aria-current) adds an inset ink bar under
+   it. Weight and ink only, never hue. The focus ring stays the global one. */
+a.stat { color: inherit; text-decoration: none; }
+a.stat:hover { border-color: var(--ink); }
+a.stat[aria-current]:not([aria-current="false"]) { border-color: var(--ink); box-shadow: inset 0 -3px 0 var(--ink); }

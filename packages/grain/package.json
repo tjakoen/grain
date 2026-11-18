@@ -32,6 +32,7 @@
     "components",
     "fonts",
     "scripts",
+    "!scripts/fixtures",
     "styles",
     "PLAN.md"
   ],

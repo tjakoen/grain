@@ -20,8 +20,10 @@
 /* ---- tone (attribute) — ink-level + border weight, NOT hue ----
    default : the calm baseline (a healthy/positive count needs no shouting).
    ok      : same calm baseline — an explicit "good" that reads identical, by design.
+   warn    : worth a look, not yet wrong — the value firms to semibold, the border stays calm.
    bad     : draws the eye monochromatically — a solid-ink border + full-ink value.
    muted   : a context/secondary count (skipped, pending, a total) recedes to faint. */
+.stat[data-tone="warn"] .stat__value { font-weight: var(--font-weight-semibold); }
 .stat[data-tone="bad"] { border-color: var(--ink); }
 .stat[data-tone="muted"] .stat__value { color: var(--ink-muted); }
 .stat[data-tone="muted"] .stat__label { color: var(--ink-muted); }

@@ -1,0 +1,39 @@
+/* organisms/diagram: planning diagrams as inline SVG (diagram.ts draws them on the server).
+   The palette is closed: every stroke and fill is a semantic token, so state is shown by line
+   weight, dashes and words, and the diagram follows both theme axes without being redrawn. */
+.diagram { margin: 0 0 var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; }
+.diagram__bar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-2); border-bottom: 1px solid var(--color-line); }
+.diagram__bar button { font: inherit; min-width: 2rem; padding: 0.15rem 0.5rem; border: 1px solid var(--color-line); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-fg); cursor: pointer; }
+.diagram__bar button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
+.diagram__hint { font-size: var(--text-xs); color: var(--color-muted); }
+.diagram__svg { display: block; width: 100%; height: auto; max-height: 75vh; min-height: 18rem; cursor: grab; touch-action: none; user-select: none; font-family: var(--font-mono); font-size: 12px; }
+.diagram__svg.is-panning { cursor: grabbing; }
+.diagram__svg a, .diagram__svg text { text-decoration: none; }
+.diagram__svg a { cursor: pointer; }
+.diagram__svg text { fill: var(--color-fg); }
+.diagram__svg .dg-box { fill: var(--color-surface); stroke: var(--color-fg); stroke-width: 1.4; }
+.diagram__svg .dg-fill { fill: var(--color-surface); stroke: none; }
+.diagram__svg .dg-rule { fill: none; stroke: var(--color-fg); stroke-width: 1.4; }
+.diagram__svg .dg-shadow { fill: var(--color-fg); opacity: 0.18; }
+.diagram__svg .dg-heavy { stroke-width: 2.6; }
+.diagram__svg .dg-dashed, .diagram__svg .dg-stub .dg-box { stroke-dasharray: 5 4; }
+.diagram__svg .dg-title { font-weight: var(--font-weight-semibold); font-family: var(--type-font); font-size: 13px; }
+.diagram__svg .dg-sub, .diagram__svg .dg-key, .diagram__svg .dg-tag { fill: var(--color-muted); font-size: 11px; }
+.diagram__svg .dg-pk { font-weight: var(--font-weight-bold); text-decoration: underline; }
+.diagram__svg .dg-line, .diagram__svg .dg-card { fill: none; stroke: var(--color-fg); stroke-width: 1.3; }
+.diagram__svg .dg-ring { fill: var(--color-surface); }
+.diagram__svg .dg-optional { stroke-dasharray: 6 4; }
+.diagram__svg .dg-arrowhead { fill: var(--color-fg); }
+.diagram__svg .dg-hit { fill: none; stroke: transparent; stroke-width: 14; }
+.diagram__svg .dg-elabel rect { fill: var(--color-surface); stroke: var(--color-line); }
+.diagram__svg .dg-elabel text { font-size: 11px; font-family: var(--type-font); }
+/* An emphasised flow (one crossing a region, say) is heavier and dashed, and says why in its title. */
+.diagram__svg .dg-emphasis .dg-line { stroke-width: 2.6; stroke-dasharray: 8 5; }
+.diagram__svg .dg-boundary rect { fill: none; stroke: var(--color-muted); stroke-width: 1.2; stroke-dasharray: 10 6; }
+.diagram__svg .is-selected .dg-box, .diagram__svg .is-selected .dg-line { stroke-width: 3; }
+.diagram__svg .dg-nodes a:hover .dg-box, .diagram__svg .dg-nodes a:focus-visible .dg-box { stroke-width: 2.6; }
+.diagram__svg .dg-node, .diagram__svg .dg-edge { transition: opacity 0.12s; }
+.diagram__svg.is-tracing .dg-node:not(.is-lit), .diagram__svg.is-tracing .dg-edge:not(.is-lit) { opacity: 0.18; }
+.diagram__svg.is-tracing .dg-edge.is-lit .dg-line { stroke-width: 2.6; }
+.diagram[data-diagram="flow"] .diagram__svg { min-height: 34rem; }
+@media (prefers-reduced-motion: reduce) { .diagram__svg .dg-node, .diagram__svg .dg-edge { transition: none; } }

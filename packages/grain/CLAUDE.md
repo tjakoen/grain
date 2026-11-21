@@ -60,6 +60,8 @@ cross-layer execution plan and this file stays canonical for grain's rules.
 - **Tests are part of the work.** Unit (`*.test.ts`, colocated) + the GRAIN **conformance** e2e
   (asserts usage contracts, not just that a page renders). `tsc` + `bun test` green before "done".
 
+For installed web apps and mobile compatibility reviews, use the [Native PWA skill](skills/native-pwa-design-system/SKILL.md).
+
 ## Hard-won lessons — do NOT repeat these (each was an architecture smell, not a typo)
 
 These are the mistakes that kept recurring. They share one root: **reaching for a bespoke mechanism

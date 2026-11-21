@@ -15,6 +15,7 @@ the reference one) but imports nothing from it.
   the two write paths): [AI-INTERFACE](https://tjakoen.github.io/grain/docs/ai-interface)
 - **Built on top of GRAIN:** [`MILL`](../mill/PLAN.md), the Markdown→pages CMS (a layer above).
 - **Roadmap / planned features:** [`PLAN.md`](PLAN.md)
+- **Mobile and installed web apps:** [Native PWA standards](skills/native-pwa-design-system/STANDARDS_BASELINE.md).
 
 > **Docs live at [tjakoen.github.io/grain/docs](https://tjakoen.github.io/grain/docs).** GRAIN's
 > explanatory docs are canonically homed in the portfolio repo (`tjakoen.github.io/docs/grain/`) and

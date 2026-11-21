@@ -1,0 +1,49 @@
+/* GRAIN PWA reference tokens. Standards verified 2026-11-21.
+   Load after GRAIN variables.css. Themes supply all color roles. */
+@layer tokens {
+  :root {
+    --pwa-material-solid: var(--color-surface);
+    --pwa-material-glass: var(--pwa-material-solid);
+    --pwa-material-blur: 16px;
+    --pwa-shadow: 0 var(--space-2) var(--space-8) var(--scrim);
+    --pwa-text-body: clamp(1rem, .97rem + .15vw, 1.125rem);
+    --pwa-text-title: clamp(1.25rem, 1.15rem + .55vw, 1.75rem);
+    --pwa-target-min: 44px;
+    --pwa-nav-rail: 5.5rem;
+    --pwa-nav-sidebar: 16rem;
+    --pwa-z-content: 0;
+    --pwa-z-chrome: 10;
+    --pwa-z-toast: 20;
+    --pwa-duration-press: 100ms;
+    --pwa-duration-enter: 240ms;
+    --pwa-duration-settle: 320ms;
+    --pwa-ease-decelerate: cubic-bezier(.05, .7, .1, 1);
+    --pwa-ease-spring: cubic-bezier(.2, .8, .25, 1.16);
+    --pwa-press-scale: .98;
+  }
+
+  @supports (color: color-mix(in srgb, black, transparent)) {
+    @media (prefers-reduced-transparency: no-preference) {
+      :root {
+        --pwa-material-glass: color-mix(in srgb, var(--pwa-material-solid) 94%, transparent);
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --pwa-duration-press: 0ms;
+      --pwa-duration-enter: 0ms;
+      --pwa-duration-settle: 0ms;
+      --pwa-press-scale: 1;
+    }
+  }
+
+  @media (forced-colors: active), (prefers-reduced-transparency: reduce) {
+    :root {
+      --pwa-material-glass: var(--pwa-material-solid);
+      --pwa-material-blur: 0px;
+      --pwa-shadow: none;
+    }
+  }
+}

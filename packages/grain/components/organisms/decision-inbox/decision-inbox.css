@@ -1,0 +1,11 @@
+.decision-inbox { display: grid; gap: var(--space-4); }
+.decision-inbox__card { padding: var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-fg); min-width: 0; overflow-wrap: anywhere; }
+.decision-inbox__title { margin: 0 0 var(--space-2); font-size: var(--text-lg); }
+.decision-inbox__options { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-3); }
+.decision-inbox__options button { font: inherit; text-align: start; padding: var(--space-2) var(--space-3); min-height: 2.75rem; max-width: 100%; overflow-wrap: anywhere; border: 1px solid var(--color-line); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); cursor: pointer; }
+.decision-inbox__options button[data-recommended] { border-color: var(--color-fg); }
+.decision-inbox :is(button, a):focus-visible { outline: 2px solid var(--color-fg); outline-offset: 3px; }
+.decision-inbox__options button:disabled { cursor: default; }
+.decision-inbox__card[data-commit="pending"] { border-style: dashed; }
+.decision-inbox__status { margin: var(--space-2) 0 0; font-size: var(--text-sm); }
+.decision-inbox__status:empty { margin: 0; }

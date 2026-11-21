@@ -1,0 +1,6 @@
+$ bun run --filter '*' check
+@tjakoen/grain check: Exited with code 0
+@tjakoen/grain-mcp check: Exited with code 0
+@tjakoen/mill check: Exited with code 0
+@tjakoen/crumb check: Exited with code 0
+@tjakoen/proof check: Exited with code 0

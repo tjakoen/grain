@@ -1,6 +1,6 @@
 ---
 id: decision-inbox
-status: todo
+status: done
 owner: ai
 touches: [packages/grain/components/organisms/decision-inbox]
 ---
@@ -27,7 +27,20 @@ PANTRY resolves GRAIN through its installed package. Verify the new component wi
 
 ## Verification
 
-- [ ] Rendering tests cover escaped titles and options, open and resolved cards, empty options, and saved answers.
-- [ ] Browser checks cover saving, failure and retry, reload, keyboard navigation and a narrow viewport.
-- [ ] Run GRAIN and PANTRY typechecks and tests, inspect the rendered page, and run grain-lint.
-- [ ] Save screenshots and a run report, then close the plans.
+- [x] Rendering tests cover escaped titles and options, open and resolved cards, empty options, and saved answers.
+- [x] Browser checks cover saving, failure and retry, reload, keyboard navigation and a narrow viewport.
+- [x] Run GRAIN and PANTRY typechecks and tests, inspect the rendered page, and run grain-lint.
+- [x] Save screenshots and a run report, then close the plans.
+
+## Review clarifications
+
+Match saved answers by source decision, ref, file, question, and identical options; the newest matching answer wins, including acknowledged answers. Changed requests expose choices again. A failed or malformed log disables quick answers and links to the detail form. After saving, retain the buttons disabled and move focus to the stable detail link while announcing the chosen answer. Existing append-only retry semantics apply, including possible duplicate submissions after an ambiguous network failure. Publishing GRAIN and updating PANTRY is a release follow-up that must be named in the handoff.
+
+## What we learned
+
+- Topic: Decision inbox
+- Changed: Added the GRAIN decision inbox and wired PANTRY inline choices to its durable answer log.
+- Why: Questions can be answered in place with context still reachable.
+- Dropped: nothing
+- Remember: Installed consumers require a GRAIN release and dependency update. Screen-reader announcement needs human verification.
+- Closed: 2026-11-21T05:38:54.775Z by codex on Tjakoens-MacBook-Air.local

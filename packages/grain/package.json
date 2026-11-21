@@ -16,6 +16,8 @@
     "access": "public"
   },
   "exports": {
+    "./framework-standards.json": "./framework-standards.json",
+    "./skills/*": "./skills/*",
     "./ai/*": "./ai/*",
     "./components/*": "./components/*",
     "./styles/*": "./styles/*",
@@ -26,6 +28,8 @@
     "./PLAN.md": "./PLAN.md"
   },
   "files": [
+    "framework-standards.json",
+    "skills",
     "ai",
     "assets",
     "catalog",

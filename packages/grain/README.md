@@ -305,3 +305,12 @@ axe-core installed, the contrast rule uses axe's own run rather than a second im
 and the AI never got a backdoor into the DOM, same door as you, every time. **I don't prompt and
 pray, I prompt and prove.**
 [How I actually work with AI, receipts and all →](https://tjakoen.github.io/notes/ten-times-zero)
+
+### Framework updates in consuming apps
+
+A project that declares GRAIN receives a proposed adoption plan for each new revision in
+framework-standards.json when the shared session doctor runs. The check uses the local
+framework checkout when available and falls back to the installed package. Each plan
+points to its guide and starts with an applicability check. Keep the plan when closing
+or declining it so the same revision stays quiet. When changing an adoption requirement,
+update its tasks and increment its revision in the catalog.

@@ -1,0 +1,14 @@
+{
+  "dashboard": {
+    "revision": 1,
+    "title": "Review dashboard surfaces against GRAIN",
+    "guide": "README.md#dashboards",
+    "tasks": ["Inventory the app's dashboards and identify the decision each one supports.", "Check panel hierarchy, comparison baselines and the next action against the dashboard layer.", "Plan the component changes and verify the affected screens with representative data."]
+  },
+  "native-pwa": {
+    "revision": 1,
+    "title": "Review native PWA support against GRAIN",
+    "guide": "skills/native-pwa-design-system/SKILL.md",
+    "tasks": ["Check whether this app offers installation or needs a standalone experience.", "Compare its manifest, icons, navigation, offline behavior and accessible controls with the native PWA guide.", "Record the applicable changes and test the installed and browser experiences on target devices."]
+  }
+}

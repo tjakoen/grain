@@ -1,0 +1,94 @@
+/* Opt-in three-region PWA composition. Load after GRAIN app-shell.css. */
+html[data-pwa-page],
+html[data-pwa-page] body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+}
+
+.app-shell[data-pwa-layout] {
+  box-sizing: border-box;
+  height: var(--pwa-visual-height, 100vh);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  grid-template: "topbar" auto "main" minmax(0, 1fr) "rail" auto / minmax(0, 1fr);
+  transition: none;
+}
+
+@supports (height: 100dvh) {
+  .app-shell[data-pwa-layout] { height: var(--pwa-visual-height, 100dvh); }
+}
+
+.app-shell[data-pwa-layout] > .app-shell__main {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior-y: contain;
+  scroll-padding: var(--space-4);
+}
+
+.app-shell[data-pwa-layout] > .app-shell__rail {
+  position: static;
+  inset: auto;
+  width: auto;
+  max-width: none;
+  max-height: max(56px, 35vh);
+  min-height: 0;
+  transform: none;
+  visibility: visible;
+  display: flex;
+  align-items: stretch;
+  flex-direction: row;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  overflow: auto;
+  overscroll-behavior-y: contain;
+  background: var(--pwa-material-solid);
+  border: 0;
+  border-block-start: 1px solid var(--color-line);
+}
+
+.app-shell[data-pwa-layout] > .app-shell__rail > .nav-item {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--pwa-target-min);
+  min-block-size: var(--pwa-target-min);
+  overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--pwa-duration-press) var(--pwa-ease-decelerate);
+}
+
+.app-shell[data-pwa-layout] > .app-shell__rail > .nav-item:active {
+  transform: scale(var(--pwa-press-scale));
+}
+
+.app-shell[data-pwa-layout] > .app-shell__rail > .nav-item:focus-visible {
+  outline: 2px solid var(--color-fg);
+  outline-offset: -2px;
+}
+
+@media (min-width: 600px) {
+  .app-shell[data-pwa-layout] {
+    grid-template: "topbar topbar" auto "rail main" minmax(0, 1fr) /
+      var(--pwa-nav-rail) minmax(0, 1fr);
+  }
+
+  .app-shell[data-pwa-layout] > .app-shell__rail {
+    flex-direction: column;
+    max-height: none;
+    border-block-start: 0;
+    border-inline-end: 1px solid var(--color-line);
+  }
+
+  .app-shell[data-pwa-layout] > .app-shell__rail > .nav-item { flex: 0 0 auto; }
+}
+
+@media (min-width: 840px) {
+  .app-shell[data-pwa-layout] { grid-template-columns: var(--pwa-nav-sidebar) minmax(0, 1fr); }
+  .app-shell[data-pwa-layout] > .app-shell__rail > .nav-item { justify-content: flex-start; }
+}

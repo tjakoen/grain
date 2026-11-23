@@ -123,3 +123,11 @@ describe("renderers", () => {
     expect(svg).toContain(">Uses<");
   });
 });
+
+describe("zoom asks for a modifier", () => {
+  test("a plain wheel scrolls the page; only Ctrl or Cmd and the wheel, or a pinch, zooms", async () => {
+    const { DIAGRAM_SCRIPT, diagramFrame } = await import("./diagram.ts");
+    expect(DIAGRAM_SCRIPT).toContain("if (!ev.ctrlKey && !ev.metaKey) return;");
+    expect(diagramFrame({ kind: "flow", width: 10, height: 10, label: "x" }, "")).toContain("Ctrl and scroll, or pinch, to zoom");
+  });
+});

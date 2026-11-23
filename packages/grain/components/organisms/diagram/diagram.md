@@ -3,7 +3,7 @@
 Planning diagrams drawn as inline SVG on the server, each in its method's own notation:
 crow's-foot for an entity relationship diagram, Gane and Sarson for a data flow diagram with
 trust boundaries, C4 for context and container views, and a flowchart for a user flow. Every
-node and edge can be a link, and the frame gives pan, zoom and hover tracing with no library.
+node and edge can be a link, and the frame gives pan, zoom and hover tracing with no library. A plain wheel scrolls the page past it; zooming takes Ctrl (or Cmd) and the wheel, a pinch, or the buttons.
 
 The palette is closed. Colour comes from the semantic tokens, so state is shown by line weight,
 dashes and words: a heavy outline marks the system in scope or a flow's end, a dashed outline

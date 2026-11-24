@@ -5,3 +5,6 @@ dist/
 
 # graphify's generated code+doc graph (the mindmap's source) — regenerable, host-local
 graphify-out/
+
+# The token index, generated per machine.
+.tokensave/

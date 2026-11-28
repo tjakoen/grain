@@ -1,0 +1,259 @@
+/* grain/components/organisms/desk-stage/desk-stage.css
+   The desk stage: the page you are reading, seen as the screen of a 3D monitor on a desk.
+   Behavior is scripts/desk-stage.js, which builds the rig below and drives the camera.
+
+   Two ideas hold it together.
+   1. The page is ONE live node and is never cloned. The resting state (data-view="flat") is
+      display: contents all the way down, so the stage costs the page nothing. Zooming out is a
+      single camera move, so the page is always the monitor's screen and nothing remounts.
+   2. Every color is a semantic token. The shadows and the lit tint are --stage-cast and
+      --stage-lit (variables.css), so a flavor or a scheme re-skins the whole desk with no edits here. */
+
+.desk-stage {
+  /* camera and layout knobs. Each is read by the rule that uses it, nothing is decorative. */
+  --ds-P: 1900px;                 /* perspective */
+  --ds-k: 0.4;                    /* screen size as a fraction of the viewport */
+  --ds-sw: calc(100vw * var(--ds-k));
+  --ds-sh: calc(100vh * var(--ds-k));
+  --ds-cy: -70px;                 /* screen centre, above the rig origin */
+  --ds-cam-x: -120px; --ds-cam-y: -30px; --ds-cam-z: -300px;
+  --ds-yaw: -17deg; --ds-pitch: -5deg;
+  --ds-rx: 0deg; --ds-ry: 0deg;   /* the live drag offset, written by the script */
+  --ds-dur: 1.6s;
+  --ds-ease: cubic-bezier(0.62, 0.04, 0.2, 1);
+
+  /* derived geometry */
+  --ds-body-cy: calc(var(--ds-cy) + 22px);
+  --ds-body-bottom: calc(var(--ds-body-cy) + (var(--ds-sh) + 72px) / 2);
+  --ds-plinth-top: calc(var(--ds-body-bottom) + 90px);
+  --ds-floor: calc(var(--ds-plinth-top) + 150px);
+
+  /* surfaces, all from the semantic tokens */
+  --ds-line: color-mix(in srgb, var(--color-fg) 62%, transparent);
+  --ds-seam: color-mix(in srgb, var(--color-fg) 32%, transparent);
+  --ds-front: color-mix(in srgb, var(--color-fg) 2%, var(--color-surface));
+  --ds-top: color-mix(in srgb, var(--paper-2) 80%, var(--color-surface));
+  --ds-side: color-mix(in srgb, var(--color-fg) 8%, var(--color-surface));
+  --ds-key: color-mix(in srgb, var(--color-fg) 30%, var(--color-accent) 16%);
+  --ds-wall: color-mix(in srgb, var(--color-fg) 3%, var(--color-bg));
+  --ds-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0 0 0 -.08'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+}
+
+/* ---- resting: no cost to the page ------------------------------------------------------ */
+.desk-stage[data-view="flat"],
+.desk-stage[data-view="flat"] .desk-stage__world { display: contents; }
+/* flow-root, not contents: the staged page is a scroll container, which stops its children's
+   margins collapsing through it. Making the flat page one too keeps the two layouts the same
+   height, so the scroll position survives the swap to the pixel. */
+.desk-stage[data-view="flat"] .desk-stage__page { display: flow-root; }
+.desk-stage[data-view="flat"] .desk-stage__rig { display: none; }
+
+/* ---- staged: the page becomes a screen inside a perspective scene ---------------------- */
+.desk-stage:not([data-view="flat"]) {
+  position: fixed; inset: 0; perspective: var(--ds-P); overflow: hidden;
+  background: var(--color-bg); z-index: 1;
+}
+.desk-stage[data-view="out"] { cursor: grab; touch-action: none; }
+.desk-stage[data-dragging] { cursor: grabbing; }
+
+.desk-stage__world {
+  position: absolute; inset: 0; transform-style: preserve-3d;
+  transition: transform var(--ds-dur) var(--ds-ease);
+}
+/* IN: the camera is pushed until the screen plane maps exactly onto the viewport, so the page
+   fills the window and the monitor is simply out of frame. OUT: the same camera pulled back. */
+.desk-stage[data-view="in"] .desk-stage__world {
+  transform: translate3d(0, calc(-1 * var(--ds-cy)), calc(var(--ds-P) * (1 - var(--ds-k)) + 38px)) rotateX(0deg) rotateY(0deg);
+}
+.desk-stage[data-view="out"] .desk-stage__world {
+  transform: translate3d(var(--ds-cam-x), var(--ds-cam-y), var(--ds-cam-z))
+             rotateX(calc(var(--ds-rx) + var(--ds-pitch))) rotateY(calc(var(--ds-ry) + var(--ds-yaw)));
+}
+.desk-stage[data-dragging] .desk-stage__world { transition: transform 0.08s linear; }
+.desk-stage[data-settling] .desk-stage__world { transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.desk-stage[data-snap], .desk-stage[data-snap] * { transition: none !important; }
+
+.desk-stage:not([data-view="flat"]) .desk-stage__page {
+  position: absolute; left: 50%; top: 50%; width: 100vw; height: 100vh;
+  overflow-y: auto; overflow-anchor: none; scrollbar-width: none; background: var(--color-bg);
+  transform: translate3d(-50%, calc(-50% + var(--ds-cy)), -38px) scale(var(--ds-k));
+  border-radius: calc(var(--radius-md) * 6); pointer-events: none;
+  transition: border-radius var(--ds-dur);
+}
+.desk-stage:not([data-view="flat"]) .desk-stage__page::-webkit-scrollbar { display: none; }
+.desk-stage[data-view="in"] .desk-stage__page { border-radius: 0; }
+
+/* the page's own scrollbar is replaced by the stage's, so the document must not scroll under it */
+html[data-desk-stage-lock] { overflow: hidden; }
+
+/* ---- the rig ---------------------------------------------------------------------------- */
+.desk-stage__rig { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+
+/* a line-drawn box: --w --h --d, centre at (--x, --y, --z) from the stage centre */
+.desk-stage__box {
+  position: absolute; left: 50%; top: 50%; width: var(--w); height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+  transform: translate3d(var(--x), var(--y), var(--z)); transform-style: preserve-3d;
+}
+.desk-stage__box > i {
+  position: absolute; display: block; border: 1px solid var(--ds-line);
+  backface-visibility: hidden; outline: 1px solid transparent;   /* the outline is what antialiases a 3D edge */
+}
+.desk-stage__box .f { width: var(--w); height: var(--h); background: var(--ds-front); transform: translateZ(calc(var(--d) / 2)); }
+.desk-stage__box .b { width: var(--w); height: var(--h); background: var(--ds-side); transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+.desk-stage__box .r, .desk-stage__box .l { width: var(--d); height: var(--h); left: calc((var(--w) - var(--d)) / 2); background: var(--ds-side); }
+.desk-stage__box .r { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+.desk-stage__box .l { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+.desk-stage__box .t, .desk-stage__box .u { width: var(--w); height: var(--d); top: calc((var(--h) - var(--d)) / 2); }
+.desk-stage__box .t { background: var(--ds-top); transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
+.desk-stage__box .u { background: var(--ds-side); transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+
+/* wall and floor */
+.desk-stage__wall, .desk-stage__floor { position: absolute; left: 50%; top: 50%; width: 7000px; overflow: hidden; }
+.desk-stage__wall {
+  height: 1800px; background: var(--ds-grain), var(--ds-wall);
+  transform: translate3d(-3500px, calc(var(--ds-floor) - 1800px), -500px);
+}
+.desk-stage__floor {
+  height: 1000px; background: var(--color-bg);
+  transform: translate3d(-3500px, calc(var(--ds-floor) + 3px - 500px), 0) rotateX(90deg);   /* 3px under the plinth, so the two never meet edge to edge: planes that touch get depth-sorted wrongly */
+}
+
+/* WINDOW SHADOWS. (A mask only reads alpha, so its opaque stops use a token rather than a literal black.) Real soft cast shadows: a gradient mask gives the penumbra, a second layer puts
+   a window mullion across each lit pane, and the lit tint warms the pane itself. Painted on the
+   surfaces, so they stay correct as the camera moves. The whole pattern drifts slowly like sun. */
+.desk-stage__wall, .desk-stage__floor, .desk-stage__plinth-top { --a: 112deg; --p: 360px; --m: 22deg; }
+.desk-stage__floor { --a: 78deg; --p: 520px; --m: 168deg; }
+.desk-stage__plinth-top { --a: 74deg; --p: 300px; --m: 164deg; }
+.desk-stage__wall::before, .desk-stage__floor::before, .desk-stage__plinth-top::before,
+.desk-stage__wall::after, .desk-stage__floor::after, .desk-stage__plinth-top::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -240px; right: -240px; pointer-events: none;
+  animation: desk-stage-sun 90s ease-in-out infinite alternate;
+}
+.desk-stage__wall::before, .desk-stage__floor::before, .desk-stage__plinth-top::before {
+  background: var(--stage-cast);
+  -webkit-mask-image: repeating-linear-gradient(var(--a), var(--color-fg) 0, var(--color-fg) calc(var(--p) * 0.02), transparent calc(var(--p) * 0.30), transparent calc(var(--p) * 0.60), var(--color-fg) calc(var(--p) * 0.88), var(--color-fg) var(--p));
+          mask-image: repeating-linear-gradient(var(--a), var(--color-fg) 0, var(--color-fg) calc(var(--p) * 0.02), transparent calc(var(--p) * 0.30), transparent calc(var(--p) * 0.60), var(--color-fg) calc(var(--p) * 0.88), var(--color-fg) var(--p));
+}
+.desk-stage__wall::after, .desk-stage__floor::after, .desk-stage__plinth-top::after {
+  background:
+    repeating-linear-gradient(var(--m), transparent 0, transparent calc(var(--p) * 0.7), var(--stage-cast) calc(var(--p) * 0.77), var(--stage-cast) calc(var(--p) * 0.8), transparent calc(var(--p) * 0.87), transparent calc(var(--p) * 1.5)),
+    var(--stage-lit);
+  -webkit-mask-image: repeating-linear-gradient(var(--a), transparent 0, transparent calc(var(--p) * 0.02), var(--color-fg) calc(var(--p) * 0.30), var(--color-fg) calc(var(--p) * 0.60), transparent calc(var(--p) * 0.88), transparent var(--p));
+          mask-image: repeating-linear-gradient(var(--a), transparent 0, transparent calc(var(--p) * 0.02), var(--color-fg) calc(var(--p) * 0.30), var(--color-fg) calc(var(--p) * 0.60), transparent calc(var(--p) * 0.88), transparent var(--p));
+}
+@keyframes desk-stage-sun { from { transform: translateX(-30px); } to { transform: translateX(90px); } }
+
+/* the monitor's cast shadow on the wall, and a soft contact shadow under every object */
+.desk-stage__cast {
+  position: absolute; border-radius: 14px; background: var(--stage-cast); filter: blur(16px);
+  left: calc(3500px - (var(--ds-sw) + 28px) / 2 + 110px);
+  top: calc(1800px - var(--ds-floor) + var(--ds-body-cy) - (var(--ds-sh) + 72px) / 2 + 70px);
+  width: calc(var(--ds-sw) + 28px); height: calc(var(--ds-sh) + 72px);
+}
+.desk-stage__contact {
+  position: absolute; left: 50%; top: 50%; width: var(--w); height: var(--d);
+  margin: calc(var(--d) / -2) 0 0 calc(var(--w) / -2); pointer-events: none;
+  transform: translate3d(var(--x), calc(var(--ds-plinth-top) - 1px), var(--z)) rotateX(90deg);
+  background: radial-gradient(closest-side, var(--stage-cast), transparent);
+}
+.desk-stage__contact[data-kind="pool"] {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--color-accent) 38%, transparent), transparent);
+  opacity: 0; transition: opacity 0.7s;
+}
+
+/* the plinth: two flat planes, front and top, in the same plain-plane style as the wall and floor.
+   A box with six bordered faces breaks when it is this wide: Chrome leaves stretches of the face
+   unpainted at some camera angles. A bare plane does not, so the plinth is built like the wall. */
+.desk-stage__plinth-front, .desk-stage__plinth-top { position: absolute; left: 50%; top: 50%; width: 3000px; }
+.desk-stage__plinth-front {
+  height: 150px; border-top: 1px solid var(--color-fg);
+  background: linear-gradient(180deg, var(--stage-cast), transparent 24%), var(--ds-grain), var(--ds-front);
+  transform: translate3d(-1500px, var(--ds-plinth-top), 130px);
+}
+.desk-stage__plinth-top {
+  height: 440px; overflow: hidden; background: var(--ds-grain), var(--ds-top);
+  transform: translate3d(-1500px, calc(var(--ds-plinth-top) - 220px), -90px) rotateX(90deg);
+}
+
+/* the monitor */
+.desk-stage__box[data-part="body"] { --w: calc(var(--ds-sw) + 28px); --h: calc(var(--ds-sh) + 72px); --d: 24px; --x: 0px; --y: var(--ds-body-cy); --z: -52px; }
+.desk-stage__box[data-part="body"] .f {
+  border-radius: 12px; pointer-events: auto; cursor: pointer;
+  background: linear-gradient(165deg, var(--paper-2), var(--ds-front) 55%, var(--ds-side));
+}
+.desk-stage__box[data-part="body"] .r, .desk-stage__box[data-part="body"] .l { border-radius: 0; }
+.desk-stage__box[data-part="body"] .f::after {
+  content: ""; position: absolute; left: 50%; bottom: 22px; width: 10px; height: 10px; margin-left: -5px;
+  border-radius: 50%; border: 1px solid var(--color-accent); background: var(--color-accent-soft);
+}
+.desk-stage__box[data-part="body"] .f::before {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: 58px; height: 0; border-top: 1px solid var(--ds-seam);
+}
+.desk-stage__box[data-part="neck"] { --w: 84px; --h: 90px; --d: 14px; --x: 0px; --y: calc(var(--ds-body-bottom) + 45px); --z: -60px; }
+.desk-stage__box[data-part="foot"] { --w: 210px; --h: 8px; --d: 130px; --x: 0px; --y: calc(var(--ds-plinth-top) - 4px); --z: -58px; }
+.desk-stage__box[data-part="foot"] > i { border-radius: 3px; }
+.desk-stage__glare {
+  position: absolute; left: 50%; top: 50%; width: var(--ds-sw); height: var(--ds-sh);
+  margin: calc(var(--ds-sh) / -2) 0 0 calc(var(--ds-sw) / -2);
+  transform: translate3d(0, var(--ds-cy), -37px); border-radius: calc(var(--radius-md) * 6);
+  pointer-events: auto; cursor: pointer;
+  background: repeating-linear-gradient(112deg, transparent 0, transparent 30px, var(--stage-lit) 80px, var(--stage-lit) 160px, transparent 210px, transparent 360px);
+  -webkit-mask-image: linear-gradient(160deg, var(--color-fg), transparent 60%);
+          mask-image: linear-gradient(160deg, var(--color-fg), transparent 60%);
+}
+
+/* keyboard and mouse */
+.desk-stage__box[data-part="keyboard"] { --w: 520px; --h: 12px; --d: 150px; --x: -30px; --y: calc(var(--ds-plinth-top) - 6px); --z: 45px; }
+.desk-stage__box[data-part="keyboard"] .t {
+  background:
+    repeating-linear-gradient(90deg, transparent 0, var(--ds-key) 0.6px, var(--ds-key) 1.4px, transparent 2px, transparent 32px),
+    repeating-linear-gradient(0deg, transparent 0, var(--ds-key) 0.6px, var(--ds-key) 1.4px, transparent 2px, transparent 30px),
+    var(--ds-top);
+}
+.desk-stage__box[data-part="keyboard"] > i { border-radius: 4px; }
+.desk-stage__box[data-part="mouse"] { --w: 46px; --h: 16px; --d: 78px; --x: 340px; --y: calc(var(--ds-plinth-top) - 8px); --z: 50px; }
+.desk-stage__box[data-part="mouse"] > i { border-radius: 22px; }
+.desk-stage__box[data-part="mouse"] .t::before { content: ""; position: absolute; left: 0; right: 0; top: 42%; border-top: 1px solid var(--ds-line); }
+.desk-stage__box[data-part="mouse"] .t::after { content: ""; position: absolute; left: 50%; top: 0; height: 42%; border-left: 1px solid var(--ds-line); }
+
+/* the shade lamp: facets built by the script. It is the control for light and dark. */
+.desk-stage__lamp { position: absolute; inset: 0; transform-style: preserve-3d; }
+.desk-stage__cyl { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+.desk-stage__facet {
+  position: absolute; transform-origin: 50% 100%; pointer-events: auto; cursor: pointer;
+  filter: drop-shadow(0.7px 0 0 var(--ds-seam)) drop-shadow(-0.7px 0 0 var(--ds-seam)) drop-shadow(0 0.7px 0 var(--ds-seam)) drop-shadow(0 -0.7px 0 var(--ds-seam));
+}
+.desk-stage__facet b { position: absolute; inset: 0; display: block; }
+.desk-stage__cap {
+  position: absolute; border-radius: 50%; border: 1px solid var(--ds-line); background: var(--ds-top);
+  outline: 1px solid transparent; pointer-events: auto; cursor: pointer;
+}
+.desk-stage__cap[data-open] { background: transparent; }
+.desk-stage__glow {
+  position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px;
+  border-radius: 50%; opacity: 0; pointer-events: none; transition: opacity 0.7s;
+  transform: translate3d(470px, calc(var(--ds-plinth-top) - 180px), -40px);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--color-accent) 36%, transparent), transparent);
+}
+
+/* lamp on: the shade glows, the wall and the desk take its light. The lamp IS the dark-mode
+   control, so "on" is simply the dark scheme. */
+:root[data-color-scheme="dark"] .desk-stage__glow,
+:root[data-color-scheme="dark"] .desk-stage__contact[data-kind="pool"] { opacity: 1; }
+:root[data-color-scheme="dark"] .desk-stage__lamp [data-part="shade"] .desk-stage__facet b {
+  background: color-mix(in srgb, var(--color-accent) 55%, var(--paper-2)) !important;
+}
+
+/* ---- off where it cannot work ------------------------------------------------------------
+   Phones: the scene is a desktop flourish. The script also refuses to stage below --bp-phone and
+   sets data-desk-stage="off" on <html>, which hides every toggle. */
+html[data-desk-stage="off"] [data-desk-stage-toggle] { display: none; }
+@media (max-width: 640px) {
+  .desk-stage__rig { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-stage__world { transition-duration: 0.01s !important; }
+  .desk-stage__wall::before, .desk-stage__floor::before, .desk-stage__box .t::before,
+  .desk-stage__wall::after, .desk-stage__floor::after, .desk-stage__box .t::after { animation: none; }
+}

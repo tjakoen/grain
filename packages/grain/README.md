@@ -191,6 +191,10 @@ data-attributes, no composition-root wiring and no AI layer required:
   opens, `[data-drawer-close]` (the scrim carries it) closes, and the script owns the modal
   obligations: focus into the panel, Tab trapped, the rest of the page `inert`, focus returned to
   the opener. Open/closed is the plain `hidden` attribute, so a server can ship it either way.
+- **`scripts/desk-stage.js`** + the `desk-stage` organism: the page seen as the screen of a 3D
+  monitor on a desk. One live page and one camera move, so zooming out and back loses nothing, and
+  the resting state costs the page nothing. A shade lamp flips light and dark. Opt in with
+  `data-desk-stage`; off on phones. It is view chrome, not in the AI vocabulary yet.
 
 ---
 

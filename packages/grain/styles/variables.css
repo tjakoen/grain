@@ -215,6 +215,12 @@
 
   /* paper grain SVG overlay opacity (DESIGN-SYSTEM §6) — override in dark mode to reduce contrast */
   --paper-grain-opacity: 0.09;
+
+  /* the desk stage's light: a cast shadow and the lit tint inside a window pane. Derived from the
+     scheme rather than from the ink, because a shadow must darken in BOTH schemes (ink goes light in
+     dark mode and would lighten the wall instead). */
+  --stage-cast: color-mix(in srgb, #000 10%, transparent);
+  --stage-lit:  color-mix(in srgb, #fff 26%, transparent);
 }
 
 /* ============================================================================================
@@ -235,6 +241,8 @@
     --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
     --ai-veil: color-mix(in srgb, #000 50%, transparent);   /* dark: dimming darkens further */
     --paper-grain-opacity: 0.04;
+    --stage-cast: color-mix(in srgb, #000 30%, transparent);
+    --stage-lit: color-mix(in srgb, var(--color-accent) 7%, transparent);
   }
 }
 :root[data-color-scheme="dark"] {
@@ -243,6 +251,8 @@
   --hairline: #E4E1D8; --line-soft: rgba(228, 225, 216, 0.16);
   --ai-veil: color-mix(in srgb, #000 50%, transparent);
   --paper-grain-opacity: 0.04;
+  --stage-cast: color-mix(in srgb, #000 30%, transparent);
+  --stage-lit: color-mix(in srgb, var(--color-accent) 7%, transparent);
 }
 
 /* ============================================================================================

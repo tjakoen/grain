@@ -16,7 +16,7 @@
   --ds-sw: calc(100vw * var(--ds-k));
   --ds-sh: calc(100vh * var(--ds-k));
   --ds-cy: -70px;                 /* screen centre, above the rig origin */
-  --ds-cam-x: -60px; --ds-cam-y: 10px; --ds-cam-z: -110px;
+  --ds-cam-x: -60px; --ds-cam-y: -70px; --ds-cam-z: -250px;
   --ds-yaw: -24deg; --ds-pitch: 1deg;
   --ds-rx: 0deg; --ds-ry: 0deg;   /* the live drag offset, written by the script */
   --ds-flat-page: flow-root;      /* the flat page's display; an app whose pane scrolls sets contents */
@@ -27,7 +27,7 @@
   --ds-body-cy: calc(var(--ds-cy) + 22px);
   --ds-body-bottom: calc(var(--ds-body-cy) + (var(--ds-sh) + 72px) / 2);
   --ds-plinth-top: calc(var(--ds-body-bottom) + 90px);
-  --ds-plinth-h: 240px;          /* the block's height: tall enough to read as a block resting on the floor */
+  --ds-plinth-h: 170px;          /* the block's height: tall enough to read as a block resting on the floor */
   --ds-floor: calc(var(--ds-plinth-top) + var(--ds-plinth-h));
 
   /* surfaces, all from the semantic tokens */
@@ -38,6 +38,7 @@
   --ds-side: color-mix(in srgb, var(--color-fg) 14%, var(--color-surface));
   --ds-key: color-mix(in srgb, var(--color-fg) 30%, var(--color-accent) 16%);
   --ds-wall: color-mix(in srgb, var(--color-fg) 11%, var(--color-bg));
+  --ds-floor-tone: color-mix(in srgb, var(--color-fg) 16%, var(--color-bg));   /* also the stage backdrop, so the floor's near edge dissolves into it */
   --ds-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0 0 0 -.08'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
 }
 
@@ -54,7 +55,7 @@
 /* ---- staged: the page becomes a screen inside a perspective scene ---------------------- */
 .desk-stage:not([data-view="flat"]) {
   position: fixed; inset: 0; perspective: var(--ds-P); overflow: hidden;
-  background: var(--color-bg); z-index: 1;
+  background: var(--ds-floor-tone); z-index: 1;
 }
 .desk-stage[data-view="out"] { cursor: grab; touch-action: none; }
 .desk-stage[data-dragging] { cursor: grabbing; }
@@ -114,11 +115,14 @@ html[data-desk-stage-lock] { overflow: hidden; }
 /* wall and floor */
 .desk-stage__wall, .desk-stage__floor { position: absolute; left: 50%; top: 50%; width: 7000px; overflow: hidden; }
 .desk-stage__wall {
-  height: 1800px; background: var(--ds-grain), var(--ds-wall);
+  height: 1800px;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 62%, transparent 40%, var(--stage-cast)),
+    var(--ds-grain), var(--ds-wall);
   transform: translate3d(-3500px, calc(var(--ds-floor) - 1800px), -500px);
 }
 .desk-stage__floor {
-  height: 1000px; background: color-mix(in srgb, var(--color-fg) 7%, var(--color-bg));
+  height: 1000px; background: var(--ds-floor-tone);
   transform: translate3d(-3500px, calc(var(--ds-floor) + 3px - 500px), 0) rotateX(90deg);   /* 3px under the plinth, so the two never meet edge to edge: planes that touch get depth-sorted wrongly */
 }
 
@@ -171,12 +175,18 @@ html[data-desk-stage-lock] { overflow: hidden; }
 .desk-stage__plinth-front, .desk-stage__plinth-top { position: absolute; left: 50%; top: 50%; width: 3000px; }
 .desk-stage__plinth-front {
   height: var(--ds-plinth-h);
-  background: linear-gradient(180deg, var(--stage-cast), transparent 24%), var(--ds-grain), var(--ds-front);
+  background:
+    linear-gradient(180deg, transparent 55%, var(--stage-cast)),
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-2) 70%, transparent), transparent 14%),
+    var(--ds-grain), var(--ds-front);
   transform: translate3d(-1500px, var(--ds-plinth-top), 130px);
 }
 /* The lip line is drawn inside the plane, with a margin of plain plane above it, not as a border on the
    plane's own edge. A 3D layer's edge is not antialiased, but anything inside the layer is filtered, so
    a line that is not on the edge is smooth. */
+.desk-stage__plinth-front::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: var(--color-fg); opacity: 0.9;
+}
 .desk-stage__plinth-front::before {
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1.5px; background: var(--color-fg); opacity: 0.85;
 }
@@ -184,8 +194,10 @@ html[data-desk-stage-lock] { overflow: hidden; }
 .desk-stage__floorshadow {
   position: absolute; left: 50%; top: 50%; width: 3000px; height: 260px;
   transform: translate3d(-1500px, calc(var(--ds-floor) + 2px - 130px), 260px) rotateX(90deg);
-  background: linear-gradient(180deg, var(--stage-cast), var(--stage-cast) 6%, transparent);
-  filter: blur(6px);
+  background:
+    linear-gradient(180deg, var(--stage-cast), var(--stage-cast) 5%, transparent 40%),
+    linear-gradient(180deg, var(--stage-cast), transparent 12%);   /* a tight dark line at the foot, then a long soft fall-off */
+  filter: blur(4px);
   pointer-events: none;
 }
 .desk-stage__plinth-top {

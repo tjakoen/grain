@@ -65,11 +65,13 @@ from its own stylesheet.
 
 ## Where it is off
 
-Phones. Below the phone breakpoint the script sets data-desk-stage="off" on the html element, which
-hides every toggle, and refuses to stage. Resizing across the breakpoint while staged returns the
+Phones. Below the phone breakpoint the script sets data-desk-stage-support="off" on the html element, which
+and refuses to stage. A toggle is visible only while that attribute is "on", so it is also hidden on a page whose script never loaded. Resizing across the breakpoint while staged returns the
 page to flat. Reduced motion keeps the feature and removes the animation.
 
 ## Limits
+
+- **The flat page is flow-root by default.** An app whose own pane scrolls rather than the document (an editor-style shell, for one) should set the custom property ds-flat-page to contents on the stage, so the stage adds no box to its layout. The stage can sit between body and the shell, but a selector written as body direct child of the shell will no longer match.
 
 - **One stage per page**, and it should wrap the whole page. The script takes the first one.
 - **Classic scrollbars.** The staged page fills the full viewport width, so a classic (non-overlay)

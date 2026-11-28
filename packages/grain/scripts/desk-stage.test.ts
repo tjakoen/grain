@@ -24,7 +24,7 @@ test("the page is moved, never cloned: one live node keeps its state", () => {
 
 test("the resting view costs the page nothing: contents or flow-root, rig not rendered", () => {
   expect(css).toMatch(/\.desk-stage\[data-view="flat"\] \.desk-stage__world \{ display: contents; \}/);
-  expect(css).toMatch(/\.desk-stage\[data-view="flat"\] \.desk-stage__page \{ display: flow-root; \}/);
+  expect(css).toMatch(/\.desk-stage\[data-view="flat"\] \.desk-stage__page \{ display: var\(--ds-flat-page\); \}/);
   expect(css).toMatch(/\.desk-stage\[data-view="flat"\] \.desk-stage__rig \{ display: none; \}/);
 });
 
@@ -43,8 +43,15 @@ test("the page is inert while staged and its scroll position is carried both way
 
 test("phones refuse: gated on the --bp-phone token, toggles hidden, a staged page is returned to flat", () => {
   expect(js).toMatch(/--bp-phone/);
-  expect(js).toMatch(/data-desk-stage", supported\(\) \? "on" : "off"/);
-  expect(css).toMatch(/html\[data-desk-stage="off"\] \[data-desk-stage-toggle\] \{ display: none; \}/);
+  expect(js).toMatch(/data-desk-stage-support", supported\(\) \? "on" : "off"/);
+  expect(css).toMatch(/html:not\(\[data-desk-stage-support="on"\]\) \[data-desk-stage-toggle\] \{ display: none; \}/);   // no dead button if the script never ran
+});
+
+test("the support flag on <html> does not collide with the stage's own opt-in attribute", () => {
+  // init() finds the stage with [data-desk-stage]; an attribute of the same name on <html> would
+  // be matched first and the stage would silently never build (found on the real portfolio).
+  expect(js).toMatch(/document\.querySelector\("\.desk-stage\[data-desk-stage\]"\)/);
+  expect(js).not.toMatch(/setAttribute\("data-desk-stage", /);
 });
 
 test("reduced motion keeps the feature and drops the animation", () => {

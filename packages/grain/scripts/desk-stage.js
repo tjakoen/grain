@@ -201,7 +201,7 @@
 
   // ---- phones and resizes: refuse, and leave cleanly if already staged -------------------------
   function syncSupport() {
-    html.setAttribute("data-desk-stage", supported() ? "on" : "off");
+    html.setAttribute("data-desk-stage-support", supported() ? "on" : "off");
     if (!supported() && root && view() !== VIEW.flat) {
       root.setAttribute("data-snap", "");
       setView(VIEW.flat);
@@ -213,7 +213,7 @@
   }
 
   function init() {
-    root = document.querySelector("[data-desk-stage]");
+    root = document.querySelector(".desk-stage[data-desk-stage]");
     if (!root || root.__deskStage) return;
     root.__deskStage = true;
     page = root.querySelector(".desk-stage__page");

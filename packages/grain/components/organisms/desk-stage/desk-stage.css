@@ -19,6 +19,7 @@
   --ds-cam-x: -120px; --ds-cam-y: -30px; --ds-cam-z: -300px;
   --ds-yaw: -17deg; --ds-pitch: -5deg;
   --ds-rx: 0deg; --ds-ry: 0deg;   /* the live drag offset, written by the script */
+  --ds-flat-page: flow-root;      /* the flat page's display; an app whose pane scrolls sets contents */
   --ds-dur: 1.6s;
   --ds-ease: cubic-bezier(0.62, 0.04, 0.2, 1);
 
@@ -44,8 +45,9 @@
 .desk-stage[data-view="flat"] .desk-stage__world { display: contents; }
 /* flow-root, not contents: the staged page is a scroll container, which stops its children's
    margins collapsing through it. Making the flat page one too keeps the two layouts the same
-   height, so the scroll position survives the swap to the pixel. */
-.desk-stage[data-view="flat"] .desk-stage__page { display: flow-root; }
+   height, so the scroll position survives the swap to the pixel. An app whose own pane scrolls (not the
+   document) sets --ds-flat-page: contents, which keeps the stage out of its layout entirely. */
+.desk-stage[data-view="flat"] .desk-stage__page { display: var(--ds-flat-page); }
 .desk-stage[data-view="flat"] .desk-stage__rig { display: none; }
 
 /* ---- staged: the page becomes a screen inside a perspective scene ---------------------- */
@@ -247,8 +249,9 @@ html[data-desk-stage-lock] { overflow: hidden; }
 
 /* ---- off where it cannot work ------------------------------------------------------------
    Phones: the scene is a desktop flourish. The script also refuses to stage below --bp-phone and
-   sets data-desk-stage="off" on <html>, which hides every toggle. */
-html[data-desk-stage="off"] [data-desk-stage-toggle] { display: none; }
+   sets data-desk-stage-support="off" on <html>. A toggle shows only while it is "on", so a page whose script never loaded
+   (an older install, a blocked request) never shows a button that does nothing. */
+html:not([data-desk-stage-support="on"]) [data-desk-stage-toggle] { display: none; }
 @media (max-width: 640px) {
   .desk-stage__rig { display: none; }
 }

@@ -16,8 +16,8 @@
   --ds-sw: calc(100vw * var(--ds-k));
   --ds-sh: calc(100vh * var(--ds-k));
   --ds-cy: -70px;                 /* screen centre, above the rig origin */
-  --ds-cam-x: -120px; --ds-cam-y: -30px; --ds-cam-z: -300px;
-  --ds-yaw: -17deg; --ds-pitch: -5deg;
+  --ds-cam-x: -60px; --ds-cam-y: 10px; --ds-cam-z: -110px;
+  --ds-yaw: -24deg; --ds-pitch: 1deg;
   --ds-rx: 0deg; --ds-ry: 0deg;   /* the live drag offset, written by the script */
   --ds-flat-page: flow-root;      /* the flat page's display; an app whose pane scrolls sets contents */
   --ds-dur: 1.6s;
@@ -27,7 +27,8 @@
   --ds-body-cy: calc(var(--ds-cy) + 22px);
   --ds-body-bottom: calc(var(--ds-body-cy) + (var(--ds-sh) + 72px) / 2);
   --ds-plinth-top: calc(var(--ds-body-bottom) + 90px);
-  --ds-floor: calc(var(--ds-plinth-top) + 150px);
+  --ds-plinth-h: 240px;          /* the block's height: tall enough to read as a block resting on the floor */
+  --ds-floor: calc(var(--ds-plinth-top) + var(--ds-plinth-h));
 
   /* surfaces, all from the semantic tokens */
   --ds-line: color-mix(in srgb, var(--color-fg) 82%, transparent);
@@ -169,9 +170,23 @@ html[data-desk-stage-lock] { overflow: hidden; }
    unpainted at some camera angles. A bare plane does not, so the plinth is built like the wall. */
 .desk-stage__plinth-front, .desk-stage__plinth-top { position: absolute; left: 50%; top: 50%; width: 3000px; }
 .desk-stage__plinth-front {
-  height: 150px; border-top: 1px solid var(--color-fg);
+  height: var(--ds-plinth-h);
   background: linear-gradient(180deg, var(--stage-cast), transparent 24%), var(--ds-grain), var(--ds-front);
   transform: translate3d(-1500px, var(--ds-plinth-top), 130px);
+}
+/* The lip line is drawn inside the plane, with a margin of plain plane above it, not as a border on the
+   plane's own edge. A 3D layer's edge is not antialiased, but anything inside the layer is filtered, so
+   a line that is not on the edge is smooth. */
+.desk-stage__plinth-front::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1.5px; background: var(--color-fg); opacity: 0.85;
+}
+/* the plinth's weight on the floor: a soft contact shadow in front of it, darkest at the base */
+.desk-stage__floorshadow {
+  position: absolute; left: 50%; top: 50%; width: 3000px; height: 260px;
+  transform: translate3d(-1500px, calc(var(--ds-floor) + 2px - 130px), 260px) rotateX(90deg);
+  background: linear-gradient(180deg, var(--stage-cast), var(--stage-cast) 6%, transparent);
+  filter: blur(6px);
+  pointer-events: none;
 }
 .desk-stage__plinth-top {
   height: 440px; overflow: hidden; background: var(--ds-grain), var(--ds-top);
@@ -200,9 +215,9 @@ html[data-desk-stage-lock] { overflow: hidden; }
   margin: calc(var(--ds-sh) / -2) 0 0 calc(var(--ds-sw) / -2);
   transform: translate3d(0, var(--ds-cy), -37px); border-radius: calc(var(--radius-md) * 6);
   pointer-events: auto; cursor: pointer;
-  background: repeating-linear-gradient(112deg, transparent 0, transparent 30px, var(--stage-lit) 80px, var(--stage-lit) 160px, transparent 210px, transparent 360px);
-  -webkit-mask-image: linear-gradient(160deg, var(--color-fg), transparent 60%);
-          mask-image: linear-gradient(160deg, var(--color-fg), transparent 60%);
+  background: repeating-linear-gradient(112deg, transparent 0, transparent 30px, color-mix(in srgb, var(--paper-2) 62%, transparent) 90px, color-mix(in srgb, var(--paper-2) 62%, transparent) 170px, transparent 230px, transparent 360px);
+  -webkit-mask-image: linear-gradient(150deg, var(--color-fg), transparent 85%);
+          mask-image: linear-gradient(150deg, var(--color-fg), transparent 85%);
 }
 
 /* keyboard and mouse */

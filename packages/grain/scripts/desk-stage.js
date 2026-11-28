@@ -99,7 +99,7 @@
     const wall = el("div", "desk-stage__wall");
     wall.appendChild(el("div", "desk-stage__cast"));
     rig.append(wall, el("div", "desk-stage__floor"),
-      el("div", "desk-stage__plinth-front"), el("div", "desk-stage__plinth-top"), box("foot"), box("neck"), box("body"), box("keyboard"), box("mouse"));
+      el("div", "desk-stage__floorshadow"), el("div", "desk-stage__plinth-front"), el("div", "desk-stage__plinth-top"), box("foot"), box("neck"), box("body"), box("keyboard"), box("mouse"));
     const lamp = el("div", "desk-stage__lamp", { "data-part": "lamp" });
     lamp.append(
       cylinder("base",  { rt: 44, rb: 46, h: 8,   N: 22, x: 470, y: 0,    z: -58, cap: true }),

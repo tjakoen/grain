@@ -30,13 +30,13 @@
   --ds-floor: calc(var(--ds-plinth-top) + 150px);
 
   /* surfaces, all from the semantic tokens */
-  --ds-line: color-mix(in srgb, var(--color-fg) 62%, transparent);
-  --ds-seam: color-mix(in srgb, var(--color-fg) 32%, transparent);
-  --ds-front: color-mix(in srgb, var(--color-fg) 2%, var(--color-surface));
-  --ds-top: color-mix(in srgb, var(--paper-2) 80%, var(--color-surface));
-  --ds-side: color-mix(in srgb, var(--color-fg) 8%, var(--color-surface));
+  --ds-line: color-mix(in srgb, var(--color-fg) 82%, transparent);
+  --ds-seam: color-mix(in srgb, var(--color-fg) 45%, transparent);
+  --ds-front: color-mix(in srgb, var(--color-fg) 4%, var(--paper-2));
+  --ds-top: color-mix(in srgb, var(--paper-2) 70%, var(--color-bg));
+  --ds-side: color-mix(in srgb, var(--color-fg) 14%, var(--color-surface));
   --ds-key: color-mix(in srgb, var(--color-fg) 30%, var(--color-accent) 16%);
-  --ds-wall: color-mix(in srgb, var(--color-fg) 3%, var(--color-bg));
+  --ds-wall: color-mix(in srgb, var(--color-fg) 11%, var(--color-bg));
   --ds-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0 0 0 -.08'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
 }
 
@@ -117,7 +117,7 @@ html[data-desk-stage-lock] { overflow: hidden; }
   transform: translate3d(-3500px, calc(var(--ds-floor) - 1800px), -500px);
 }
 .desk-stage__floor {
-  height: 1000px; background: var(--color-bg);
+  height: 1000px; background: color-mix(in srgb, var(--color-fg) 7%, var(--color-bg));
   transform: translate3d(-3500px, calc(var(--ds-floor) + 3px - 500px), 0) rotateX(90deg);   /* 3px under the plinth, so the two never meet edge to edge: planes that touch get depth-sorted wrongly */
 }
 

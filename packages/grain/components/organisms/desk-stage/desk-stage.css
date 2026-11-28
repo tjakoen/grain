@@ -139,21 +139,21 @@ html[data-desk-stage-lock] { overflow: hidden; }
 }
 .desk-stage__wall::before, .desk-stage__floor::before, .desk-stage__plinth-top::before {
   background: var(--stage-cast);
-  -webkit-mask-image: repeating-linear-gradient(var(--a), var(--color-fg) 0, var(--color-fg) calc(var(--p) * 0.02), transparent calc(var(--p) * 0.30), transparent calc(var(--p) * 0.60), var(--color-fg) calc(var(--p) * 0.88), var(--color-fg) var(--p));
-          mask-image: repeating-linear-gradient(var(--a), var(--color-fg) 0, var(--color-fg) calc(var(--p) * 0.02), transparent calc(var(--p) * 0.30), transparent calc(var(--p) * 0.60), var(--color-fg) calc(var(--p) * 0.88), var(--color-fg) var(--p));
+  -webkit-mask-image: repeating-linear-gradient(var(--a), var(--color-fg) 0, var(--color-fg) calc(var(--p) * 0.0), transparent calc(var(--p) * 0.32), transparent calc(var(--p) * 0.58), var(--color-fg) calc(var(--p) * 0.96), var(--color-fg) var(--p));
+          mask-image: repeating-linear-gradient(var(--a), var(--color-fg) 0, var(--color-fg) calc(var(--p) * 0.0), transparent calc(var(--p) * 0.32), transparent calc(var(--p) * 0.58), var(--color-fg) calc(var(--p) * 0.96), var(--color-fg) var(--p));
 }
 .desk-stage__wall::after, .desk-stage__floor::after, .desk-stage__plinth-top::after {
   background:
-    repeating-linear-gradient(var(--m), transparent 0, transparent calc(var(--p) * 0.7), var(--stage-cast) calc(var(--p) * 0.77), var(--stage-cast) calc(var(--p) * 0.8), transparent calc(var(--p) * 0.87), transparent calc(var(--p) * 1.5)),
+    repeating-linear-gradient(var(--m), transparent 0, transparent calc(var(--p) * 0.7), color-mix(in srgb, var(--stage-cast) 80%, transparent) calc(var(--p) * 0.77), color-mix(in srgb, var(--stage-cast) 80%, transparent) calc(var(--p) * 0.79), transparent calc(var(--p) * 0.9), transparent calc(var(--p) * 1.5)),
     var(--stage-lit);
-  -webkit-mask-image: repeating-linear-gradient(var(--a), transparent 0, transparent calc(var(--p) * 0.02), var(--color-fg) calc(var(--p) * 0.30), var(--color-fg) calc(var(--p) * 0.60), transparent calc(var(--p) * 0.88), transparent var(--p));
-          mask-image: repeating-linear-gradient(var(--a), transparent 0, transparent calc(var(--p) * 0.02), var(--color-fg) calc(var(--p) * 0.30), var(--color-fg) calc(var(--p) * 0.60), transparent calc(var(--p) * 0.88), transparent var(--p));
+  -webkit-mask-image: repeating-linear-gradient(var(--a), transparent 0, transparent calc(var(--p) * 0.0), var(--color-fg) calc(var(--p) * 0.32), var(--color-fg) calc(var(--p) * 0.58), transparent calc(var(--p) * 0.96), transparent var(--p));
+          mask-image: repeating-linear-gradient(var(--a), transparent 0, transparent calc(var(--p) * 0.0), var(--color-fg) calc(var(--p) * 0.32), var(--color-fg) calc(var(--p) * 0.58), transparent calc(var(--p) * 0.96), transparent var(--p));
 }
 @keyframes desk-stage-sun { from { transform: translateX(-30px); } to { transform: translateX(90px); } }
 
 /* the monitor's cast shadow on the wall, and a soft contact shadow under every object */
 .desk-stage__cast {
-  position: absolute; border-radius: 14px; background: var(--stage-cast); filter: blur(16px);
+  position: absolute; border-radius: 14px; background: var(--stage-cast); filter: blur(26px);
   left: calc(3500px - (var(--ds-sw) + 28px) / 2 + 110px);
   top: calc(1800px - var(--ds-floor) + var(--ds-body-cy) - (var(--ds-sh) + 72px) / 2 + 70px);
   width: calc(var(--ds-sw) + 28px); height: calc(var(--ds-sh) + 72px);
